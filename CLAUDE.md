@@ -10,13 +10,13 @@ Changer, fit score, decklist.
 Core (tracked): `CLAUDE.md`, `README.md`, `scoring.md` (the 0 to 10 metric
 the owner tunes) and the skills in `.claude/skills/`.
 
-The owner's output (gitignored; may be symlinks into a private repo):
+The owner's output, under `output/` (gitignored):
 
-- `decks/moxfield.json`: the owner's Moxfield username and owned decks,
+- `output/decks/moxfield.json`: the owner's Moxfield username and owned decks,
   `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}}`.
-- `decks/README.md`: the deck table (rank, commander, colours, bracket,
+- `output/decks/README.md`: the deck table (rank, commander, colours, bracket,
   Moxfield link).
-- `decks/<slug>/`: everything about one deck.
+- `output/decks/<slug>/`: everything about one deck.
   - `list.txt`: card names only ("1 Card Name"), commander first, then the
     99, optional `SIDEBOARD:` block. No set codes or collector numbers.
   - `plan.md`: the owner's statement of the deck's intended lines and
@@ -26,10 +26,10 @@ The owner's output (gitignored; may be symlinks into a private repo):
     lands in separate tables sorted descending.
   - `adds.md`, `cuts.md`: ranked adds and cuts, judged independently, never
     paired.
-- `rankings.md`: strength order and WotC-guideline brackets.
-- `data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and
+- `output/rankings.md`: strength order and WotC-guideline brackets.
+- `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and
   `tokens.md`.
-- `carts/`: one report per cart.
+- `output/carts/`: one report per cart.
 
 ## Skills
 

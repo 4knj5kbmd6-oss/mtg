@@ -10,7 +10,7 @@ in, enter credentials or payment details, or check out: the owner does that.
 Delegate the build to one `general-purpose` agent (`model: claude-opus-5-5`,
 `run_in_background`) with this file, the canonical list, the requirements
 (finish, condition, language, artwork constraints, premium per package
-eliminated) and a report path under `carts/<date>-<name>.md`. Ask the app
+eliminated) and a report path under `output/carts/<date>-<name>.md`. Ask the app
 to keep the Mac awake (`request_keep_awake`, `session_idle`); a sleep
 mid-run killed one build. Verify the live cart totals yourself before
 reporting.

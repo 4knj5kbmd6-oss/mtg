@@ -1,4 +1,4 @@
-// Run from any moxfield.com page. Paste the ids in (the keys of "decks" in decks/moxfield.json).
+// Run from any moxfield.com page. Paste the ids in (the keys of "decks" in output/decks/moxfield.json).
 const ids = [/* "v156azYYskS5tYwPVChQyg", ... */];
 const out = {};
 for (const id of ids) {

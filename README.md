@@ -7,11 +7,11 @@ your decks with their brackets, and a TCGplayer cart builder.
 ## Quick start
 
 1. Clone this repo and open it in Claude Code.
-2. Create `decks/moxfield.json` with your Moxfield username and the decks
+2. Create `output/decks/moxfield.json` with your Moxfield username and the decks
    you own: `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}}`
    (or let the first `/mtg-sync` create it).
 3. Run `/mtg-sync` to pull the lists, then write each deck's
-   `decks/<slug>/plan.md`.
+   `output/decks/<slug>/plan.md`.
 4. Run `/mtg-score`, then `/mtg-upgrades`; `/tcg-cart` builds a cart from
    any list.
 
@@ -25,7 +25,7 @@ Core (tracked):
 | [`scoring.md`](scoring.md) | The fit-score metric, yours to tune |
 | [`.claude/skills/`](.claude/skills/) | `mtg-sync`, `mtg-score`, `mtg-upgrades`, `tcg-cart` |
 
-Your output (gitignored):
+Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
@@ -35,7 +35,3 @@ Your output (gitignored):
 | `rankings.md` | Strength order and brackets |
 | `data/` | `oracle.json` (Scryfall) and `tokens.md` |
 | `carts/` | One report per cart |
-
-Your output can live anywhere (a folder in Documents, a private repo):
-symlink `decks`, `data`, `carts` and `rankings.md` from there into this
-checkout.

@@ -1,6 +1,6 @@
 """Merge three scorers' files to one: median, spread flags, optional arbitration.
 usage (repo root): python3 .claude/skills/mtg-score/merge.py <run_dir> <slug> [arb.json] > merged.md
-reads <run_dir>/<slug>-A.md, -B.md, -C.md and the deck title from decks/<slug>/plan.md;
+reads <run_dir>/<slug>-A.md, -B.md, -C.md and the deck title from output/decks/<slug>/plan.md;
 writes <run_dir>/<slug>-flagged.md; prints the shape line to stderr"""
 import re, sys, json, statistics
 from pathlib import Path
@@ -8,7 +8,7 @@ if len(sys.argv) < 3: sys.exit(__doc__)
 ROOT = Path(__file__).resolve().parents[3]
 raw, slug = sys.argv[1], sys.argv[2]
 arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
-title = re.sub(r"^#\s*|:\s*plan\s*$", "", (ROOT / f"decks/{slug}/plan.md").read_text().splitlines()[0])
+title = re.sub(r"^#\s*|:\s*plan\s*$", "", (ROOT / f"output/decks/{slug}/plan.md").read_text().splitlines()[0])
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 def norm(n):
     n = re.sub(COUNT, "", n.strip()).strip(); return re.sub(r"^\d+\s+", "", n)

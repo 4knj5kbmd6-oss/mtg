@@ -1,4 +1,4 @@
-"""Rebuild data/oracle.json from Scryfall for every card in decks/*/list.txt.
+"""Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt.
 usage: python3 .claude/skills/mtg-sync/fetch-oracle.py"""
 import json, re, time, urllib.request
 from datetime import date
@@ -26,7 +26,7 @@ def entry(c):
     e["related_tokens"] = sorted({p["name"] for p in c.get("all_parts", []) if p["component"] == "token"})
     return e
 
-names = sorted({m.group(1) for f in ROOT.glob("decks/*/list.txt") for line in f.read_text().splitlines()
+names = sorted({m.group(1) for f in ROOT.glob("output/decks/*/list.txt") for line in f.read_text().splitlines()
                 if (m := re.match(r"\d+ (.+)", line.strip()))})
 cards, missing = [], []
 for i in range(0, len(names), 75):
@@ -36,7 +36,7 @@ retry = [n.split(" // ")[0] for n in missing if " // " in n]  # double-faced car
 if retry: cards += post(retry)[0]
 out = {c["name"]: entry(c) for c in cards}
 json.dump({"fetched": date.today().isoformat(), "source": API, "cards": out},
-          open(ROOT / "data/oracle.json", "w"), indent=1, sort_keys=True)
+          open(ROOT / "output/data/oracle.json", "w"), indent=1, sort_keys=True)
 fronts = {n.split(" // ")[0] for n in out}
 print(len(names), "requested,", len(out), "saved; missing:", [n for n in names if n.split(" // ")[0] not in fronts])
 print("game changers:", sorted(n for n, e in out.items() if e.get("game_changer")))
