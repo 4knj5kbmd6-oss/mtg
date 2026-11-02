@@ -45,6 +45,11 @@ if __name__ == "__main__":
     retry = [n.split(" // ")[0] for n in missing if " // " in n]  # double-faced cards by front face
     if retry: cards += post(retry)[0]
     out = {c["name"]: entry(c) for c in cards}
+    # a name that is also another card's face (Sign in Blood, the Omen) comes back only alone
+    for n in names:
+        if n not in out and n.split(" // ")[0] not in {k.split(" // ")[0] for k in out}:
+            got, _ = post([n])
+            out.update({c["name"]: entry(c) for c in got})
     json.dump({"fetched": date.today().isoformat(), "source": API, "cards": out},
               open(ROOT / "output/data/oracle.json", "w"), indent=1, sort_keys=True)
     fronts = {n.split(" // ")[0] for n in out}
