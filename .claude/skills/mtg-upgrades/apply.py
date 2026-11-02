@@ -13,8 +13,8 @@ def apply(scores, adds, cuts):
     secs = split(scores); old = dict(secs)
     done = {key(r[0]): r[1:3] for r in cells(old.get("## Adds", [])) if r[1] != "-"}
     deck = {key(r[0]): r[1] for h in ("## Nonlands", "## Lands") for r in cells(old.get(h, []))}
-    new = [[n, *done.get(key(n), ["-", why]), src, "Yes" if since.startswith("Yes") else "No", price]
-           for _, n, src, since, why, price in cells(adds.splitlines())]
+    new = [[n, *done.get(key(n), ["-", why]), "Yes" if since.startswith("Yes") else "No", price]
+           for _, n, since, why, price in cells(adds.splitlines())]
     cut = [[n, deck.get(key(n), "-"), why] for _, n, why in cells(cuts.splitlines())]
     intro = [l for l in adds.splitlines()[1:] if l.strip() and not l.startswith("|")]
     secs = [s for s in secs if s[0] not in ("## Adds", "## Cuts")]

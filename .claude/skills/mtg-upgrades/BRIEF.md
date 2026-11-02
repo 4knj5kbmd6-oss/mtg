@@ -52,8 +52,8 @@ the card's role and the interaction it joins (or, for a cut, why it falls short)
 # <deck>: top adds (<date>)
 Built <created>, last edited <updated>, bracket <n>.
 
-| # | Add | Set (release) | New since built? | Why | ~Price |
-|---|---|---|---|---|---|
+| # | Add | New since built? | Why | ~Price |
+|---|---|---|---|---|
 ```
 
 <slug>-cuts.md, the 10 to 15 cards that pull least weight, weakest first,

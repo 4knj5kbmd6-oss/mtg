@@ -6,7 +6,7 @@ prints the shape line to stderr. The scores.md helpers here are shared with mtg-
 import re, sys, json, statistics
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
-ADDS = "| Card | Score | Note | Set (release) | New | ~Price |"
+ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 
