@@ -34,7 +34,7 @@ new id and slug to `decks`, and create `output/decks/<slug>/` with an empty
 `plan.md`.
 
 Report in a line per changed deck: cards in, cards out; then the landed
-changes `sync.py` printed. A deck whose
-`lastUpdatedAtUtc` is newer than
-`git log -1 --format=%as -- output/decks/<slug>/scores.md` needs rescoring
-(`/mtg-score`); say so, do not start it unasked.
+changes `sync.py` printed. A deck whose `lastUpdatedAtUtc` is newer than
+the modification date of `output/decks/<slug>/scores.md`
+(`stat -f %Sm -t %F <file>` on macOS, `date -r <file> +%F` on Linux)
+needs rescoring (`/mtg-score`); say so, do not start it unasked.
