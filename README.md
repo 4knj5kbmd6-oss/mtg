@@ -1,0 +1,41 @@
+# mtg
+
+Tooling for your Commander decks, run by Claude Code skills: a 0 to 10 fit
+score for every card in a deck, ranked adds and cuts, a strength ranking of
+your decks with their brackets, and a TCGplayer cart builder.
+
+## Quick start
+
+1. Clone this repo and open it in Claude Code.
+2. Create `decks/moxfield.json` with your Moxfield username and the decks
+   you own: `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}}`
+   (or let the first `/mtg-sync` create it).
+3. Run `/mtg-sync` to pull the lists, then write each deck's
+   `decks/<slug>/plan.md`.
+4. Run `/mtg-score`, then `/mtg-upgrades`; `/tcg-cart` builds a cart from
+   any list.
+
+## Layout
+
+Core (tracked):
+
+| Path | What |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
+| [`scoring.md`](scoring.md) | The fit-score metric, yours to tune |
+| [`.claude/skills/`](.claude/skills/) | `mtg-sync`, `mtg-score`, `mtg-upgrades`, `tcg-cart` |
+
+Your output (gitignored):
+
+| Path | What |
+|---|---|
+| `decks/moxfield.json` | Your Moxfield username and owned decks |
+| `decks/README.md` | Deck table: rank, commander, colours, bracket, Moxfield link |
+| `decks/<slug>/` | `list.txt`, `plan.md`, `scores.md`, `adds.md`, `cuts.md` |
+| `rankings.md` | Strength order and brackets |
+| `data/` | `oracle.json` (Scryfall) and `tokens.md` |
+| `carts/` | One report per cart |
+
+Your output can live anywhere (a folder in Documents, a private repo):
+symlink `decks`, `data`, `carts` and `rankings.md` from there into this
+checkout.

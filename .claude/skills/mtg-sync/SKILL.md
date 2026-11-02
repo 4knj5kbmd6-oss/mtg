@@ -1,0 +1,37 @@
+---
+name: mtg-sync
+description: Refresh your owned Commander decks from Moxfield into decks/<slug>/list.txt, regenerate data/tokens.md and data/oracle.json. Use when asked to sync, refresh, re-export or pull decks from Moxfield, or before scoring a deck Moxfield says was edited since the last export.
+---
+
+# mtg-sync
+
+Moxfield blocks curl (Cloudflare 403), so every call goes through the
+built-in browser pane from page context. Only decks the owner physically
+owns are exported, as card names only; maybeboards never.
+`decks/moxfield.json` is the single list of those decks:
+`{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}}`.
+
+The first run creates it: ask the owner for their Moxfield username, then
+follow the new-deck steps below for every deck they name as owned.
+
+1. `navigate` to `https://moxfield.com/users/<user>` and wait about 10 s
+   for the app to render. Paste the keys of `decks` into `fetch.js`
+   and run it with the javascript tool. It returns, per deck: name,
+   `createdAtUtc`, `lastUpdatedAtUtc`, commanders, mainboard, sideboard and
+   the Tokens-tab list. The result is large; it lands in a tool-results
+   file. Save its text to the scratchpad as `mox.json`.
+2. `python3 .claude/skills/mtg-sync/sync.py <mox.json>` from the repo root
+   rewrites every `decks/<slug>/list.txt` and `data/tokens.md`, then prints
+   a diff summary.
+3. `python3 .claude/skills/mtg-sync/fetch-oracle.py` rebuilds
+   `data/oracle.json` from Scryfall.
+
+Only when the owner names a new deck as owned, run `collect.js` on the
+profile page first to list their deck ids (it clicks "View More"), add the
+new id and slug to `decks`, and create `decks/<slug>/` with an empty
+`plan.md`.
+
+Report in a line per changed deck: cards in, cards out. A deck whose
+`lastUpdatedAtUtc` is newer than
+`git log -1 --format=%as -- decks/<slug>/scores.md` needs rescoring
+(`/mtg-score`); say so, do not start it unasked.
