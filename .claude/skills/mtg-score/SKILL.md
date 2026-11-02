@@ -17,10 +17,12 @@ Inputs per deck: `output/decks/<slug>/list.txt`, `plan.md` (authoritative),
 2. Make a fresh scratchpad folder `<run>/` and copy `SCORER-BRIEF.md` into
    it with `<run>` filled in. Dispatch three `planner` agents per deck
    group (`model: claude-opus-5-5`, `run_in_background`), lettered A, B, C,
-   each with its own `work-<letter>/` subfolder and a list of its decks with
-   the deck's bracket from output/rankings.md. Group decks by shared colours (three
-   or so per agent). Scorers must not see each other's output or any
-   existing `scores.md`; the brief says so.
+   each with its own `work-<group>-<letter>/` subfolder (every scorer in
+   the run gets a folder of its own; two sharing one overwrite each
+   other's helpers) and a list of its decks with the deck's bracket from
+   output/rankings.md. Group decks by shared colours (three or so per
+   agent). Scorers must not see each other's output or any existing
+   `scores.md`; the brief says so.
 3. When all three of a group are back:
    `python3 .claude/skills/mtg-score/merge.py <run> <slug> > <run>/merged/<slug>.md`.
    It takes the median, writes `<run>/<slug>-flagged.md` for cards whose
