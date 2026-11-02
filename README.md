@@ -31,7 +31,7 @@ Your output, all under `output/` (gitignored):
 |---|---|
 | `decks/moxfield.json` | Your Moxfield username and owned decks |
 | `decks/README.md` | Deck table: rank, commander, colours, bracket, Moxfield link |
-| `decks/<slug>/` | `list.txt`, `plan.md`, `scores.md`, `adds.md`, `cuts.md` |
+| `decks/<slug>/` | `list.txt`, `plan.md`, `scores.md` (fit scores, adds, cuts) |
 | `rankings.md` | Strength order and brackets |
 | `data/` | `oracle.json` (Scryfall) and `tokens.md` |
 | `carts/` | One report per cart |

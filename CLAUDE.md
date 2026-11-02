@@ -22,10 +22,9 @@ The owner's output, under `output/` (gitignored):
   - `plan.md`: the owner's statement of the deck's intended lines and
     interactions. Authoritative. Scorers and rankers read it first; it
     overrides anything inferred from the list.
-  - `scores.md`: one score per card plus the recommended adds, nonlands and
-    lands in separate tables sorted descending.
-  - `adds.md`, `cuts.md`: ranked adds and cuts, judged independently, never
-    paired.
+  - `scores.md`: one score per card, nonlands and lands in separate tables
+    sorted descending, then the Adds and Cuts tables: recommended adds and
+    cuts, judged independently, never paired.
 - `output/rankings.md`: strength order and WotC-guideline brackets.
 - `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and
   `tokens.md`.

@@ -1,15 +1,46 @@
-"""Merge three scorers' files to one: median, spread flags, optional arbitration.
+"""Merge three scorers' files to one scores.md: median, spread flags, optional arbitration.
 usage (repo root): python3 .claude/skills/mtg-score/merge.py <run_dir> <slug> [arb.json] > merged.md
-reads <run_dir>/<slug>-A.md, -B.md, -C.md and the deck title from output/decks/<slug>/plan.md;
-writes <run_dir>/<slug>-flagged.md; prints the shape line to stderr"""
+reads <run_dir>/<slug>-A.md, -B.md, -C.md, the deck title from output/decks/<slug>/plan.md and the
+Adds and Cuts tables from output/decks/<slug>/scores.md; writes <run_dir>/<slug>-flagged.md;
+prints the shape line to stderr. The scores.md helpers here are shared with mtg-upgrades/apply.py."""
 import re, sys, json, statistics
 from pathlib import Path
-if len(sys.argv) < 3: sys.exit(__doc__)
 ROOT = Path(__file__).resolve().parents[3]
-raw, slug = sys.argv[1], sys.argv[2]
-arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
-title = re.sub(r"^#\s*|:\s*plan\s*$", "", (ROOT / f"output/decks/{slug}/plan.md").read_text().splitlines()[0])
+ADDS = "| Card | Score | Note | Set (release) | New | ~Price |"
+CUTS = "| Card | Score | Why it underperforms here |"
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
+
+def split(text):
+    """[heading, lines] pairs, the title block first under heading None; join() undoes it"""
+    out = [[None, []]]
+    for line in text.split("\n"):
+        if line.startswith("## "): out.append([line, []])
+        else: out[-1][1].append(line)
+    return out
+
+def join(secs): return "\n".join(l for h, ls in secs for l in ([h] if h else []) + ls)
+
+def cells(lines):
+    """data rows of the tables in lines, as lists of cells"""
+    return [[c.strip() for c in l.strip().strip("|").split("|")] for l in lines
+            if l.startswith("|") and not re.match(r"^\|\s*(-+|Card|#)\s*\|", l)]
+
+def key(name):
+    """name for matching across files: no count or parenthetical, front face only"""
+    return re.sub(r"^\d+\s+|\s*(\(.*\)|[x×]\s*\d+)$", "", name.strip()).split(" // ")[0].strip()
+
+def table(head, rows):
+    return "\n".join([head, "|" + "---|" * (head.count("|") - 1)] + ["| " + " | ".join(r) + " |" for r in rows])
+
+def ranked(rows, desc):
+    """by the Score column, ties in the given order, unscored ("-") last"""
+    return sorted(rows, key=lambda r: (not r[1].isdigit(), (-1 if desc else 1) * int(r[1]) if r[1].isdigit() else 0))
+
+def tail(intro, adds, cuts):
+    """the Adds (score descending) and Cuts (score ascending) sections"""
+    return [["## Adds", intro + ["", table(ADDS, ranked(adds, True)), ""]],
+            ["## Cuts", [table(CUTS, ranked(cuts, False)), ""]]]
+
 def norm(n):
     n = re.sub(COUNT, "", n.strip()).strip(); return re.sub(r"^\d+\s+", "", n)
 def copies(n):
@@ -17,25 +48,42 @@ def copies(n):
 def parse(p):
     out, sec = {}, None
     for line in open(p):
-        if line.startswith("## "): sec = {"## Nonlands":"nonlands","## Lands":"lands","## Recommended adds":"adds"}.get(line.strip()); continue
-        if sec and line.startswith("|") and not re.match(r"^\|\s*(-|Card)", line):
-            c = [x.strip() for x in line.strip().strip("|").split("|")]
-            if len(c) >= 3 and re.fullmatch(r"\d+", c[1]): out[norm(c[0])] = (c[0], int(c[1]), c[2], sec)
+        if line.startswith("## "): sec = {"## Nonlands":"nonlands","## Lands":"lands","## Adds":"adds"}.get(line.strip()); continue
+        if sec:
+            for c in cells([line]):
+                if len(c) >= 3 and re.fullmatch(r"\d+", c[1]): out[norm(c[0])] = (c[0], int(c[1]), c[2], sec)
     return out
-A, B, C = (parse(f"{raw}/{slug}-{x}.md") for x in "ABC")
-rows = {"nonlands": [], "lands": [], "adds": []}; flagged = []
-for k in sorted(set(A) | set(B) | set(C)):
-    got = [d.get(k) for d in (A, B, C)]; sc = [g[1] for g in got if g]
-    disp = next(g[0] for g in got if g); med = int(statistics.median(sc)) if len(sc) == 3 else round(sum(sc)/len(sc))
-    note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
-    if k in arb: med, note = arb[k]["score"], arb[k]["note"]
-    elif max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
-    secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append((med, disp, note))
-def table(s): return "| Card | Score | Note |\n|---|---|---|\n" + "\n".join(f"| {d} | {m} | {n} |" for m, d, n in sorted(rows[s], key=lambda r: -r[0]))
-alls = [m for s in ("nonlands", "lands") for m, d, n in rows[s] for _ in range(copies(d))]
-shape = (f"10: {sum(x==10 for x in alls)} / 8-9: {sum(8<=x<=9 for x in alls)} / 5-7: {sum(5<=x<=7 for x in alls)}"
-         f" / 4 or below: {sum(x<=4 for x in alls)}, mean {sum(alls)/max(len(alls), 1):.1f} (by card copy).")
-print(f"# {title}: fit scores\n\n## Nonlands\n{table('nonlands')}\n\n## Lands\n{table('lands')}\n\n## Recommended adds\n{table('adds')}\n\n## Shape\n{shape}\n")
-with open(f"{raw}/{slug}-flagged.md", "w") as f:
-    f.write(f"# {slug}: cards with spread >= 3\n\n" + "".join(f"## {d}\nScores A/B/C: {sc}\n- A: {n[0]}\n- B: {n[1]}\n- C: {n[2]}\n\n" for d, sc, n in flagged))
-print(f"{slug}: {shape} {len(flagged)} flagged", file=sys.stderr)
+
+def main():
+    if len(sys.argv) < 3: sys.exit(__doc__)
+    raw, slug = sys.argv[1], sys.argv[2]
+    arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
+    title = re.sub(r"^#\s*|:\s*plan\s*$", "", (ROOT / f"output/decks/{slug}/plan.md").read_text().splitlines()[0])
+    A, B, C = (parse(f"{raw}/{slug}-{x}.md") for x in "ABC")
+    rows = {"nonlands": [], "lands": [], "adds": []}; flagged = []
+    for k in sorted(set(A) | set(B) | set(C)):
+        got = [d.get(k) for d in (A, B, C)]; sc = [g[1] for g in got if g]
+        disp = next(g[0] for g in got if g); med = int(statistics.median(sc)) if len(sc) == 3 else round(sum(sc)/len(sc))
+        note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
+        if k in arb: med, note = arb[k]["score"], arb[k]["note"]
+        elif max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
+        secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append((med, disp, note))
+    def tab(s): return table("| Card | Score | Note |", [[d, str(m), n] for m, d, n in sorted(rows[s], key=lambda r: -r[0])])
+    alls = [m for s in ("nonlands", "lands") for m, d, n in rows[s] for _ in range(copies(d))]
+    shape = (f"10: {sum(x==10 for x in alls)} / 8-9: {sum(8<=x<=9 for x in alls)} / 5-7: {sum(5<=x<=7 for x in alls)}"
+             f" / 4 or below: {sum(x<=4 for x in alls)}, mean {sum(alls)/max(len(alls), 1):.1f} (by card copy).")
+    cur = ROOT / f"output/decks/{slug}/scores.md"
+    old = dict(split(cur.read_text())) if cur.exists() else {}
+    secs = [[None, [f"# {title}: fit scores", ""]], ["## Nonlands", [tab("nonlands"), ""]], ["## Lands", [tab("lands"), ""]]]
+    if "## Adds" in old:  # research metadata and order stay; scores, add notes and cut scores are this run's
+        got = {norm(d): [str(m), n] for m, d, n in rows["adds"]}
+        deck = {key(d): str(m) for s in ("nonlands", "lands") for m, d, n in rows[s]}
+        adds = [[r[0], *got.get(norm(r[0]), r[1:3]), *r[3:]] for r in cells(old["## Adds"])]
+        cuts = [[r[0], deck.get(key(r[0]), r[1]), *r[2:]] for r in cells(old.get("## Cuts", []))]
+        secs += tail([l for l in old["## Adds"] if l.strip() and not l.startswith("|")], adds, cuts)
+    sys.stdout.write(join(secs + [["## Shape", [shape, ""]]]))
+    with open(f"{raw}/{slug}-flagged.md", "w") as f:
+        f.write(f"# {slug}: cards with spread >= 3\n\n" + "".join(f"## {d}\nScores A/B/C: {sc}\n- A: {n[0]}\n- B: {n[1]}\n- C: {n[2]}\n\n" for d, sc, n in flagged))
+    print(f"{slug}: {shape} {len(flagged)} flagged", file=sys.stderr)
+
+if __name__ == "__main__": main()

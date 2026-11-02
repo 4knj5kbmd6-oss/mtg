@@ -4,8 +4,8 @@ Paths are relative to the mtg repo root, your working directory.
 
 You are one of three independent scorers for a group of Commander decks. Your
 scores will be compared with two other scorers' and the median taken, so
-score honestly and on your own: do NOT read any existing output/decks/*/scores.md,
-output/decks/*/cuts.md, or any other scorer's output in the scratchpad. Work only
+score honestly and on your own: do NOT read any existing output/decks/*/scores.md beyond
+the Card column of its Adds table, or any other scorer's output in the scratchpad. Work only
 in your own subfolder of the scratchpad (named in your prompt) so you never
 collide with the other scorers.
 
@@ -22,8 +22,8 @@ Inputs per deck (<slug>):
   SIDEBOARD block which you do not score).
 - output/data/oracle.json: rules text for every card. Read it, do not fetch card by
   card. Use Scryfall only for adds missing from it.
-- output/decks/<slug>/adds.md: the recommended adds, to be scored as if already in
-  the deck.
+- output/decks/<slug>/scores.md, the Card column of its `## Adds` table only: the
+  recommended adds, to be scored as if already in the deck.
 
 Output per deck, exactly this file:
 <run>/<slug>-<LETTER>.md
@@ -42,10 +42,10 @@ where LETTER is the one in your prompt (A, B or C).
 |---|---|---|
 ...every land, score descending; basics as one row "Swamp (29)" with the count...
 
-## Recommended adds
+## Adds
 | Card | Score | Note |
 |---|---|---|
-...every card in the adds file, score descending...
+...every card in the Adds table, score descending...
 
 ## Shape
 <count at 10 / 8-9 / 5-7 / 4 or below, by card copy>

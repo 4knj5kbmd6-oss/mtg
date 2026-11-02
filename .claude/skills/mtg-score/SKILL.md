@@ -10,7 +10,8 @@ applies it. Scores are never hand-edited: when one looks wrong, fix the
 metric or the deck's `plan.md` and rescore.
 
 Inputs per deck: `output/decks/<slug>/list.txt`, `plan.md` (authoritative),
-`adds.md` (adds are scored too), `output/data/oracle.json`.
+the Card column of the `## Adds` table in `scores.md` (adds are scored
+too), `output/data/oracle.json`.
 
 1. If Moxfield's `lastUpdatedAtUtc` may be newer than the list, run
    `/mtg-sync` first.
@@ -22,10 +23,11 @@ Inputs per deck: `output/decks/<slug>/list.txt`, `plan.md` (authoritative),
    other's helpers) and a list of its decks with the deck's bracket from
    output/rankings.md. Group decks by shared colours (three or so per
    agent). Scorers must not see each other's output or any existing
-   `scores.md`; the brief says so.
+   `scores.md` beyond its adds; the brief says so.
 3. When all three of a group are back:
    `python3 .claude/skills/mtg-score/merge.py <run> <slug> > <run>/merged/<slug>.md`.
-   It takes the median, writes `<run>/<slug>-flagged.md` for cards whose
+   It takes the median, carries the Adds and Cuts tables over from the
+   current `scores.md` with this run's scores, writes `<run>/<slug>-flagged.md` for cards whose
    three scores differ by 3 or more, and prints the deck's shape line and
    flagged count.
 4. Flagged cards go to one `planner` arbiter per batch with
