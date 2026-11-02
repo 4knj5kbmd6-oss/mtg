@@ -20,7 +20,8 @@ that would change the deck's bracket says so in its own row.
 3. Per deck, `python3 .claude/skills/mtg-upgrades/apply.py <run> <slug>`
    writes the results into `output/decks/<slug>/scores.md`: cuts carry
    their deck score, new adds score `-` until `/mtg-score` scores them as
-   part of the deck.
+   part of the deck. Then `python3 .claude/skills/mtg-sync/fetch-oracle.py`
+   caches the adds in `output/data/oracle.json` for the scorers.
 
 Report: three lines per deck, top adds and top cuts, plus any add that
 would change a bracket.
