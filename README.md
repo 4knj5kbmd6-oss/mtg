@@ -33,5 +33,6 @@ Your output, all under `output/` (gitignored):
 | `decks/README.md` | Deck table: rank, commander, colours, bracket, Moxfield link |
 | `decks/<slug>/` | `list.txt`, `plan.md`, `scores.md` (fit scores, adds, cuts) |
 | `rankings.md` | Strength order and brackets |
+| `changes.md` | Your intended swaps not yet made; `/mtg-sync` drops each once it lands |
 | `data/` | `oracle.json` (Scryfall) and `tokens.md` |
 | `carts/` | One report per cart |

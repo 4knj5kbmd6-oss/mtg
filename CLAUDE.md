@@ -26,6 +26,8 @@ The owner's output, under `output/` (gitignored):
     sorted descending, then the Adds and Cuts tables: recommended adds and
     cuts, judged independently, never paired.
 - `output/rankings.md`: strength order and WotC-guideline brackets.
+- `output/changes.md`: the owner's intended swaps not yet made, one table
+  (Deck, In, Out, Note) across all decks; mtg-sync drops a row once it lands.
 - `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and
   `tokens.md`.
 - `output/carts/`: one report per cart.

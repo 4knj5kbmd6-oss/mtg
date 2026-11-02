@@ -21,8 +21,10 @@ follow the new-deck steps below for every deck they name as owned.
    the Tokens-tab list. The result is large; it lands in a tool-results
    file. Save its text to the scratchpad as `mox.json`.
 2. `python3 .claude/skills/mtg-sync/sync.py <mox.json>` from the repo root
-   rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`, then prints
-   a diff summary.
+   rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`,
+   removes every row of `output/changes.md` that has landed (In card in
+   the deck's list or In blank, Out card gone or Out blank) and prints it
+   as `landed: <deck> <In> for <Out>`, then prints a diff summary.
 3. `python3 .claude/skills/mtg-sync/fetch-oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall.
 
@@ -31,7 +33,8 @@ profile page first to list their deck ids (it clicks "View More"), add the
 new id and slug to `decks`, and create `output/decks/<slug>/` with an empty
 `plan.md`.
 
-Report in a line per changed deck: cards in, cards out. A deck whose
+Report in a line per changed deck: cards in, cards out; then the landed
+changes `sync.py` printed. A deck whose
 `lastUpdatedAtUtc` is newer than
 `git log -1 --format=%as -- output/decks/<slug>/scores.md` needs rescoring
 (`/mtg-score`); say so, do not start it unasked.
