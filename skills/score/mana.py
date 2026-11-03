@@ -1,7 +1,7 @@
 """A deck's mana facts from its list and oracle.json, its <run_dir>/<slug>-mana.md, for facts.py.
 write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands, their mean mana
 value and curve; the odds of exactly 2, 3 and 4 lands in an opening seven drawn from the deck without its
-commanders; and per colour of the commanders' identity, the land sources, the nonland sources, the pips, the cards
+commanders, unknown when fewer than seven of its cards are known; and per colour of the commanders' identity, the land sources, the nonland sources, the pips, the cards
 with two or more pips of it and the lowest mana value among those. A card's colours are its produced_mana within the
 identity; a fetch land's are also those of the basic land types it searches for, or every colour of the identity
 when it searches for a basic land card of no type. Pips are the {W} {U} {B} {R} {G} symbols of the front face's
@@ -39,7 +39,8 @@ def page(slug, commanders, rest):
     mean = sum(n * e.get("cmc", 0) for n, e in spells) / max(count(spells), 1)
     curve = [count((n, e) for n, e in spells if min(int(e.get("cmc", 0)), 7) == i) for i in range(8)]
     size, drawn = count(rest), count((n, e) for n, e in rest if is_land(e))
-    odds = [f"{comb(drawn, k) * comb(size - drawn, 7 - k) / comb(size, 7):.0%}" for k in (2, 3, 4)]
+    odds = [f"{comb(drawn, k) * comb(size - drawn, 7 - k) / comb(size, 7):.0%}" if size >= 7 else "unknown"
+            for k in (2, 3, 4)]
     rows = []
     for c in identity:
         sources = lambda cards: count((n, e) for n, e in cards if c in colours(e, identity))

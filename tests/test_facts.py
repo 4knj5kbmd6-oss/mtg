@@ -158,6 +158,35 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 """
 
 
+def test_mana_odds_are_unknown_with_fewer_than_seven_known_cards(capsys):
+    oracle = {"Sol Ring": {"name": "Sol Ring", "type_line": "Artifact", "cmc": 1, "mana_cost": "{1}", "produced_mana": ["C"]},
+              "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]},
+              "Zara, Tide Caller": {"name": "Zara, Tide Caller", "type_line": "Legendary Creature", "cmc": 2,
+                                    "mana_cost": "{1}{U}", "color_identity": ["U"]}}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("tiny", "Zara, Tide Caller", {"Sol Ring": 1, "Island": 5, "Mystery Card": 3})
+    Path("run").mkdir()
+    mana.write("run", "tiny")
+    assert capsys.readouterr().out == "tiny: not in oracle.json: Mystery Card\n"
+    assert read("run/tiny-mana.md") == """# tiny: mana
+
+## Curve
+| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 5 | 2 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+
+## Opening seven
+| 2 lands | 3 lands | 4 lands |
+|---|---|---|
+| unknown | unknown | unknown |
+
+## Colours
+| Colour | Land sources | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
+|---|---|---|---|---|---|
+| U | 5 | 0 | 1 | 0 | - |
+"""
+
+
 def test_facts_writes_both_files_per_deck(combos, monkeypatch):
     deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1, "Island": 7})
     deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1, "Island": 7})
