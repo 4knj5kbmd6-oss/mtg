@@ -28,7 +28,9 @@ follow the new-deck steps below for every deck they name as owned.
    runs `apply-changes.py`, which applies the rows left so each list is the
    deck as the owner intends it again, moves each applied add's row from
    Adds to Cards and drops each applied cut's rows, and prints a line per
-   deck: cards in, cards out. Last it prints a diff summary.
+   deck: cards in, cards out. An Out row takes one copy unless its Note
+   says `n copies`, so a basic cut by count is applied once per sync, not
+   on a manual rerun. Last it prints a diff summary.
 3. `python3 .claude/skills/mtg-sync/fetch-oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall.
 
