@@ -7,7 +7,7 @@ count. Running it twice changes nothing. Prints one line per changed deck: cards
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, join, cells, match, norm, recount, KINDS
+from merge import split, join, cells, match, norm, recount, KINDS, DECKS, CHANGES
 
 def counted(name, n): return f"{name} ({n})" if n > 1 else name
 
@@ -52,14 +52,13 @@ def apply_scores(files, ins, outs):
     return {k: join(s) for k, s in secs.items()}
 
 def main():
-    changes = Path("changes.md")
-    if not changes.exists(): return
+    if not CHANGES.exists(): return
     decks = {}
-    for c in cells(changes.read_text().splitlines()):
+    for c in cells(CHANGES.read_text().splitlines()):
         if len(c) >= 3 and c[0] and c[0] != "Deck": decks.setdefault(c[0], []).append((c + [""])[:4])
     for slug, rows in decks.items():
-        deck = Path("output/decks", slug)
-        if not (deck / "list.txt").exists(): print(f"skip {slug}: no output/decks/{slug}/list.txt"); continue
+        deck = DECKS / slug
+        if not (deck / "list.txt").exists(): print(f"skip {slug}: no {deck}/list.txt"); continue
         lines = (deck / "list.txt").read_text().split("\n")
         ins, outs = apply_list(lines, rows)
         if not ins and not outs: continue

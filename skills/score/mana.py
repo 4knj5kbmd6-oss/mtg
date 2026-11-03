@@ -11,16 +11,12 @@ import json, re, sys
 from math import comb
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from merge import ORACLE, decklist, table
+from merge import ORACLE, decklist, table, front, is_land
 
 COLOURS = "WUBRG"
 TYPES = {"Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G"}
 FETCH = re.compile(r"search your library for ([^.]*)", re.I)
 CURVE = [str(n) for n in range(7)] + ["7+"]
-
-def front(e): return (e.get("card_faces") or [e])[0]
-
-def is_land(e): return "Land" in front(e).get("type_line", "").split()
 
 def colours(e, identity):
     """the colours of the identity e makes mana of, a fetch land's by the land types it searches for"""

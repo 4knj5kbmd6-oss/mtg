@@ -8,7 +8,7 @@ the budget in settings.json (a price that does not parse is kept); the drops are
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, join, cells, key, tail, lands, by_kind, KINDS
+from merge import split, join, cells, key, tail, lands, by_kind, KINDS, DECKS
 from settings import settings
 
 def restricted(paths):
@@ -47,7 +47,7 @@ def apply(files, adds, cuts, land):
 if __name__ == "__main__":
     if len(sys.argv) < 3: sys.exit(__doc__)
     run, slug = sys.argv[1], sys.argv[2]
-    deck = Path(f"output/decks/{slug}")
+    deck = DECKS / slug
     paths = {k: deck / f"{k}.md" for k in KINDS}
     names = restricted([Path("restricted.md"), deck / "restricted.md"])
     adds, dropped = drop(Path(f"{run}/{slug}-adds.md").read_text(), lambda r: set(map(str.strip, r[1].split(" // "))) & names)

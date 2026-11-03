@@ -5,8 +5,9 @@ usage (from the folder that holds output/):
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py --glossary term         the glossary entry for term"""
 import re, sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
+from merge import RULES
 
-RULES = Path("output/data/rules.txt")
 NUMBER = re.compile(r"(\d(?:\d\d(?:\.\d+[a-z]*)?)?)\.? ")   # 8. section, 800. subsection, 800.4. rule, 800.4a and 704.5aa subrules
 
 def parse(text):

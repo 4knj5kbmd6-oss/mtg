@@ -8,9 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "judge"))
-from merge import split, cells, get, SCRYFALL, ORACLE, KINDS
+from merge import get, adds, SCRYFALL, ORACLE, DECKS
 from card import card
-API = f"{SCRYFALL}/cards/collection"
+API, BATCH = f"{SCRYFALL}/cards/collection", 75  # Scryfall's most names per collection request
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
 FACE = ["name", "mana_cost", "type_line", "oracle_text", "colors", "power", "toughness", "loyalty"]
@@ -37,11 +37,9 @@ def entry(c):
 
 def card_names():
     """every card in a deck list or a deck's Adds table"""
-    listed = {m.group(1) for f in Path().glob("output/decks/*/list.txt") for line in f.read_text().splitlines()
+    listed = {m.group(1) for f in DECKS.glob("*/list.txt") for line in f.read_text().splitlines()
               if (m := re.match(r"\d+ (.+)", line.strip()))}
-    adds = {r[0] for k in KINDS for f in Path().glob(f"output/decks/*/{k}.md")
-            for r in cells(dict(split(f.read_text())).get("## Adds", []))}
-    return sorted(listed | adds)
+    return sorted(listed | {r[0] for d in DECKS.glob("*") for r in adds(d)})
 
 def save(oracle): json.dump(oracle, open(ORACLE, "w"), indent=1, sort_keys=True)
 
@@ -58,8 +56,8 @@ def add(names):
 def rebuild():
     names = card_names()
     cards, missing = [], []
-    for i in range(0, len(names), 75):
-        got, nf = post(names[i:i + 75])
+    for i in range(0, len(names), BATCH):
+        got, nf = post(names[i:i + BATCH])
         cards += got; missing += nf
     retry = [n.split(" // ")[0] for n in missing if " // " in n]  # double-faced cards by front face
     if retry: cards += post(retry)[0]

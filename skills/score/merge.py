@@ -19,7 +19,9 @@ KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 SCRYFALL, UA = "https://api.scryfall.com", "mtg-toolbox"
 SEARCH = f"{SCRYFALL}/cards/search?q="
-ORACLE = Path("output/data/oracle.json")
+DECKS, DATA = Path("output/decks"), Path("output/data")
+ORACLE, RULES = DATA / "oracle.json", DATA / "rules.txt"
+CHANGES = Path("changes.md")
 CHALLENGE = re.compile(r"cf[-_]chl|challenge-platform|Just a moment")
 SPLIT = 3  # a card the scorers put this far apart is flagged
 last = 0.0
@@ -64,7 +66,7 @@ def match(name):
 def decklist(slug):
     """([(copies, name)] of the commanders, [(copies, name)] of the rest) from output/decks/<slug>/list.txt, the
     commanders being the lines before its first blank line and its SIDEBOARD: block left out"""
-    text = Path(f"output/decks/{slug}/list.txt").read_text().split("SIDEBOARD:")[0].strip()
+    text = (DECKS / slug / "list.txt").read_text().split("SIDEBOARD:")[0].strip()
     rows = lambda t: [(int(m[1]), m[2]) for l in t.splitlines() if (m := re.match(r"(\d+)\s+(.+)", l.strip()))]
     head, _, rest = text.partition("\n\n")
     return rows(head), rows(rest)
@@ -81,11 +83,18 @@ def tail(intro, adds, cuts):
     return [["## Adds", intro + ["", table(ADDS, ranked(adds, True)), ""]],
             ["## Cuts", [table(CUTS, ranked(cuts, False)), ""]]]
 
+def front(e): return (e.get("card_faces") or [e])[0]
+
+def is_land(e): return "Land" in front(e).get("type_line", "").split()
+
 def lands():
     """name -> whether its front face is a Land in oracle.json; a card not in it is a nonland"""
-    front = {n.split(" // ")[0]: (e.get("card_faces") or [e])[0].get("type_line", "")
-             for n, e in json.loads(ORACLE.read_text())["cards"].items()}
-    return lambda name: "Land" in front.get(key(name), "").split()
+    fronts = {n.split(" // ")[0]: e for n, e in json.loads(ORACLE.read_text())["cards"].items()}
+    return lambda name: is_land(fronts.get(key(name), {}))
+
+def adds(deck):
+    """the Adds rows, as lists of cells, of the deck folder's nonlands.md and lands.md that exist"""
+    return [r for k in KINDS if (p := deck / f"{k}.md").exists() for r in cells(dict(split(p.read_text())).get("## Adds", []))]
 
 def by_kind(rows, land):
     """{"nonlands": rows, "lands": rows}, split on whether a row's first cell names a land"""
@@ -160,7 +169,7 @@ def whole(deck, rows, scorers):
 def main():
     if len(sys.argv) != 3: sys.exit(__doc__)
     raw, slug = sys.argv[1], sys.argv[2]
-    deck = Path(f"output/decks/{slug}")
+    deck = DECKS / slug
     files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
     if not files: sys.exit(f"no scorer files {raw}/{slug}-<LETTER>.md")
     letters, scorers = [p.stem[-1] for p in files], [parse(p) for p in files]
@@ -172,14 +181,14 @@ def main():
         if max(sc) - min(sc) >= SPLIT: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
         secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
     scored = {key(r[0]) for k in rows for r in rows[k]}
-    listed = {key(l) for l in (deck / "list.txt").read_text().split("SIDEBOARD:")[0].splitlines() if l.strip()}
+    listed = {key(n) for part in decklist(slug) for _, n in part}
     if len(scored & listed) < len(listed):  # fewer of the list's cards: a card-only score, patched into the deck's files
         if not all((deck / f"{k}.md").exists() for k in KINDS): sys.exit(f"no {deck}/nonlands.md and lands.md to patch")
         old = {k: (deck / f"{k}.md").read_text() for k in KINDS}
-        kept = {key(r[0]): r[3:5] for t in old.values() for r in cells(dict(split(t)).get("## Adds", []))}
-        adds = by_kind([[*r, *kept.get(key(r[0]), ["-", "-"])] for k in rows for r in rows[k] if key(r[0]) not in listed],
-                       lands())
-        text = {k: patch(old[k], [r for r in rows[k] if key(r[0]) in listed], adds[k], scored) for k in KINDS}
+        kept = {key(r[0]): r[3:5] for r in adds(deck)}
+        candidates = by_kind([[*r, *kept.get(key(r[0]), ["-", "-"])] for k in rows for r in rows[k] if key(r[0]) not in listed],
+                             lands())
+        text = {k: patch(old[k], [r for r in rows[k] if key(r[0]) in listed], candidates[k], scored) for k in KINDS}
     else: text = whole(deck, rows, len(files))
     out = Path(raw) / "merged" / slug; out.mkdir(parents=True, exist_ok=True)
     for k in KINDS: (out / f"{k}.md").write_text(text[k])

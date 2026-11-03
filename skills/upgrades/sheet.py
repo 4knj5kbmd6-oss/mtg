@@ -9,8 +9,8 @@ import sys, urllib.parse
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, cells, key, get, found, SEARCH, KINDS
-DECKS, CACHE = Path("output/decks"), Path("output/data/images")
+from merge import split, cells, key, get, found, SEARCH, KINDS, DECKS, DATA
+CACHE = DATA / "images"
 BANDS = (("Nonland adds", "nonlands", "## Adds"), ("Nonland cuts", "nonlands", "## Cuts"),
          ("Land adds", "lands", "## Adds"), ("Land cuts", "lands", "## Cuts"))
 W, H, GAP, HEAD = 488, 680, 12, 72

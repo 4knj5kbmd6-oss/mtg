@@ -6,6 +6,8 @@ end of the list. A Sideboard or Companion section becomes the SIDEBOARD: block; 
 card count and every line it could not parse; those lines are not written."""
 import re, sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
+from merge import DECKS
 
 SECTIONS = {"commander": "commander", "commanders": "commander", "deck": "main", "main": "main", "mainboard": "main",
             "sideboard": "side", "companion": "side", "maybeboard": None, "considering": None, "tokens": None, "about": "about"}
@@ -60,7 +62,7 @@ def main():
     if len(sys.argv) not in (2, 3): sys.exit(__doc__)
     slug = sys.argv[1]
     boards, bad = parse(open(sys.argv[2]).read() if len(sys.argv) == 3 else sys.stdin.read())
-    deck = Path("output/decks", slug)
+    deck = DECKS / slug
     deck.mkdir(parents=True, exist_ok=True)
     (deck / "list.txt").write_text(listing(boards))
     count = lambda b: sum(boards[b].values())

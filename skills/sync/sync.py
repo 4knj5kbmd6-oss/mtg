@@ -4,12 +4,12 @@ changes.md the dump shows landed, except those noted unowned, then run apply-cha
 intended deck again. A deck that came back as anything else (Cloudflare's challenge page, an error) is left as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw): {"user", "listing", "decks"}."""
-import json, os, re, sys, subprocess, unicodedata
+import json, re, sys, subprocess, unicodedata
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import cells, match, CHALLENGE
+from merge import cells, match, CHALLENGE, DECKS, DATA, CHANGES
 
-MOXFIELD, CHANGES = Path("moxfield.json"), Path("changes.md")
+MOXFIELD = Path("moxfield.json")
 UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync"
 
 def blocked(v):
@@ -82,7 +82,7 @@ def main():
     if why := blocked(dump["listing"]):
         print(f"blocked: deck list of {dump['user']} ({why}); {UNBLOCK}")
     else:
-        taken = set(mox["decks"].values()) | {p.name for p in Path("output/decks").glob("*") if p.is_dir()}
+        taken = set(mox["decks"].values()) | {p.name for p in DECKS.glob("*") if p.is_dir()}
         for mid, slug in enlist(mox, dump["listing"], taken).items(): print(f"added: {slug} ({mid})")
     MOXFIELD.write_text(json.dumps({k: mox[k] for k in ("user", "decks", "seen") if k in mox}, indent=2, ensure_ascii=False) + "\n")
 
@@ -95,9 +95,9 @@ def main():
         lines = v["commanders"] + [""] + v["mainboard"] + [""]
         if v["sideboard"]: lines += ["SIDEBOARD:"] + v["sideboard"] + [""]
         fetched[slug], dumped[slug] = v, lines
-        os.makedirs(f"output/decks/{slug}", exist_ok=True)
-        open(f"output/decks/{slug}/list.txt", "w").write("\n".join(lines))
-    if not stale: open("output/data/tokens.md", "w").write(tokens(fetched))
+        (DECKS / slug).mkdir(parents=True, exist_ok=True)
+        (DECKS / slug / "list.txt").write_text("\n".join(lines))
+    if not stale: (DATA / "tokens.md").write_text(tokens(fetched))
     drop_landed(dumped)
     subprocess.run([sys.executable, str(Path(__file__).with_name("apply-changes.py"))], check=True)
     if stale: print(f"not refreshed: {', '.join(stale)} (tokens.md left as it was)")

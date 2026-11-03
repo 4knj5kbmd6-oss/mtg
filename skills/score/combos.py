@@ -8,7 +8,7 @@ unreachable or answers with no JSON, prints one line naming the URL and writes n
 import json, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from merge import get, key, cells, split, table, decklist, KINDS
+from merge import get, key, table, decklist, adds, DECKS
 
 SPELLBOOK = "https://backend.commanderspellbook.com"
 FLAGS = {"massLandDenial": "mass land denial", "extraTurn": "extra turns"}
@@ -52,8 +52,7 @@ def main():
     known = {key(c["card"]["name"]).lower() for c in bracket["cards"]}
     if unknown := [n for _, n in commanders + rest if key(n).lower() not in known]:
         print("not on Commander Spellbook:", ", ".join(unknown))
-    adds = {key(r[0]).lower() for k in KINDS if (p := Path(f"output/decks/{slug}/{k}.md")).exists()
-            for r in cells(dict(split(p.read_text())).get("## Adds", []))}
-    Path(run, f"{slug}-combos.md").write_text(page(slug, combos["results"], bracket, adds))
+    candidates = {key(r[0]).lower() for r in adds(DECKS / slug)}
+    Path(run, f"{slug}-combos.md").write_text(page(slug, combos["results"], bracket, candidates))
 
 if __name__ == "__main__": main()

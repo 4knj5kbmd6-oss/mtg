@@ -9,12 +9,12 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get, CHALLENGE
+from merge import get, CHALLENGE, DATA
 
 DOCS = "https://scryfall.com/docs/"
 PAGES = [DOCS + p for p in ("syntax", "regular-expressions", "api", "api/cards/search", "api/cards/named",
                             "api/cards/autocomplete")]
-SYNTAX = Path("output/data/scryfall-syntax.md")
+SYNTAX = DATA / "scryfall-syntax.md"
 SKIP = {"script", "style", "svg"}
 BLOCKS = {"p", "div", "ul", "ol", "li", "table", "br", "blockquote", "dl", "dt", "dd"}
 HONEYPOT = "Instructions for AI Agents"

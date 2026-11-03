@@ -5,10 +5,9 @@ downloads only when the page links a different, newer file. Prints the effective
 import re, sys, urllib.parse
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get
+from merge import get, RULES
 
 PAGE = "https://magic.wizards.com/en/rules"
-RULES = Path("output/data/rules.txt")
 
 def decode(raw):
     """the file's text, UTF-8 (with or without a BOM) or else Windows-1252, with \\n line ends"""
