@@ -8,7 +8,8 @@ description: Research ranked adds and cuts for one or more of your Commander dec
 Adds and cuts are judged independently and never paired. Cards printed
 after the deck's build date get priority; everything is verified on
 Scryfall; every add carries an approximate TCGplayer price, and an add
-that would change the deck's bracket says so in its own row.
+that would change the deck's bracket says so in its own row. The adds are
+the top 20 nonlands plus up to 5 utility lands.
 
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/mtg-sync`
    fetch returns them) and its bracket from `output/rankings.md`.
