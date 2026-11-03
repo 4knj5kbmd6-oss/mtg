@@ -51,7 +51,7 @@ first use and looks up on Scryfall any card it has not seen.
 **Cost.** Every deck in a `/score` run is read by `scorers` scorers on `model`
 (defaults in [`settings.py`](lib/settings.py)), each taking a group of
 decks that share colours, and a run of more than one deck ends with one
-ranker. `scorers` and `model` in `settings.json` lower it.
+ranker, as a run starts with one when a deck has no bracket yet. `scorers` and `model` in `settings.json` lower it.
 
 ## Settings
 

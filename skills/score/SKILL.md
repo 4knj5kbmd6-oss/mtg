@@ -1,6 +1,6 @@
 ---
 name: score
-description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, redraw its changes.png, optionally recompute rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
+description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, redraw its changes.png, recompute rankings.md after a rescore of several decks or when a deck has no bracket yet. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
 argument-hint: "[slug ...] [key=value ...] | <slug> <card name> [<card name> ...]"
 ---
 
