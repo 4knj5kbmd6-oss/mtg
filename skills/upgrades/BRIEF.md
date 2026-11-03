@@ -11,7 +11,7 @@ the repo; write your output to the scratchpad path named at the end.
   first, then the 99, optional SIDEBOARD block. A card in it is never an add; a card not in it is
   never a cut.
 - output/restricted.md (every deck) and output/decks/<slug>/restricted.md (this deck; may not exist):
-  bullets naming cards or describing kinds of card. A card named or described on either is never an add.
+  card names, one `- Name` line each. A card named on either is never an add.
 - output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
   colours, Game Changer flag). Read this instead of fetching card by card.
 - output/decks/rankings.md: each deck's bracket and its strength relative to the others.

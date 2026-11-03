@@ -41,7 +41,8 @@ The owner's output, under `output/` (gitignored):
   - `changes.png`: the earliest-printing image of every add and cut, in four
     bands: nonland adds, nonland cuts, land adds, land cuts.
 - `output/restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
-  deck): bullets of cards, by name or kind, never considered as adds.
+  deck): card names, one `- Name` line each and nothing else; `upgrades`'
+  `apply.py` drops an add named on either.
 - `output/changes.md`: the owner's intended swaps not yet made, one table
   (Deck, In, Out, Note) across all decks; `sync` drops a row once Moxfield
   shows it and re-applies the rest to the lists.

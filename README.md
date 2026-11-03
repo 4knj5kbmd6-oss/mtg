@@ -75,7 +75,7 @@ Your output, all under `output/` (gitignored):
 | `decks/moxfield.json` | Your Moxfield username and the decks synced, written by `/sync <username>`; a deck you delete from it stays out |
 | `decks/rankings.md` | Your decks in strength order: commander, colours, bracket, Game Changers, why, Moxfield link |
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts), `changes.png` (an image of every add and cut: nonland adds, nonland cuts, land adds, land cuts) |
-| `restricted.md`, `decks/<slug>/restricted.md` | Cards, by name or kind, never considered as adds: for every deck, and for one deck |
+| `restricted.md`, `decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
 | `changes.md` | Your intended swaps not yet made on Moxfield; `/sync` re-applies them to each `list.txt` and drops each once Moxfield shows it, except a card noted `unowned`, which stays until you clear the note |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings) and `tokens.md` |
 | `data/rules.txt`, `data/rules-index.md` | The Comprehensive Rules and their section headings, for `/judge` |
