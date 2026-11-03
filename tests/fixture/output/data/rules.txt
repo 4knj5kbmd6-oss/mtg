@@ -1,0 +1,43 @@
+Magic: The Gathering Comprehensive Rules
+
+These rules are effective as of September 25, 2026.
+
+Contents
+
+1. Game Concepts
+100. General
+8. Multiplayer Rules
+800. General
+Glossary
+Credits
+
+1. Game Concepts
+
+100. General
+
+100.1. These rules apply to any game with two or more players.
+
+100.1a A two-player game begins with only two players.
+
+100.1b A multiplayer game begins with more than two players.
+
+8. Multiplayer Rules
+
+800. General
+
+800.4. Multiplayer games can continue after a player has left the game.
+
+800.4a When a player leaves the game, all objects that player owns leave the game.
+Example: Alex leaves the game, and the Aura Alex controls leaves with Alex.
+
+Glossary
+
+Abandon
+To turn a face-up ongoing scheme card face down. See rule 701.33, "Abandon."
+
+Ability Word
+An italicized word with no rules meaning. See rule 207.2c.
+
+Credits
+
+Original Game Design: Richard Garfield

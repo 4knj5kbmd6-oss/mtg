@@ -1,0 +1,196 @@
+{
+ "cards": {
+  "Brine Elemental": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{4}{U}{U}",
+   "name": "Brine Elemental",
+   "oracle_text": "Ward {2}",
+   "power": "6",
+   "related_tokens": [],
+   "rulings": [],
+   "toughness": "6",
+   "type_line": "Creature — Elemental"
+  },
+  "Coral Signet": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{2}",
+   "name": "Coral Signet",
+   "oracle_text": "{1}, {T}: Add {U}{U}.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Artifact"
+  },
+  "Deep Current": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{1}{U}",
+   "name": "Deep Current",
+   "oracle_text": "Whenever you cast an instant or sorcery spell, scry 1.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Enchantment"
+  },
+  "Island": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "",
+   "name": "Island",
+   "oracle_text": "({T}: Add {U}.)",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Basic Land — Island"
+  },
+  "Kelp Weaver": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{1}{U}",
+   "name": "Kelp Weaver",
+   "oracle_text": "Defender\n{T}: Draw a card, then discard a card.",
+   "power": "0",
+   "related_tokens": [],
+   "rulings": [],
+   "toughness": "4",
+   "type_line": "Creature — Merfolk"
+  },
+  "Misty Cove": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "",
+   "name": "Misty Cove",
+   "oracle_text": "Misty Cove enters tapped.\n{T}: Add {U}.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Land"
+  },
+  "Pearl Diver": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{U}",
+   "name": "Pearl Diver",
+   "oracle_text": "When Pearl Diver enters, scry 2.",
+   "power": "1",
+   "related_tokens": [],
+   "rulings": [],
+   "toughness": "1",
+   "type_line": "Creature — Merfolk"
+  },
+  "Rising Tide // Tidal Flats": {
+   "card_faces": [
+    {
+     "mana_cost": "{1}{U}",
+     "name": "Rising Tide",
+     "oracle_text": "Draw a card.",
+     "type_line": "Instant"
+    },
+    {
+     "mana_cost": "",
+     "name": "Tidal Flats",
+     "oracle_text": "{T}: Add {U}.",
+     "type_line": "Land"
+    }
+   ],
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{1}{U} // ",
+   "name": "Rising Tide // Tidal Flats",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Instant // Land"
+  },
+  "Sol Ring": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{1}",
+   "name": "Sol Ring",
+   "oracle_text": "{T}: Add {C}{C}.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Artifact"
+  },
+  "Sunken Grotto": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "",
+   "name": "Sunken Grotto",
+   "oracle_text": "{T}: Add {U}.\n{1}, {T}: Scry 1.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Land"
+  },
+  "Tidal Insight": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{2}{U}",
+   "name": "Tidal Insight",
+   "oracle_text": "Draw two cards.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Instant"
+  },
+  "Tidepool Ruins": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "",
+   "name": "Tidepool Ruins",
+   "oracle_text": "{T}: Add {C}.\n{3}, {T}: Return target instant card from your graveyard to your hand.",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Land"
+  },
+  "Tundra": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "",
+   "name": "Tundra",
+   "oracle_text": "({T}: Add {W} or {U}.)",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Land — Plains Island"
+  },
+  "Wave Breaker": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{1}{R}",
+   "name": "Wave Breaker",
+   "oracle_text": "Haste",
+   "power": "3",
+   "related_tokens": [],
+   "rulings": [],
+   "toughness": "1",
+   "type_line": "Creature — Human Warrior"
+  },
+  "Zara, Tide Caller": {
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{2}{U}{U}",
+   "name": "Zara, Tide Caller",
+   "oracle_text": "Whenever you cast an instant or sorcery spell, draw a card.",
+   "power": "2",
+   "related_tokens": [],
+   "rulings": [
+    "Zara's ability resolves before the spell that triggered it."
+   ],
+   "toughness": "4",
+   "type_line": "Legendary Creature — Merfolk Wizard"
+  }
+ },
+ "fetched": "2026-11-02",
+ "source": "https://api.scryfall.com/cards/collection"
+}
