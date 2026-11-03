@@ -25,7 +25,10 @@ the top 20 nonlands plus up to 5 utility lands.
    part of the deck. Then `python3 .claude/skills/mtg-sync/fetch-oracle.py`
    caches the adds in `output/data/oracle.json` for the scorers, and
    `apply.py` runs once more so an add the oracle had not seen is filed by
-   its type.
+   its type. Last, `python3 .claude/skills/mtg-upgrades/sheet.py <slug>`
+   writes `output/decks/<slug>/changes.png`, the earliest-printing image of
+   every add and cut in four bands: nonland adds, nonland cuts, land adds,
+   land cuts.
 
 Report: three lines per deck, top adds and top cuts, plus any add that
 would change a bracket.

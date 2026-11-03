@@ -28,6 +28,8 @@ The owner's output, under `output/` (gitignored):
     descending, then the Adds and Cuts tables (recommended adds and cuts,
     judged independently, never paired), then the shape line. A card goes
     to `lands.md` if its front face is a Land.
+  - `changes.png`: the earliest-printing image of every add and cut, in four
+    bands: nonland adds, nonland cuts, land adds, land cuts.
 - `output/rankings.md`: strength order and WotC-guideline brackets.
 - `output/restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
   deck): bullets of cards, by name or kind, never considered as adds.
