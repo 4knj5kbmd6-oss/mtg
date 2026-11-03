@@ -1,11 +1,12 @@
 """Fetch the current Comprehensive Rules into output/data/rules.txt.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/fetch-rules.py
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/fetch_rules.py
 The rules file is the .txt linked from Wizards' rules page. Its first line is the file's link, so a later run
 downloads only when the page links a different, newer file. Prints the effective date."""
 import re, sys, urllib.parse
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get, RULES
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get
+from project import RULES
 
 PAGE = "https://magic.wizards.com/en/rules"
 

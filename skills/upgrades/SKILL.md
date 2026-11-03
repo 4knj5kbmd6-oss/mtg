@@ -6,7 +6,7 @@ argument-hint: "[slug ...] [key=value ...]"
 
 # upgrades
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
 `run_in_background` in the folder that holds `output/`, with `model` only
 when it differs from the agent's own; its prompt carries only the per-run
@@ -26,7 +26,7 @@ inputs named below.
    bracket and two fact files.
 3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run> <slug>`,
    which prints the adds it drops; then
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py`, `apply.py`
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py`, `apply.py`
    once more per deck so each new add is filed by its type, and
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>`, which
    writes `output/decks/<slug>/changes.png`.

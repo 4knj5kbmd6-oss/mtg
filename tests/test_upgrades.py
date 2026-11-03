@@ -1,7 +1,8 @@
 from pathlib import Path
 import pytest
 from PIL import Image
-from conftest import run, load, read, snapshot
+from conftest import run, read, snapshot
+import sheet as script
 
 ADDS = """# Zara, Tide Caller: top adds (2026-11-02)
 Built 2025-01-01, last edited 2025-06-01, bracket 2.
@@ -29,7 +30,7 @@ def research():
     Path("run").mkdir(exist_ok=True)
     Path("run/zara-adds.md").write_text(ADDS)
     Path("run/zara-cuts.md").write_text(CUTS)
-    return run("upgrades/apply.py", "run", "zara")
+    return run("skills/upgrades/apply.py", "run", "zara")
 
 
 def test_apply_routes_keeps_and_drops():
@@ -81,7 +82,7 @@ def test_apply_twice_is_byte_identical():
 @pytest.fixture
 def sheet(monkeypatch):
     """sheet.py with fetching disabled"""
-    module = load("upgrades/sheet.py")
+    module = script
     def offline(url): raise AssertionError(f"fetched {url}")
     monkeypatch.setattr(module, "get", offline)
     monkeypatch.setattr(module, "found", offline)

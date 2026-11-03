@@ -2,7 +2,7 @@ from conftest import run
 
 
 def rule(*args):
-    return run("judge/rule.py", *args)
+    return run("skills/judge/rule.py", *args)
 
 
 def test_a_number_prints_its_subrules():
@@ -41,7 +41,7 @@ def test_a_miss_exits_1():
 
 
 def card(name):
-    return run("judge/card.py", name).stdout
+    return run("skills/judge/card.py", name).stdout
 
 
 def test_a_card_name_beats_another_cards_face():

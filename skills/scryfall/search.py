@@ -5,8 +5,8 @@ A warning names a term Scryfall ignored, which widens the results."""
 import json, sys, urllib.parse
 from pathlib import Path
 from urllib.error import HTTPError
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get, SEARCH
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get, SEARCH
 
 SHOWN = 20
 

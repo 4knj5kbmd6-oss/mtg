@@ -49,14 +49,14 @@ first use and looks up on Scryfall any card it has not seen.
 3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
 
 **Cost.** Every deck in a `/score` run is read by `scorers` scorers on `model`
-(defaults in [`settings.py`](skills/score/settings.py)), each taking a group of
+(defaults in [`settings.py`](lib/settings.py)), each taking a group of
 decks that share colours, and a run of more than one deck ends with one
 ranker. `scorers` and `model` in `settings.json` lower it.
 
 ## Settings
 
 `settings.json`, beside `output/`, holds any of these keys. An absent file
-or key takes its default from [`settings.py`](skills/score/settings.py), and
+or key takes its default from [`settings.py`](lib/settings.py), and
 a partial `quota` or `cart` keeps the rest of its default. A `key=value` on
 the command line overrides one for that run (`/score budget=50 quota.adds=15`).
 

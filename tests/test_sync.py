@@ -1,12 +1,13 @@
 import json
 import pytest
-from conftest import run, load, read, snapshot
+from conftest import run, read, snapshot
+import fetch_oracle, sync
 
 LIST = "output/decks/zara/list.txt"
 
 
 def test_changes_in_and_out():
-    out = run("sync/apply-changes.py")
+    out = run("skills/sync/apply_changes.py")
     assert out.returncode == 0, out.stderr
     assert out.stdout == "zara: in Deep Current; Pearl Diver | out Wave Breaker\n"
     assert read(LIST).splitlines()[-3:] == ["1 Tidal Insight", "1 Deep Current", "1 Pearl Diver"]
@@ -19,22 +20,22 @@ def test_changes_in_and_out():
 
 
 def test_changes_twice_change_nothing():
-    run("sync/apply-changes.py")
+    run("skills/sync/apply_changes.py")
     once = snapshot()
-    out = run("sync/apply-changes.py")
+    out = run("skills/sync/apply_changes.py")
     assert out.stdout == ""
     assert snapshot() == once
 
 
 def test_changes_rows_stay():
     before = read("changes.md")
-    run("sync/apply-changes.py")
+    run("skills/sync/apply_changes.py")
     assert read("changes.md") == before
 
 
 def test_sync_drops_landed_rows_but_unowned():
     landed = ["1 Zara, Tide Caller", "", "1 Deep Current", "1 Pearl Diver", ""]
-    load("sync/sync.py").drop_landed({"zara": landed})
+    sync.drop_landed({"zara": landed})
     rows = [l for l in read("changes.md").splitlines() if l.startswith("| zara")]
     assert rows == ["| zara | Pearl Diver |  | unowned |"]
 
@@ -63,21 +64,21 @@ EXPORTS = {
 @pytest.mark.parametrize("shape", EXPORTS)
 def test_import(shape):
     text, side = EXPORTS[shape]
-    out = run("sync/import.py", "imported", stdin=text)
+    out = run("skills/sync/import.py", "imported", stdin=text)
     assert out.returncode == 0, out.stderr
     assert out.stdout == "imported: 8 cards, 1 of them commander" + (", 1 in the sideboard" if side else "") + "\n"
     assert read("output/decks/imported/list.txt") == DECK + (SIDE if side else "")
 
 
 def test_import_reports_what_it_cannot_parse():
-    out = run("sync/import.py", "imported", stdin="Sol Ring, but no count\n1 Sol Ring\n")
+    out = run("skills/sync/import.py", "imported", stdin="Sol Ring, but no count\n1 Sol Ring\n")
     assert out.stdout.splitlines()[1:] == ["no commander found: put it first, set apart by a blank line, and rerun",
                                           "not parsed: Sol Ring, but no count"]
     assert read("output/decks/imported/list.txt") == "1 Sol Ring\n"
 
 
 def test_card_names():
-    names = load("sync/fetch-oracle.py").card_names()
+    names = fetch_oracle.card_names()
     assert names == ["Brine Elemental", "Coral Signet", "Deep Current", "Island", "Kelp Weaver", "Misty Cove",
                      "Sol Ring", "Sunken Grotto", "Tidal Insight", "Tidepool Ruins", "Wave Breaker", "Zara, Tide Caller"]
     assert set(names) <= set(json.loads(read("output/data/oracle.json"))["cards"])

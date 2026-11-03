@@ -11,7 +11,7 @@ rulings the `rulings` key in `output/data/oracle.json`. The scripts run from
 the folder that holds `output/`, as
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`.
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
 `run_in_background` in the folder that holds `output/`, with `model` only
 when it differs from the agent's own; its prompt carries only the per-run
@@ -19,7 +19,7 @@ inputs named below.
 
 For `/judge <question>`:
 
-1. If `output/data/rules.txt` is missing, run `fetch-rules.py`.
+1. If `output/data/rules.txt` is missing, run `fetch_rules.py`.
 2. Run `card.py` with every card the question names.
 3. Run `rule.py --find` on the question's keywords (keyword abilities,
    zones, game terms such as "leaves the battlefield" or "state-based"),

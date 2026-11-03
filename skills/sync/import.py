@@ -6,8 +6,8 @@ end of the list. A Sideboard or Companion section becomes the SIDEBOARD: block; 
 card count and every line it could not parse; those lines are not written."""
 import re, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import DECKS
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import DECKS
 
 SECTIONS = {"commander": "commander", "commanders": "commander", "deck": "main", "main": "main", "mainboard": "main",
             "sideboard": "side", "companion": "side", "maybeboard": None, "considering": None, "tokens": None, "about": "about"}

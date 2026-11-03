@@ -2,21 +2,10 @@
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/card.py "Card Name" [...]
 A name matches output/data/oracle.json case-insensitively, as a full name, else the front face of a Front // Back
 card, else its back face; a card not there is fetched singly from Scryfall by exact name, with its rulings."""
-import json, sys, urllib.parse
+import json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get, found, SCRYFALL, ORACLE
-
-NAMED = f"{SCRYFALL}/cards/named?exact="
-
-def card(name, oracle):
-    """name's oracle entry, else Scryfall's card with its rulings; None if Scryfall has no such card"""
-    want = name.casefold()
-    for matches in (lambda n: n == want, lambda n: n.split(" // ")[0] == want, lambda n: want in n.split(" // ")[1:]):
-        for n, e in oracle.items():
-            if matches(n.casefold()): return e
-    if (c := found(NAMED + urllib.parse.quote(name))) is None: return None
-    return {**c, "rulings": [r["comment"] for r in json.loads(get(c["rulings_uri"]))["data"]]}
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import card, ORACLE
 
 def text(c):
     """each face's name and cost, type and stats, and oracle text, then the rulings"""

@@ -10,116 +10,12 @@ existing nonlands.md and lands.md are patched instead, each listed card's row re
 table in score order and its Adds row dropped, each card not in the list (a candidate) replaced or inserted in the
 Adds table of the file its type belongs to, keeping the New and ~Price of its old Adds row, else "-"; the Shape
 line recomputed, every other line as it was."""
-import re, sys, json, statistics, time, urllib.error, urllib.request
+import re, sys, statistics
 from pathlib import Path
-CARDS = "| Card | Score | Note |"
-ADDS = "| Card | Score | Note | New | ~Price |"
-CUTS = "| Card | Score | Why it underperforms here |"
-KINDS = ("nonlands", "lands")
-COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
-SCRYFALL, UA = "https://api.scryfall.com", "mtg-toolbox"
-SEARCH = f"{SCRYFALL}/cards/search?q="
-DECKS, DATA = Path("output/decks"), Path("output/data")
-ORACLE, RULES = DATA / "oracle.json", DATA / "rules.txt"
-CHANGES = Path("changes.md")
-CHALLENGE = re.compile(r"cf[-_]chl|challenge-platform|Just a moment")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import key, norm, decklist, lands, by_kind, KINDS, DECKS
+from tables import split, join, cells, adds, tail, shape, deck_file, recount, table, ranked, ADDS
 SPLIT = 3  # a card the scorers put this far apart is flagged
-last = 0.0
-
-def get(url, body=None):
-    """the response body to a GET of url, or a POST of body as JSON, at least 100 ms after the previous request"""
-    global last
-    time.sleep(max(0, last + 0.1 - time.monotonic()))
-    head = {"User-Agent": UA, "Accept": "application/json;q=0.9,*/*;q=0.8"} | ({"Content-Type": "application/json"} if body else {})
-    try: return urllib.request.urlopen(urllib.request.Request(url, body and json.dumps(body).encode(), head)).read()
-    finally: last = time.monotonic()
-
-def found(url):
-    """get(url) parsed as JSON, or None on a 404"""
-    try: return json.loads(get(url))
-    except urllib.error.HTTPError as e:
-        if e.code != 404: raise
-
-def split(text):
-    """[heading, lines] pairs, the title block first under heading None; join() undoes it"""
-    out = [[None, []]]
-    for line in text.split("\n"):
-        if line.startswith("## "): out.append([line, []])
-        else: out[-1][1].append(line)
-    return out
-
-def join(secs): return "\n".join(l for h, ls in secs for l in ([h] if h else []) + ls)
-
-def cells(lines):
-    """data rows of the tables in lines, as lists of cells"""
-    return [[c.strip() for c in l.strip().strip("|").split("|")] for l in lines
-            if l.startswith("|") and not re.match(r"^\|\s*(-+|Card|#)\s*\|", l)]
-
-def key(name):
-    """name for matching across files: no count or parenthetical, front face only"""
-    return re.sub(r"^\d+\s+|\s*(\(.*\)|[x×]\s*\d+)$", "", name.strip()).split(" // ")[0].strip()
-
-def match(name):
-    """test for a list line or table cell naming this card, by front face"""
-    k = key(name).lower(); return lambda s: key(s).lower() == k
-
-def decklist(slug):
-    """([(copies, name)] of the commanders, [(copies, name)] of the rest) from output/decks/<slug>/list.txt, the
-    commanders being the lines before its first blank line and its SIDEBOARD: block left out"""
-    text = (DECKS / slug / "list.txt").read_text().split("SIDEBOARD:")[0].strip()
-    rows = lambda t: [(int(m[1]), m[2]) for l in t.splitlines() if (m := re.match(r"(\d+)\s+(.+)", l.strip()))]
-    head, _, rest = text.partition("\n\n")
-    return rows(head), rows(rest)
-
-def table(head, rows):
-    return "\n".join([head, "|" + "---|" * (head.count("|") - 1)] + ["| " + " | ".join(r) + " |" for r in rows])
-
-def ranked(rows, desc):
-    """by the Score column, ties in the given order, unscored ("-") last"""
-    return sorted(rows, key=lambda r: (not r[1].isdigit(), (-1 if desc else 1) * int(r[1]) if r[1].isdigit() else 0))
-
-def tail(intro, adds, cuts):
-    """the Adds (score descending) and Cuts (score ascending) sections"""
-    return [["## Adds", intro + ["", table(ADDS, ranked(adds, True)), ""]],
-            ["## Cuts", [table(CUTS, ranked(cuts, False)), ""]]]
-
-def front(e): return (e.get("card_faces") or [e])[0]
-
-def is_land(e): return "Land" in front(e).get("type_line", "").split()
-
-def lands():
-    """name -> whether its front face is a Land in oracle.json; a card not in it is a nonland"""
-    fronts = {n.split(" // ")[0]: e for n, e in json.loads(ORACLE.read_text())["cards"].items()}
-    return lambda name: is_land(fronts.get(key(name), {}))
-
-def adds(deck):
-    """the Adds rows, as lists of cells, of the deck folder's nonlands.md and lands.md that exist"""
-    return [r for k in KINDS if (p := deck / f"{k}.md").exists() for r in cells(dict(split(p.read_text())).get("## Adds", []))]
-
-def by_kind(rows, land):
-    """{"nonlands": rows, "lands": rows}, split on whether a row's first cell names a land"""
-    return {k: [r for r in rows if land(r[0]) == (k == "lands")] for k in KINDS}
-
-def shape(cards, scorers=None):
-    """the shape line of [card, score, ...] rows, by card copy, unscored ("-") rows left out; with the
-    count of scorers when given"""
-    s = [int(r[1]) for r in cards if r[1].isdigit() for _ in range(copies(r[0]))]
-    by = f", {scorers} scorer{'s' * (scorers != 1)}" if scorers else ""
-    return (f"10: {sum(x==10 for x in s)} / 8-9: {sum(8<=x<=9 for x in s)} / 5-7: {sum(5<=x<=7 for x in s)}"
-            f" / 4 or below: {sum(x<=4 for x in s)}, mean {sum(s)/max(len(s), 1):.1f} (by card copy){by}.")
-
-def deck_file(title, kind, cards, rest, scorers):
-    """nonlands.md or lands.md: the Cards table, rest (its Adds and Cuts sections, if any), the Shape line"""
-    return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table(CARDS, ranked(cards, True)), ""]],
-                 *rest, ["## Shape", [shape(cards, scorers), ""]]])
-
-def recount(sec, cards):
-    """sec, a deck file's {heading: lines}, with its Cards table rewritten from these rows and its Shape line
-    recomputed, keeping the scorer count it carried"""
-    if "## Cards" in sec: sec["## Cards"][:] = [table(CARDS, ranked(cards, True)), ""]
-    if "## Shape" in sec:
-        n = re.search(r", (\d+) scorers?\.", "".join(sec["## Shape"]))
-        sec["## Shape"][:] = [shape(cards, n and int(n.group(1))), ""]
 
 def patch(text, cards, adds, scored):
     """a deck file's text with these [card, score, note] rows in its Cards table and these [card, score, note, new,
@@ -128,18 +24,16 @@ def patch(text, cards, adds, scored):
     keeping the scorer count it carried; every other line as it was"""
     secs = split(text)
     if adds and "## Adds" not in dict(secs): secs.insert([h for h, _ in secs].index("## Cards") + 1, tail([], [], [])[0])
-    sec = dict(secs); new = {key(r[0]): r for r in cards}
+    sec = dict(secs)
+    new = {key(r[0]): r for r in cards}
     cards = [new.pop(key(r[0]), r) for r in cells(sec["## Cards"])] + list(new.values())
     if "## Adds" in sec:
-        lines = sec["## Adds"]; at = [i for i, l in enumerate(lines) if l.startswith("|")]
+        lines = sec["## Adds"]
+        at = [i for i, l in enumerate(lines) if l.startswith("|")]
         lines[at[0]:at[-1] + 1] = [table(ADDS, ranked([r for r in cells(lines) if key(r[0]) not in scored] + adds, True))]
     recount(sec, cards)
     return join(secs)
 
-def norm(n):
-    n = re.sub(COUNT, "", n.strip()).strip(); return re.sub(r"^\d+\s+", "", n)
-def copies(n):
-    m = re.search(COUNT, n.strip()); return int(m.group(1) or m.group(2)) if m else 1
 def parse(p):
     out, sec = {}, None
     for line in open(p):
@@ -173,13 +67,17 @@ def main():
     files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
     if not files: sys.exit(f"no scorer files {raw}/{slug}-<LETTER>.md")
     letters, scorers = [p.stem[-1] for p in files], [parse(p) for p in files]
-    rows = {"nonlands": [], "lands": [], "adds": []}; flagged = []
+    rows = {"nonlands": [], "lands": [], "adds": []}
+    flagged = []
     for k in sorted(set().union(*scorers)):
-        got = [d.get(k) for d in scorers]; sc = [g[1] for g in got if g]
-        disp = next(g[0] for g in got if g); med = round(statistics.median(sc))
+        got = [d.get(k) for d in scorers]
+        sc = [g[1] for g in got if g]
+        disp = next(g[0] for g in got if g)
+        med = round(statistics.median(sc))
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
         if max(sc) - min(sc) >= SPLIT: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
-        secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
+        secs = [g[3] for g in got if g]
+        rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
     scored = {key(r[0]) for k in rows for r in rows[k]}
     listed = {key(n) for part in decklist(slug) for _, n in part}
     if len(scored & listed) < len(listed):  # fewer of the list's cards: a card-only score, patched into the deck's files

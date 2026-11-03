@@ -1,12 +1,12 @@
-"""Print Comprehensive Rules from output/data/rules.txt, which fetch-rules.py writes. Reads only; never fetches.
+"""Print Comprehensive Rules from output/data/rules.txt, which fetch_rules.py writes. Reads only; never fetches.
 usage (from the folder that holds output/):
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py 800.4a [704.5 ...]      each rule with its subrules (800 prints every rule under 800)
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py --find word [word ...]  number and first 100 characters of each rule holding every word
   python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py --glossary term         the glossary entry for term"""
 import re, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import RULES
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import RULES
 
 NUMBER = re.compile(r"(\d(?:\d\d(?:\.\d+[a-z]*)?)?)\.? ")   # 8. section, 800. subsection, 800.4. rule, 800.4a and 704.5aa subrules
 
@@ -28,7 +28,7 @@ def under(n, q):
 
 def main(args):
     if not args: sys.exit(__doc__)
-    if not RULES.exists(): sys.exit(f"no {RULES}: run fetch-rules.py first")
+    if not RULES.exists(): sys.exit(f"no {RULES}: run fetch_rules.py first")
     rules, glossary = parse(RULES.read_text())
     if args[0] == "--find":
         words = [w.casefold() for w in args[1:]]

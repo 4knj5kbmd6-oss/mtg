@@ -8,8 +8,10 @@ later run fetches only new cards. A card Scryfall does not find is printed and l
 import sys, urllib.parse
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, cells, key, get, found, SEARCH, KINDS, DECKS, DATA
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get, found, SEARCH
+from project import key, KINDS, DECKS, DATA
+from tables import split, cells
 CACHE = DATA / "images"
 BANDS = (("Nonland adds", "nonlands", "## Adds"), ("Nonland cuts", "nonlands", "## Cuts"),
          ("Land adds", "lands", "## Adds"), ("Land cuts", "lands", "## Cuts"))

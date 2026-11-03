@@ -1,13 +1,16 @@
 """Add the user's public Commander decks not seen before to moxfield.json, write output/decks/<slug>/list.txt
 for every deck there that came back as deck data and output/data/tokens.md once every deck did, drop the rows of
-changes.md the dump shows landed, except those noted unowned, then run apply-changes.py so every list is the
+changes.md the dump shows landed, except those noted unowned, then apply changes.md with apply_changes.py so every list is the
 intended deck again. A deck that came back as anything else (Cloudflare's challenge page, an error) is left as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw): {"user", "listing", "decks"}."""
-import json, re, sys, subprocess, unicodedata
+import json, re, sys, unicodedata
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import cells, match, CHALLENGE, DECKS, DATA, CHANGES
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import CHALLENGE
+from project import match, DECKS, DATA, CHANGES
+from tables import cells
+import apply_changes
 
 MOXFIELD = Path("moxfield.json")
 UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync"
@@ -99,7 +102,7 @@ def main():
         (DECKS / slug / "list.txt").write_text("\n".join(lines))
     if not stale: (DATA / "tokens.md").write_text(tokens(fetched))
     drop_landed(dumped)
-    subprocess.run([sys.executable, str(Path(__file__).with_name("apply-changes.py"))], check=True)
+    apply_changes.main()
     if stale: print(f"not refreshed: {', '.join(stale)} (tokens.md left as it was)")
 
 if __name__ == "__main__": main()

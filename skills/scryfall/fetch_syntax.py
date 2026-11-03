@@ -1,5 +1,5 @@
 """Fetch Scryfall's search reference into output/data/scryfall-syntax.md, one ## section per docs page.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/fetch-syntax.py [--refresh]
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/fetch_syntax.py [--refresh]
 Downloads only when the file is missing or --refresh is given. Each section is a page's heading, its URL and its
 text, code spans kept in backticks and every example search shown as its query, less the paragraph labelled
 "Instructions for AI Agents" (a honeypot Scryfall plants for crawlers). A page that answers other than 200,
@@ -8,8 +8,9 @@ import re, sys, urllib.parse
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get, CHALLENGE, DATA
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get, CHALLENGE
+from project import DATA
 
 DOCS = "https://scryfall.com/docs/"
 PAGES = [DOCS + p for p in ("syntax", "regular-expressions", "api", "api/cards/search", "api/cards/named",

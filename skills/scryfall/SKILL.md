@@ -9,7 +9,7 @@ argument-hint: "<what to find>"
 Scryfall's search reference is `output/data/scryfall-syntax.md`, one `##`
 section per docs page.
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
 `run_in_background` in the folder that holds `output/`, with `model` only
 when it differs from the agent's own; its prompt carries only the per-run
@@ -17,7 +17,7 @@ inputs named below.
 
 For `/scryfall <what to find>`:
 
-1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/fetch-syntax.py`; it
+1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/fetch_syntax.py`; it
    writes the reference from scryfall.com/docs when the file is missing, or
    again with `--refresh`.
 2. Dispatch one `mtg-toolbox:librarian`, its prompt giving the request and

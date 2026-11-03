@@ -1,6 +1,7 @@
 import copy
 from pathlib import Path
-from conftest import run, load, read
+from conftest import run, read
+import merge, project, settings
 
 # each card's score from scorers A, B and C
 SCORES = {
@@ -25,7 +26,7 @@ def scorers(letters="ABC", scores=SCORES):
 
 def test_parse_reads_every_section():
     scorers("A")
-    got = load("score/merge.py").parse("run/zara-A.md")
+    got = merge.parse("run/zara-A.md")
     assert got["Island"] == ("Island (4)", 6, "fits", "lands")
     assert got["Deep Current"] == ("Deep Current", 8, "fits", "adds")
     assert got["Zara, Tide Caller"][3] == "nonlands"
@@ -33,15 +34,14 @@ def test_parse_reads_every_section():
 
 
 def test_key_and_copies():
-    merge = load("score/merge.py")
-    assert merge.key("4 Island (4)") == "Island"
-    assert merge.key("Rising Tide // Tidal Flats") == "Rising Tide"
-    assert merge.copies("Island (4)") == 4 and merge.copies("Island x 3") == 3 and merge.copies("Sol Ring") == 1
+    assert project.key("4 Island (4)") == "Island"
+    assert project.key("Rising Tide // Tidal Flats") == "Rising Tide"
+    assert project.copies("Island (4)") == 4 and project.copies("Island x 3") == 3 and project.copies("Sol Ring") == 1
 
 
 def test_merge_writes_the_file_pair():
     scorers()
-    out = run("score/merge.py", "run", "zara")
+    out = run("skills/score/merge.py", "run", "zara")
     assert out.returncode == 0, out.stderr
     assert out.stderr.startswith("zara: 10: 1 / 8-9: 1 / 5-7: ") and out.stderr.endswith("3 scorers. 1 flagged\n")
     assert read("run/merged/zara/nonlands.md") == """# Zara, Tide Caller: nonlands
@@ -83,7 +83,7 @@ Built 2025-01-01, last edited 2025-06-01, bracket 2.
 
 def test_one_scorer_stands_alone():
     scorers("A")
-    out = run("score/merge.py", "run", "zara")
+    out = run("skills/score/merge.py", "run", "zara")
     assert out.stderr.endswith("1 scorer.\n")
     assert not Path("run/zara-flagged.md").exists()
     assert "| Brine Elemental | 2 | fits |" in read("run/merged/zara/nonlands.md")
@@ -93,7 +93,7 @@ def test_card_only_score_patches_the_deck_files():
     with open("output/decks/zara/list.txt", "a") as f: f.write("1 Deep Current\n")
     nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
     scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Deep Current": (8, 8, 5)}})
-    out = run("score/merge.py", "run", "zara")
+    out = run("skills/score/merge.py", "run", "zara")
     assert out.returncode == 0, out.stderr
     assert out.stderr == "zara: 10: 1 / 8-9: 2 / 5-7: 9 / 4 or below: 2, mean 6.3 (by card copy), 3 scorers. 1 flagged\n"
     assert read("run/merged/zara/nonlands.md") == (nonlands
@@ -110,7 +110,7 @@ def test_card_only_score_puts_a_candidate_in_its_adds_table():
     nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
     scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Pearl Diver": (6, 6, 5), "Tundra": (8, 8, 7)},
                     "Adds": {"Deep Current": (8, 8, 5)}})
-    out = run("score/merge.py", "run", "zara")
+    out = run("skills/score/merge.py", "run", "zara")
     assert out.returncode == 0, out.stderr
     assert out.stderr == "zara: 10: 1 / 8-9: 1 / 5-7: 9 / 4 or below: 2, mean 6.2 (by card copy), 3 scorers. 1 flagged\n"
     assert read("run/merged/zara/nonlands.md") == (nonlands
@@ -127,7 +127,7 @@ def test_a_candidate_makes_the_adds_table_it_lacks():
     bare = lands[:lands.index("## Adds")] + lands[lands.index("## Shape"):]
     Path("output/decks/zara/lands.md").write_text(bare)
     scorers(scores={"Lands": {"Tundra": (8, 8, 7)}})
-    assert run("score/merge.py", "run", "zara").returncode == 0
+    assert run("skills/score/merge.py", "run", "zara").returncode == 0
     assert read("run/merged/zara/lands.md") == bare.replace("## Shape", """## Adds
 
 | Card | Score | Note | New | ~Price |
@@ -138,7 +138,6 @@ def test_a_candidate_makes_the_adds_table_it_lacks():
 
 
 def test_settings_defaults():
-    settings = load("score/settings.py")
     Path("settings.json").unlink()
     defaults = copy.deepcopy(settings.DEFAULTS)
     assert settings.settings() == defaults
@@ -149,13 +148,12 @@ def test_settings_defaults():
 
 
 def test_settings_overrides():
-    settings = load("score/settings.py")
     base, given, defaults = settings.settings(), read("settings.json"), copy.deepcopy(settings.DEFAULTS)
     got = settings.settings(["scorers=1", "quota.adds=15", "quota.cuts=[8, 12]", "cart.finish=nonfoil",
                              "model=claude-sonnet-5"])
     assert got == {**base, "scorers": 1, "model": "claude-sonnet-5", "quota": {**base["quota"], "adds": 15, "cuts": [8, 12]},
                    "cart": {**base["cart"], "finish": "nonfoil"}}
     assert settings.settings() == base and read("settings.json") == given and settings.DEFAULTS == defaults
-    out = run("score/settings.py", "budget=50", "universes_beyond=false", "new_sets=true")
+    out = run("lib/settings.py", "budget=50", "universes_beyond=false", "new_sets=true")
     assert out.returncode == 0 and '"budget": 50' in out.stdout and '"universes_beyond": false' in out.stdout
     assert '"new_sets": true' in out.stdout

@@ -2,14 +2,13 @@
 Adds table of every output/decks/*/nonlands.md and lands.md, each card with its Scryfall rulings (the comment
 texts, oldest first) from Scryfall's bulk rulings file. Given card names, instead fetch each one oracle.json
 lacks singly from Scryfall into it, with its rulings, every other entry as it was.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py ["Card Name" ...]"""
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py ["Card Name" ...]"""
 import gzip, json, re, sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "judge"))
-from merge import get, adds, SCRYFALL, ORACLE, DECKS
-from card import card
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get, SCRYFALL
+from project import card, ORACLE, DECKS
+from tables import adds
 API, BATCH = f"{SCRYFALL}/cards/collection", 75  # Scryfall's most names per collection request
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]

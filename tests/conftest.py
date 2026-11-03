@@ -1,10 +1,11 @@
-"""Every test runs in a temporary copy of tests/fixture, the folder that holds output/, as the scripts expect."""
-import importlib.util, shutil, subprocess, sys
+"""Every test runs in a temporary copy of tests/fixture, the folder that holds output/, as the scripts expect.
+lib/ and every skills/ folder are on sys.path, so a test imports a script by its name."""
+import shutil, subprocess, sys
 from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILLS = ROOT / "skills"
+sys.path[:0] = [str(ROOT / "lib"), *sorted(str(p) for p in (ROOT / "skills").iterdir() if p.is_dir())]
 
 
 @pytest.fixture(autouse=True)
@@ -17,17 +18,8 @@ def project(tmp_path, monkeypatch):
 
 
 def run(script, *args, stdin=None):
-    """a skills/ script run from the working directory, as the owner runs it"""
-    return subprocess.run([sys.executable, str(SKILLS / script), *args], input=stdin, capture_output=True, text=True)
-
-
-def load(script):
-    """a skills/ script imported as a module, hyphenated names included"""
-    path = SKILLS / script
-    spec = importlib.util.spec_from_file_location(path.stem.replace("-", "_"), path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """a script, by its path from the repo root, run from the working directory as the owner runs it"""
+    return subprocess.run([sys.executable, str(ROOT / script), *args], input=stdin, capture_output=True, text=True)
 
 
 def read(path):

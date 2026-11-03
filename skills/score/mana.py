@@ -10,8 +10,9 @@ cost. Prints any card oracle.json lacks, left out of the counts."""
 import json, re, sys
 from math import comb
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from merge import ORACLE, decklist, table, front, is_land
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import ORACLE, decklist, front, is_land
+from tables import table
 
 COLOURS = "WUBRG"
 TYPES = {"Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G"}

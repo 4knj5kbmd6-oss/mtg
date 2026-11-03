@@ -31,7 +31,7 @@ Every script here runs from the folder that holds `output/`.
    row of `changes.md` it drops, a line per changed deck (cards in, cards
    out), and a `blocked:` line per deck left as it was, the last line naming
    every deck not refreshed.
-3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py` rebuilds
+3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall, each card with its rulings.
 
 For each `added:` deck write an empty `output/decks/<slug>/plan.md`.
@@ -40,7 +40,7 @@ With no Moxfield, the owner pastes a decklist or names a `.txt` export
 (Moxfield, Archidekt, MTGO or Arena). Save a paste to the scratchpad, run
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/import.py <slug> <file>`, which
 writes `output/decks/<slug>/list.txt` and prints the card count and every
-line it could not parse, then `fetch-oracle.py`. A deck imported this way
+line it could not parse, then `fetch_oracle.py`. A deck imported this way
 has no `moxfield.json` entry, and the Moxfield pass leaves it alone.
 
 Report in a line per changed deck: cards in, cards out; then the added

@@ -7,8 +7,10 @@ Spellbook flags as mass land denial or extra turns. Prints the deck's names Spel
 unreachable or answers with no JSON, prints one line naming the URL and writes nothing."""
 import json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from merge import get, key, table, decklist, adds, DECKS
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get
+from project import key, decklist, DECKS
+from tables import table, adds
 
 SPELLBOOK = "https://backend.commanderspellbook.com"
 FLAGS = {"massLandDenial": "mass land denial", "extraTurn": "extra turns"}

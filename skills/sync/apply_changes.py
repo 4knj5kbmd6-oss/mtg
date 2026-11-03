@@ -1,13 +1,14 @@
 """Apply every row of changes.md to its deck, so output/decks/<slug>/list.txt is the deck as the owner intends it.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/apply-changes.py
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/apply_changes.py
 An In card not in the list is appended before any SIDEBOARD block (n copies from an "n copies" note, else 1) and its
 Adds row in nonlands.md or lands.md moves to that file's Cards table. An Out card in the list loses one copy (all with
 a copies note); once gone, its Cards and Cuts rows go too. Both Shape lines are recomputed, each keeping its scorer
 count. Running it twice changes nothing. Prints one line per changed deck: cards in, cards out."""
 import re, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, join, cells, match, norm, recount, KINDS, DECKS, CHANGES
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import match, norm, KINDS, DECKS, CHANGES
+from tables import split, join, cells, recount
 
 def counted(name, n): return f"{name} ({n})" if n > 1 else name
 

@@ -1,19 +1,15 @@
 from pathlib import Path
 from urllib.error import HTTPError
 import pytest
-from conftest import ROOT, run, load
+from conftest import ROOT, run
+import fetch_syntax, search
 
 SAVED = ROOT / "tests" / "scryfall"
 URL = "https://scryfall.com/docs/regular-expressions"
 
 
-@pytest.fixture
-def fetch():
-    return load("scryfall/fetch-syntax.py")
-
-
-def test_a_page_becomes_its_section(fetch):
-    text = fetch.section((SAVED / "regular-expressions.html").read_text(), URL)
+def test_a_page_becomes_its_section():
+    text = fetch_syntax.section((SAVED / "regular-expressions.html").read_text(), URL)
     lines = text.splitlines()
     assert lines[:3] == ["## Regular Expressions", "", f"Source: {URL}"]
     assert [l for l in lines if l.startswith("#")] == ["## Regular Expressions", "### Scryfall Regex Flavor",
@@ -28,24 +24,24 @@ def test_a_page_becomes_its_section(fetch):
     assert text.endswith("| `\\sc` | Short-hand for any colored mana symbol |\n")
 
 
-def test_a_blocked_page_stops_naming_its_url(fetch, monkeypatch):
-    monkeypatch.setattr(fetch, "get", lambda url: b"<title>Just a moment...</title>")
+def test_a_blocked_page_stops_naming_its_url(monkeypatch):
+    monkeypatch.setattr(fetch_syntax, "get", lambda url: b"<title>Just a moment...</title>")
     with pytest.raises(SystemExit, match=f"^{URL}: Cloudflare challenge$"):
-        fetch.page(URL)
+        fetch_syntax.page(URL)
     def refused(url): raise HTTPError(url, 403, "Forbidden", {}, None)
-    monkeypatch.setattr(fetch, "get", refused)
+    monkeypatch.setattr(fetch_syntax, "get", refused)
     with pytest.raises(SystemExit, match=f"^{URL}: HTTP 403$"):
-        fetch.page(URL)
+        fetch_syntax.page(URL)
 
 
 def test_a_fetched_reference_is_kept():
     Path("output/data/scryfall-syntax.md").write_text("## Scryfall Search Reference\n")
-    out = run("scryfall/fetch-syntax.py")
+    out = run("skills/scryfall/fetch_syntax.py")
     assert (out.returncode, out.stdout) == (0, "output/data/scryfall-syntax.md (already fetched)\n")
 
 
 def answer(name):
-    return load("scryfall/search.py").answer((SAVED / name).read_bytes())
+    return search.answer((SAVED / name).read_bytes())
 
 
 def test_a_search_prints_its_count_warnings_and_first_20_cards():

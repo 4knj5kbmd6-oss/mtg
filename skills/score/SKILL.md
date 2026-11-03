@@ -11,7 +11,7 @@ The metric lives in the `mtg-toolbox:scorer` agent,
 skill only applies it. Scores are never hand-edited: when one looks wrong,
 fix the metric or the deck's `plan.md` and rescore.
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
 `run_in_background` in the folder that holds `output/`, with `model` only
 when it differs from the agent's own; its prompt carries only the per-run
@@ -47,7 +47,7 @@ Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
 score only those cards for that deck, usually a card just added through
 `changes.md`. A card not in the deck's `list.txt` is a candidate, scored as
 if added; one missing from `oracle.json` is fetched into it first with
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py "<card name>" ...`,
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py "<card name>" ...`,
 which reports any name Scryfall does not know. Run steps 2 to 4 for that
 deck alone, each scorer's prompt also naming the cards. merge.py patches
 those rows into the deck's `nonlands.md` and `lands.md` (a candidate's into

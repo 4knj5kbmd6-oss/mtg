@@ -2,7 +2,8 @@ import json, sys
 from pathlib import Path
 from urllib.error import URLError
 import pytest
-from conftest import ROOT, run, load, read
+from conftest import ROOT, run, read
+import combos as script
 
 SAVED = ROOT / "tests" / "spellbook"  # Spellbook's answers for two real decks, trimmed to a few combos
 
@@ -18,7 +19,7 @@ def deck(slug, commander, cards, adds=()):
 @pytest.fixture
 def combos(monkeypatch):
     """combos.py with Spellbook answering from the saved files of the deck named on the command line"""
-    module = load("score/combos.py"); posted = []
+    module, posted = script, []
     def get(url, body):
         posted.append((url, body))
         return (SAVED / f"{sys.argv[2]}-{url.rstrip('/').rsplit('/', 1)[1]}.json").read_bytes()
@@ -131,7 +132,7 @@ def test_mana_counts_fetch_lands_by_the_types_they_find():
     Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
     deck("lazav", "Lazav, Dimir Mastermind", {**{n: 1 for n in list(CARDS)[1:]}, "Island": 4, "Swamp": 3, "Mystery Card": 1})
     Path("run").mkdir()
-    out = run("score/mana.py", "run", "lazav")
+    out = run("skills/score/mana.py", "run", "lazav")
     assert (out.returncode, out.stdout) == (0, "not in oracle.json: Mystery Card\n"), out.stderr
     # 13 lands and 8 nonlands in the 21 drawn from; 9 nonlands with the commander, 26 mana value between them
     # U: Delta, Strand, Path, Passage, Wilds, Tower, 4 Island; Mox, Signet; Lazav 2, Counterspell 2, Sphinx 2

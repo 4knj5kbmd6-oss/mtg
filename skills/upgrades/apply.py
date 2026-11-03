@@ -7,8 +7,9 @@ own restricted.md (either face of a double-faced card) is dropped, and so is an 
 the budget in settings.json (a price that does not parse is kept); the drops are printed."""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, join, cells, key, tail, lands, by_kind, KINDS, DECKS
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from project import key, lands, by_kind, KINDS, DECKS
+from tables import split, join, cells, tail
 from settings import settings
 
 def restricted(paths):
@@ -30,7 +31,8 @@ def price(cell):
 def apply(files, adds, cuts, land):
     """{kind: text} of a deck's nonlands.md and lands.md with their Adds and Cuts sections rebuilt from the
     research files' texts, each row in the file land(card) picks"""
-    secs = {k: split(t) for k, t in files.items()}; old = [dict(s) for s in secs.values()]
+    secs = {k: split(t) for k, t in files.items()}
+    old = [dict(s) for s in secs.values()]
     done = {key(r[0]): r[1:3] for o in old for r in cells(o.get("## Adds", [])) if r[1] != "-"}
     deck = {key(r[0]): r[1] for o in old for r in cells(o.get("## Cards", []))}
     new = by_kind([[n, *done.get(key(n), ["-", why]), "Yes" if since.startswith("Yes") else "No", price]
