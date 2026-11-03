@@ -1,10 +1,10 @@
 """Merge three scorers' files to a deck's nonlands.md and lands.md: median, spread flags, optional arbitration.
-usage (from the folder that holds output/): python3 skills/mtg-score/merge.py <run_dir> <slug> [arb.json]
+usage (from the folder that holds output/): python3 skills/score/merge.py <run_dir> <slug> [arb.json]
 reads <run_dir>/<slug>-A.md, -B.md, -C.md, the deck title from output/decks/<slug>/plan.md and the
 Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
 writes <run_dir>/merged/<slug>/nonlands.md and lands.md and <run_dir>/<slug>-flagged.md; prints the
-whole deck's shape line to stderr. The deck-file helpers here are shared with mtg-upgrades/apply.py and
-mtg-sync/apply-changes.py."""
+whole deck's shape line to stderr. The deck-file helpers here are shared with upgrades/apply.py and
+sync/apply-changes.py."""
 import re, sys, json, statistics
 from pathlib import Path
 CARDS = "| Card | Score | Note |"

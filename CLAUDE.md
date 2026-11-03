@@ -35,14 +35,14 @@ The owner's output, under `output/` (gitignored):
 - `output/restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
   deck): bullets of cards, by name or kind, never considered as adds.
 - `output/changes.md`: the owner's intended swaps not yet made, one table
-  (Deck, In, Out, Note) across all decks; mtg-sync drops a row once Moxfield
+  (Deck, In, Out, Note) across all decks; `sync` drops a row once Moxfield
   shows it and re-applies the rest to the lists.
   A Note of `unowned` (`unowned, 10 copies` for basics) marks a card to buy,
   possibly already in the list; the row stays until the owner clears it.
-- `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`,
+- `output/data/`: `oracle.json` (rebuilt by `sync`'s `fetch-oracle.py`,
   each card with its Scryfall rulings), `tokens.md`, and `rules.txt` with
   `rules-index.md` (the Comprehensive Rules and their headings, from
-  mtg-rules' `fetch-rules.py`).
+  `judge`'s `fetch-rules.py`).
 - `output/carts/`: one report per cart.
 
 ## Skills
@@ -50,15 +50,15 @@ The owner's output, under `output/` (gitignored):
 Procedures are skills in `skills/`, each with its scripts and agent briefs
 beside it:
 
-- `mtg-sync`: refresh lists and tokens from Moxfield through the browser pane.
-- `mtg-score`: three independent Opus scorers per deck, median, arbitration,
+- `sync`: refresh lists and tokens from Moxfield through the browser pane.
+- `score`: three independent Opus scorers per deck, median, arbitration,
   one score kept; optional rankings recompute.
-- `mtg-upgrades`: ranked adds and cuts per deck, new-since-built weighted.
-- `tcg-cart`: build and optimize a TCGplayer guest cart from a list.
-- `mtg-rules`: the Comprehensive Rules on disk and an Opus judge for rules
+- `upgrades`: ranked adds and cuts per deck, new-since-built weighted.
+- `cart`: build and optimize a TCGplayer guest cart from a list.
+- `judge`: the Comprehensive Rules on disk and an Opus judge for rules
   questions, citing rule numbers.
 
-The repo is a plugin: the skills load from an installed plugin or with
+The repo is the `commander-deckhand` plugin: the skills load from an installed plugin or with
 `claude --plugin-dir .`, and run from the folder that holds `output/`.
 
 ## Rules

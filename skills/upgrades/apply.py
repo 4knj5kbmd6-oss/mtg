@@ -1,12 +1,12 @@
 """Write a planner's adds and cuts into a deck's nonlands.md and lands.md as their Adds and Cuts tables.
-usage (from the folder that holds output/): python3 skills/mtg-upgrades/apply.py <run_dir> <slug>
+usage (from the folder that holds output/): python3 skills/upgrades/apply.py <run_dir> <slug>
 reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if output/data/oracle.json
 says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
 get "-" and the research reason; a cut gets its deck score. An add named on output/restricted.md or the deck's
 own restricted.md (either face of a double-faced card) is dropped, and the drops are printed."""
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mtg-score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
 from merge import split, join, cells, key, tail, lands, by_kind, KINDS
 
 def restricted(paths):

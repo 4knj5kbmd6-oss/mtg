@@ -1,12 +1,12 @@
 """Apply every row of output/changes.md to its deck, so output/decks/<slug>/list.txt is the deck as the owner intends it.
-usage (from the folder that holds output/): python3 skills/mtg-sync/apply-changes.py
+usage (from the folder that holds output/): python3 skills/sync/apply-changes.py
 An In card not in the list is appended before any SIDEBOARD block (n copies from an "n copies" note, else 1) and its
 Adds row in nonlands.md or lands.md moves to that file's Cards table. An Out card in the list loses one copy (all with
 a copies note); once gone, its Cards and Cuts rows go too. Both Shape lines are recomputed. Running it twice changes
 nothing. Prints one line per changed deck: cards in, cards out."""
 import re, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mtg-score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
 from merge import split, join, cells, key, norm, table, ranked, shape, CARDS, KINDS
 
 def match(name):

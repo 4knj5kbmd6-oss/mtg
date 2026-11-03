@@ -1,8 +1,8 @@
 {
-  "name": "mtg",
-  "description": "The mtg plugin: tooling for your Commander decks, run by Claude Code skills.",
+  "name": "commander-deckhand",
+  "description": "The commander-deckhand plugin: tooling for your Commander decks, run by Claude Code skills.",
   "owner": { "name": "4knj5kbmd6-oss" },
   "plugins": [
-    { "name": "mtg", "source": "./" }
+    { "name": "commander-deckhand", "source": "./" }
   ]
 }

@@ -25,10 +25,10 @@ Inputs per deck (<slug>):
 - output/decks/<slug>/nonlands.md and lands.md, the Card columns of their `## Adds` tables
   only: the recommended adds, to be scored as if already in the deck.
 
-A rules question about a card goes first to `python3 <plugin>/skills/mtg-rules/rule.py`
-(`--find word ...` to locate rules, a number such as `702.87` for a rule and its subrules)
-and the card's `rulings` in output/data/oracle.json; when those do not settle it, to a judge
-dispatched with <plugin>/skills/mtg-rules/JUDGE-BRIEF.md.
+A rules question about a card you settle yourself as <plugin>/skills/judge/JUDGE-BRIEF.md
+directs, with `python3 <plugin>/skills/judge/card.py "Card Name"` for its oracle text and rulings
+and `python3 <plugin>/skills/judge/rule.py` (`--find word ...` to locate rules, a number such as
+`702.87` for a rule and its subrules) for the Comprehensive Rules.
 
 Output per deck, exactly this file:
 <run>/<slug>-<LETTER>.md

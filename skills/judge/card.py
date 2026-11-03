@@ -1,5 +1,5 @@
 """Print each named card's oracle text and Scryfall rulings, for the judge's brief.
-usage (from the folder that holds output/): python3 skills/mtg-rules/card.py "Card Name" [...]
+usage (from the folder that holds output/): python3 skills/judge/card.py "Card Name" [...]
 A name matches output/data/oracle.json case-insensitively, as the full name or either face of a Front // Back
 card; a card not there is fetched singly from Scryfall by exact name, with its rulings."""
 import json, sys, urllib.parse, urllib.request
@@ -10,7 +10,7 @@ ORACLE = Path("output/data/oracle.json")
 NAMED = "https://api.scryfall.com/cards/named?exact="
 
 def get(url):
-    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "mtg-rules/1.0"})
+    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "mtg-judge/1.0"})
     return json.load(urllib.request.urlopen(req))
 
 def card(name, oracle):

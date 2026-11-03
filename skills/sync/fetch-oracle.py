@@ -1,12 +1,12 @@
 """Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt and in the
 Adds table of every output/decks/*/nonlands.md and lands.md, each card with its Scryfall rulings (the comment
 texts, oldest first) from Scryfall's bulk rulings file.
-usage (from the folder that holds output/): python3 skills/mtg-sync/fetch-oracle.py"""
+usage (from the folder that holds output/): python3 skills/sync/fetch-oracle.py"""
 import gzip, json, re, sys, time, urllib.request
 from datetime import date
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mtg-score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
 from merge import split, cells, KINDS
 API = "https://api.scryfall.com/cards/collection"
 BULK = "https://api.scryfall.com/bulk-data"

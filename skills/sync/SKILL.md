@@ -1,9 +1,9 @@
 ---
-name: mtg-sync
+name: sync
 description: Refresh your owned Commander decks from Moxfield into output/decks/<slug>/list.txt, regenerate output/data/tokens.md and output/data/oracle.json. Use when asked to sync, refresh, re-export or pull decks from Moxfield, or before scoring a deck Moxfield says was edited since the last export.
 ---
 
-# mtg-sync
+# sync
 
 Moxfield blocks curl (Cloudflare 403), so every call goes through the
 built-in browser pane from page context. Only decks the owner physically
@@ -20,7 +20,7 @@ follow the new-deck steps below for every deck they name as owned.
    `createdAtUtc`, `lastUpdatedAtUtc`, commanders, mainboard, sideboard and
    the Tokens-tab list. The result is large; it lands in a tool-results
    file. Save its text to the scratchpad as `mox.json`.
-2. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-sync/sync.py <mox.json>`, run
+2. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/sync.py <mox.json>`, run
    from the folder that holds `output/`, rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`
    from the dump, removes every row of `output/changes.md` the dump shows
    landed (In card in the deck or In blank, Out card gone or Out blank) and
@@ -31,7 +31,7 @@ follow the new-deck steps below for every deck they name as owned.
    deck: cards in, cards out. An Out row takes one copy unless its Note
    says `n copies`, so a basic cut by count is applied once per sync, not
    on a manual rerun. Last it prints a diff summary.
-3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-sync/fetch-oracle.py` rebuilds
+3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall, each card with its rulings.
 
 Only when the owner names a new deck as owned, run `collect.js` on the
@@ -43,4 +43,4 @@ Report in a line per changed deck: cards in, cards out; then the landed
 changes `sync.py` printed. A deck whose `lastUpdatedAtUtc` is newer than
 the modification date of `output/decks/<slug>/nonlands.md`
 (`stat -f %Sm -t %F <file>` on macOS, `date -r <file> +%F` on Linux)
-needs rescoring (`/mtg-score`); say so, do not start it unasked.
+needs rescoring (`/score`); say so, do not start it unasked.

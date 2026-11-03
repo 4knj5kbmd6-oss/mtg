@@ -1,9 +1,9 @@
 ---
-name: tcg-cart
+name: cart
 description: Build and optimize a TCGplayer shopping cart from a card list (a deck, a set of tokens, a shopping list), balancing delivered price against package count, then audit it against the source list. Use when asked to build a cart, price a list, or buy cards on TCGplayer.
 ---
 
-# tcg-cart
+# cart
 
 The cart is built in the built-in browser pane as a guest cart. Never sign
 in, enter credentials or payment details, or check out: the owner does that.

@@ -1,5 +1,5 @@
 """Write each deck's changes sheet: an image of every suggested add and cut, as output/decks/<slug>/changes.png.
-usage (from the folder that holds output/): python3 skills/mtg-upgrades/sheet.py [slug ...]   (no slug: every deck)
+usage (from the folder that holds output/): python3 skills/upgrades/sheet.py [slug ...]   (no slug: every deck)
 Four bands top to bottom, each a plain heading over its cards in table order: nonland adds, nonland cuts
 (nonlands.md), land adds, land cuts (lands.md); a band with no rows is left out. The bands share one column
 count, the one that makes the sheet's longer side shortest. A card's image is Scryfall's normal image of its
@@ -9,7 +9,7 @@ import json, sys, time, urllib.parse, urllib.request
 from urllib.error import HTTPError
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mtg-score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
 from merge import split, cells, key, KINDS
 DECKS, CACHE = Path("output/decks"), Path("output/data/images")
 SEARCH = "https://api.scryfall.com/cards/search?q="

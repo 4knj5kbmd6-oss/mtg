@@ -1,7 +1,7 @@
 """Write output/decks/<slug>/list.txt and output/data/tokens.md from a Moxfield dump, drop the rows of
 output/changes.md the dump shows landed, except those noted unowned, then run apply-changes.py so every
 list is the intended deck again.
-usage (from the folder that holds output/): python3 skills/mtg-sync/sync.py mox.json
+usage (from the folder that holds output/): python3 skills/sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw)."""
 import json, os, sys, subprocess
 from pathlib import Path

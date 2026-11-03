@@ -17,10 +17,10 @@ the repo; write your output to the scratchpad path named at the end.
 - output/rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
-A rules question about a card goes first to `python3 <plugin>/skills/mtg-rules/rule.py`
-(`--find word ...` to locate rules, a number such as `702.87` for a rule and its subrules)
-and the card's `rulings` in output/data/oracle.json; when those do not settle it, to a judge
-dispatched with <plugin>/skills/mtg-rules/JUDGE-BRIEF.md.
+A rules question about a card you settle yourself as <plugin>/skills/judge/JUDGE-BRIEF.md
+directs, with `python3 <plugin>/skills/judge/card.py "Card Name"` for its oracle text and rulings
+and `python3 <plugin>/skills/judge/rule.py` (`--find word ...` to locate rules, a number such as
+`702.87` for a rule and its subrules) for the Comprehensive Rules.
 
 ## Deck dates (Moxfield; "created" is the build date, "updated" the last edit)
 | slug | commander | created | updated | bracket |

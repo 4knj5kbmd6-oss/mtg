@@ -1,9 +1,9 @@
 ---
-name: mtg-score
+name: score
 description: Score every card in one or more of your Commander decks with the fit-score metric (three independent Opus scorers, median, arbitration), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute output/rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
 ---
 
-# mtg-score
+# score
 
 The metric is `${CLAUDE_PLUGIN_ROOT}/scoring.md`; the owner tunes it, this
 skill only applies it. Scores are never hand-edited: when one looks wrong, fix the
@@ -14,7 +14,7 @@ the Card columns of the `## Adds` tables in `nonlands.md` and `lands.md`
 (adds are scored too), `output/data/oracle.json`.
 
 1. If Moxfield's `lastUpdatedAtUtc` may be newer than the list, run
-   `/mtg-sync` first.
+   `commander-deckhand:sync` first.
 2. Make a fresh scratchpad folder `<run>/` and copy `SCORER-BRIEF.md` into
    it with `<run>`, `<scoring>` (the metric's path) and `<plugin>`
    (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch
@@ -26,7 +26,7 @@ the Card columns of the `## Adds` tables in `nonlands.md` and `lands.md`
    agent). Scorers must not see each other's output or any existing
    `nonlands.md` or `lands.md` beyond their adds; the brief says so.
 3. When all three of a group are back:
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-score/merge.py <run> <slug>`.
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`.
    It takes the median, writes `<run>/merged/<slug>/nonlands.md` and
    `lands.md` with the Adds and Cuts tables carried over from the current
    pair and this run's scores, writes `<run>/<slug>-flagged.md` for cards
