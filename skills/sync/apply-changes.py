@@ -2,8 +2,8 @@
 usage (from the folder that holds output/): python3 skills/sync/apply-changes.py
 An In card not in the list is appended before any SIDEBOARD block (n copies from an "n copies" note, else 1) and its
 Adds row in nonlands.md or lands.md moves to that file's Cards table. An Out card in the list loses one copy (all with
-a copies note); once gone, its Cards and Cuts rows go too. Both Shape lines are recomputed. Running it twice changes
-nothing. Prints one line per changed deck: cards in, cards out."""
+a copies note); once gone, its Cards and Cuts rows go too. Both Shape lines are recomputed, each keeping its scorer
+count. Running it twice changes nothing. Prints one line per changed deck: cards in, cards out."""
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
@@ -54,7 +54,9 @@ def apply_scores(files, ins, outs):
             else: cards[k] = [r for r in cards[k] if not hit(r[0])]; drop(k, "## Cuts", hit)
     for k in sec:
         if "## Cards" in sec[k]: sec[k]["## Cards"][:] = [table(CARDS, ranked(cards[k], True)), ""]
-        if "## Shape" in sec[k]: sec[k]["## Shape"][:] = [shape(cards[k]), ""]
+        if "## Shape" in sec[k]:
+            n = re.search(r", (\d+) scorers?\.", "".join(sec[k]["## Shape"]))  # the scorer count the line carried
+            sec[k]["## Shape"][:] = [shape(cards[k], n and int(n.group(1))), ""]
     return {k: join(s) for k, s in secs.items()}
 
 def main():
