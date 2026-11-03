@@ -1,5 +1,6 @@
+from pathlib import Path
 import pytest
-from conftest import run
+from conftest import run, read
 import fetch_rules
 
 
@@ -56,3 +57,20 @@ def test_a_rules_page_with_no_link_exits_naming_it(monkeypatch):
     monkeypatch.setattr(fetch_rules, "get", lambda url: b"<html>moved</html>")
     with pytest.raises(SystemExit, match="^https://magic.wizards.com/en/rules: no link to the Comprehensive Rules .txt$"):
         fetch_rules.main()
+
+
+def test_the_rules_decode_from_utf8_or_windows_1252():
+    assert fetch_rules.decode(b"\xef\xbb\xbfRules\r\nline\r") == "Rules\nline\n"
+    assert fetch_rules.decode(b"\x93Rules\x94\r\n") == "\u201cRules\u201d\n"
+    assert fetch_rules.effective(read("output/data/rules.txt")) == "September 25, 2026"
+
+
+def test_rules_from_the_same_link_are_kept(monkeypatch, capsys):
+    link = "https://media.wizards.com/2026/downloads/MagicCompRules 20260925.txt"
+    Path("output/data/rules.txt").write_text(f"Source: {link.replace(' ', '%20')}\n" + read("output/data/rules.txt"))
+    before = read("output/data/rules.txt")
+    pages = {fetch_rules.PAGE: f'<a class="x" href="{link}">TXT</a> <a href="/rules.pdf">PDF</a>'.encode()}
+    monkeypatch.setattr(fetch_rules, "get", pages.__getitem__)
+    fetch_rules.main()
+    assert capsys.readouterr().out == "Comprehensive Rules effective September 25, 2026 (already current)\n"
+    assert read("output/data/rules.txt") == before

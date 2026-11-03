@@ -106,6 +106,21 @@ def test_empty_band_left_out(sheet):
     assert [head for head, _ in sheet.bands("zara")] == ["Nonland adds", "Nonland cuts", "Land adds"]
 
 
+def test_an_image_comes_from_the_cache_or_is_fetched_into_it(sheet, monkeypatch):
+    Path("output/data/images").mkdir()
+    Image.new("RGB", (10, 14), "red").save("output/data/images/Deep Current.jpg")
+    img = sheet.image("Deep Current")
+    assert (img.mode, img.size) == ("RGB", (sheet.W, sheet.H)) and img.getpixel((sheet.W // 2, sheet.H // 2))[0] > 200
+    blue = Path("blue.jpg")
+    Image.new("RGB", (10, 14), "blue").save(blue)
+    face = {"data": [{"card_faces": [{"image_uris": {"normal": "front.jpg"}}, {"image_uris": {"normal": "back.jpg"}}]}]}
+    monkeypatch.setattr(sheet, "found", lambda url: face if "Rising" in url else None)
+    monkeypatch.setattr(sheet, "get", {"front.jpg": blue.read_bytes()}.__getitem__)
+    assert sheet.image("Rising Tide").getpixel((sheet.W // 2, sheet.H // 2))[2] > 200
+    assert Path("output/data/images/Rising Tide.jpg").read_bytes() == blue.read_bytes()
+    assert sheet.image("No Such Card") is None
+
+
 def test_band_layout_with_stub_images(sheet, monkeypatch, capsys):
     colour = {"A": "red", "B": "green", "C": "blue", "D": "yellow"}
     monkeypatch.setattr(sheet, "image", lambda n: Image.new("RGB", (sheet.W, sheet.H), colour[n]) if n in colour else None)

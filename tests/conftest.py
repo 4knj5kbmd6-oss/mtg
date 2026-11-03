@@ -9,6 +9,12 @@ sys.path[:0] = [str(ROOT / "lib"), *sorted(str(p) for p in (ROOT / "skills").ite
 
 
 @pytest.fixture(autouse=True)
+def offline(monkeypatch):
+    """urllib, in a test and in every run() subprocess, goes through a proxy that refuses, so no test reaches a server"""
+    for name in ("http_proxy", "https_proxy"): monkeypatch.setenv(name, "http://127.0.0.1:9")
+
+
+@pytest.fixture(autouse=True)
 def project(tmp_path, monkeypatch):
     """the fixture project, copied and made the working directory"""
     home = tmp_path / "project"

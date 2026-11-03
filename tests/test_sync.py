@@ -1,10 +1,11 @@
-import json, sys
+import gzip, json
 from pathlib import Path
 import pytest
-from conftest import run, read, snapshot
-import fetch_oracle, sync
+from conftest import ROOT, run, read, snapshot
+import fetch_oracle, project, sync
 
 LIST = "output/decks/zara/list.txt"
+MOX = ROOT / "tests" / "moxfield" / "mox.json"  # fetch.js's answer: Zara, a new deck, two decks sync skips, a blocked one
 
 
 def test_changes_in_and_out():
@@ -96,16 +97,96 @@ def test_a_failed_save_leaves_oracle_json(monkeypatch):
     assert read("output/data/oracle.json") == before
 
 
-def test_sync_names_each_deck_whose_list_changed(tmp_path, monkeypatch, capsys):
-    listing = [{"publicId": "z1", "name": "Zara", "format": "commander", "visibility": "public"},
-               {"publicId": "n1", "name": "New Deck", "format": "commander", "visibility": "public"}]
-    deck = lambda *cards: {"name": "-", "commanders": [cards[0]], "mainboard": list(cards[1:]), "sideboard": [], "tokens": []}
-    zara = read(LIST).split("SIDEBOARD:")[0].strip().splitlines()
-    dump = {"user": "owner", "listing": listing, "decks": {"z1": deck(zara[0], *zara[2:]), "n1": deck("1 Newcomer", "1 Sol Ring")}}
+UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync"
+
+
+def test_sync_adds_a_deck_and_leaves_blocked_and_stale_ones():
+    Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara", "b1": "blocked", "s1": "stale"}}))
+    out = run("skills/sync/sync.py", str(MOX))
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.splitlines() == ["added: krakens (k1)", f"blocked: blocked (Cloudflare challenge); {UNBLOCK}",
+                                       "not in the dump: stale", "zara: in Deep Current; Pearl Diver | out Wave Breaker",
+                                       "rescore: krakens", "rescore: zara",
+                                       "not refreshed: blocked, stale (tokens.md left as it was)"]
+    assert json.loads(read("moxfield.json")) == {"user": "owner", "decks": {"z1": "zara", "b1": "blocked", "s1": "stale",
+                                                                          "k1": "krakens"}, "seen": ["b1", "k1", "s1", "z1"]}
+    assert read("output/decks/krakens/list.txt") == "1 Kraken Lord\n\n9 Island\n1 Sol Ring\n\nSIDEBOARD:\n1 Spare Card\n"
+    assert not Path("output/decks/blocked").exists() and not Path("output/data/tokens.md").exists()
+
+
+def test_sync_writes_tokens_once_every_deck_came_back():
     Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara"}}))
-    Path("mox.json").write_text(json.dumps(dump))
-    monkeypatch.setattr(sys, "argv", ["sync.py", "mox.json"])
-    sync.main()
-    assert [l for l in capsys.readouterr().out.splitlines() if l.startswith("rescore")] == ["rescore: new", "rescore: zara"]
-    sync.main()
-    assert "rescore" not in capsys.readouterr().out
+    assert run("skills/sync/sync.py", str(MOX)).returncode == 0
+    assert read("output/data/tokens.md") == """# Tokens
+
+| Token | P/T | Colors | Type | Decks |
+|---|---|---|---|---|
+| Treasure |  | - | Token Artifact — Treasure | krakens |
+| Fish | 1/1 | U | Token Creature — Fish | krakens, zara |
+"""
+    again = run("skills/sync/sync.py", str(MOX))
+    assert "rescore" not in again.stdout and "added" not in again.stdout
+
+
+PLAIN = ["Brine Elemental", "Coral Signet", "Deep Current", "Island", "Kelp Weaver", "Misty Cove", "Sol Ring",
+         "Sunken Grotto", "Tidal Insight", "Tidepool Ruins", "Wave Breaker", "Zara, Tide Caller"]
+TIDE = {"name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
+        "legalities": {"commander": "legal", "modern": "legal"}, "prices": {"usd": "1"},
+        "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant", "artist": "-"},
+                       {"name": "Tidal Flats", "type_line": "Land"}],
+        "all_parts": [{"component": "token", "name": "Fish"}, {"component": "combo_piece", "name": "Rising Tide"}]}
+
+
+def scryfall(posts):
+    """Scryfall's collection, bulk-data and rulings answers. A double-faced card is found only by its front face, and
+    Sign in Blood only when posted alone (in a batch it comes back as neither found nor not found)."""
+    def get(url, body=None):
+        if body:
+            names = [i["name"] for i in body["identifiers"]]
+            posts.append(names)
+            card = lambda n: TIDE if n == "Rising Tide" else {"name": n, "oracle_id": n, "type_line": "Instant",
+                                                               "legalities": {"commander": "legal"}}
+            data = [card(n) for n in names if n in PLAIN + ["Rising Tide"] or names == ["Sign in Blood"]]
+            lost = [{"name": n} for n in names if n not in PLAIN + ["Rising Tide", "Sign in Blood"]]
+            return json.dumps({"data": data, "not_found": lost}).encode()
+        if url.endswith("/bulk-data"):
+            return json.dumps({"data": [{"type": "oracle_cards"}, {"type": "rulings", "jsonl_download_uri": "rulings"}]}).encode()
+        assert url == "rulings"
+        return gzip.compress(b'{"oracle_id": "tide", "published_at": "2024-02-01", "comment": "Second."}\n'
+                             b'{"oracle_id": "tide", "published_at": "2023-01-01", "comment": "First."}\n')
+    return get
+
+
+def test_rebuild_retries_double_faced_cards_by_front_face_and_lone_names_alone(monkeypatch, capsys):
+    with open(LIST, "a") as f: f.write("1 Rising Tide // Tidal Flats\n1 Sign in Blood\n1 Not A Card\n")
+    posts = []
+    monkeypatch.setattr(fetch_oracle, "get", scryfall(posts))
+    fetch_oracle.rebuild()
+    names = fetch_oracle.card_names()
+    assert posts == [names, ["Rising Tide"], ["Not A Card"], ["Sign in Blood"]]
+    assert capsys.readouterr().out == (f"{len(names)} requested, 14 saved; missing: ['Not A Card']\n"
+                                       "game changers: ['Rising Tide // Tidal Flats']\n")
+    cards = json.loads(read("output/data/oracle.json"))["cards"]
+    assert sorted(cards) == sorted(PLAIN + ["Rising Tide // Tidal Flats", "Sign in Blood"])
+    assert cards["Rising Tide // Tidal Flats"] == {
+        "name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
+        "legalities": {"commander": "legal"}, "related_tokens": ["Fish"], "rulings": ["First.", "Second."],
+        "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
+                       {"name": "Tidal Flats", "type_line": "Land"}]}
+    assert cards["Sol Ring"]["rulings"] == []
+
+
+def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
+    before = json.loads(read("output/data/oracle.json"))["cards"]
+    wave = {"name": "Tidal Wave", "type_line": "Sorcery", "legalities": {"commander": "legal"}, "rulings_uri": "wave-rulings"}
+    asked = []
+    def found(url):
+        asked.append(url)
+        return wave if url == project.NAMED + "Tidal%20Wave" else None
+    monkeypatch.setattr(project, "found", found)
+    monkeypatch.setattr(project, "get", lambda url: b'{"data": [{"comment": "It waves."}]}' if url == "wave-rulings" else None)
+    assert fetch_oracle.add(["sol ring", "Tidal Wave", "Nothing Card"]) == ["Nothing Card"]
+    assert asked == [project.NAMED + "Tidal%20Wave", project.NAMED + "Nothing%20Card"]
+    assert json.loads(read("output/data/oracle.json"))["cards"] == {**before, "Tidal Wave": {
+        "name": "Tidal Wave", "type_line": "Sorcery", "legalities": {"commander": "legal"}, "related_tokens": [],
+        "rulings": ["It waves."]}}

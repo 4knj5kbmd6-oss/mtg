@@ -1,0 +1,25 @@
+{
+  "user": "owner",
+  "listing": [
+    {"publicId": "z1", "name": "Zara, Tide Caller", "format": "commander", "visibility": "public"},
+    {"publicId": "k1", "name": "The Kraken's Deep", "format": "commanderPrecons", "visibility": "public"},
+    {"publicId": "p1", "name": "Secret Brew", "format": "commander", "visibility": "private"},
+    {"publicId": "m1", "name": "Modern Burn", "format": "modern", "visibility": "public"}
+  ],
+  "decks": {
+    "z1": {"name": "Zara, Tide Caller", "created": "2025-01-01T00:00:00Z", "updated": "2025-06-01T00:00:00Z",
+           "commanders": ["1 Zara, Tide Caller"],
+           "mainboard": ["1 Brine Elemental", "1 Coral Signet", "4 Island", "1 Kelp Weaver", "1 Misty Cove", "1 Sol Ring",
+                         "1 Sunken Grotto", "1 Tidal Insight", "1 Wave Breaker"],
+           "sideboard": [],
+           "tokens": [{"name": "Fish", "colors": ["U"], "pt": "1/1", "type": "Token Creature — Fish", "text": ""},
+                      {"name": "Zara, Tide Caller", "colors": ["U"], "pt": "3/3", "type": "Legendary Creature — Merfolk", "text": ""}]},
+    "k1": {"name": "The Kraken's Deep", "created": "2026-01-01T00:00:00Z", "updated": "2026-02-01T00:00:00Z",
+           "commanders": ["1 Kraken Lord"],
+           "mainboard": ["9 Island", "1 Sol Ring"],
+           "sideboard": ["1 Spare Card"],
+           "tokens": [{"name": "Fish", "colors": ["U"], "pt": "1/1", "type": "Token Creature — Fish", "text": ""},
+                      {"name": "Treasure", "colors": [], "pt": "", "type": "Token Artifact — Treasure", "text": "Sacrifice this artifact: Add one mana of any color."}]},
+    "b1": {"status": 403, "body": "<html><title>Just a moment...</title></html>"}
+  }
+}

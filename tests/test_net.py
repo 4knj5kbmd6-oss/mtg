@@ -47,3 +47,23 @@ def test_another_http_error_is_raised_as_it_came(monkeypatch):
         net.get(URL)
     assert net.found(URL) is None
     assert len(calls) == 2
+
+
+def test_requests_are_paced_and_carry_the_tools_headers(monkeypatch):
+    calls = answers(monkeypatch, b"{}", b"{}")
+    waits = []
+    monkeypatch.setattr(net.time, "sleep", waits.append)
+    monkeypatch.setattr(net, "last", 0.0)
+    net.get(URL)
+    net.get("https://backend.commanderspellbook.com/estimate-bracket/", {"commanders": []})
+    assert waits[0] == 0 and 0.09 < waits[1] <= 0.1
+    (get, _), (post, _) = calls
+    assert (get.get_method(), get.data) == ("GET", None)
+    assert get.headers == {"User-agent": "mtg-toolbox", "Accept": "application/json;q=0.9,*/*;q=0.8"}
+    assert (post.get_method(), post.data) == ("POST", b'{"commanders": []}')
+    assert post.headers == {**get.headers, "Content-type": "application/json"}
+
+
+def test_no_test_reaches_the_network():
+    with pytest.raises(net.Failed, match="^https://api.scryfall.com/bulk-data: "):
+        net.get("https://api.scryfall.com/bulk-data")
