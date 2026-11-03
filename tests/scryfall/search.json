@@ -1,0 +1,120 @@
+{
+ "object": "list",
+ "total_cards": 44,
+ "has_more": false,
+ "warnings": [
+  "Invalid expression “foo:bar” was ignored. Unknown keyword “foo”."
+ ],
+ "data": [
+  {
+   "object": "card",
+   "name": "Archaeomancer's Spade",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Atarka Monument",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Birgi, God of Storytelling // Harnfel, Horn of Bounty",
+   "type_line": "Legendary Creature — God // Legendary Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Boros Cluestone",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Boros Keyrune",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Boros Locket",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Boros Signet",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Brass's Tunnel-Grinder // Tecutlan, the Searing Rift",
+   "type_line": "Legendary Artifact // Legendary Land — Cave"
+  },
+  {
+   "object": "card",
+   "name": "Carnelian Orb of Dragonkind",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Coal Golem",
+   "type_line": "Artifact Creature — Golem"
+  },
+  {
+   "object": "card",
+   "name": "Cursed Mirror",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Dowsing Device // Geode Grotto",
+   "type_line": "Artifact // Land — Cave"
+  },
+  {
+   "object": "card",
+   "name": "Fire Diamond",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Firewild Borderpost",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Foriysian Totem",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Glittering Stockpile",
+   "type_line": "Artifact — Treasure"
+  },
+  {
+   "object": "card",
+   "name": "Great Furnace",
+   "type_line": "Artifact Land"
+  },
+  {
+   "object": "card",
+   "name": "Gruul Cluestone",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Gruul Keyrune",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Gruul Locket",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Gruul Signet",
+   "type_line": "Artifact"
+  },
+  {
+   "object": "card",
+   "name": "Heart of Ramos",
+   "type_line": "Artifact"
+  }
+ ]
+}

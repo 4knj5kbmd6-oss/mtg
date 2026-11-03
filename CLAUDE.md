@@ -15,7 +15,7 @@ authoritative: it overrides anything inferred from the list.
 
 Procedures are skills in `skills/`, each with its scripts beside it; the
 agents they dispatch are in `agents/`: `sync`, `score`, `upgrades`, `cart`,
-`judge`.
+`judge`, `scryfall`.
 
 The repo is the `mtg-deckhand` plugin: the skills and agents load from an installed plugin or with
 `claude --plugin-dir .`, and run from the folder that holds `output/`.

@@ -62,8 +62,8 @@ Core (tracked):
 | Path | What |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
-| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge` and `shopper` |
-| [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge` |
+| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge`, `librarian` and `shopper` |
+| [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge`, `scryfall` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 | [`tests/`](tests/) | The scripts' tests, run on a fixture project |
 | [`.github/`](.github/) | Issue templates and the test workflow |
@@ -87,6 +87,7 @@ Your output, all under `output/` (gitignored):
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts), `changes.png` (an image of every add and cut) |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings) and `tokens.md` |
 | `data/rules.txt`, `data/rules-index.md` | The Comprehensive Rules and their section headings, for `/judge` |
+| `data/scryfall-syntax.md` | Scryfall's search reference, one section per docs page, for `/scryfall` |
 | `carts/` | One report per cart |
 
 ## Contributing
