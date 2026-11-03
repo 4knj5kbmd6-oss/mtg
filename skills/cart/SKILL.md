@@ -28,10 +28,11 @@ in, enter credentials or payment details, or check out: the owner does that.
    review. If the buyer changes the deck or exclusions, update the list.
 3. Ask the app to keep the Mac awake (`request_keep_awake`, `session_idle`);
    a sleep mid-run kills a build.
-4. Dispatch one `commander-deckhand:shopper`, `run_in_background` in the
-   folder that holds `output/`, its prompt giving the canonical list's path,
-   the requirements and the report path `output/carts/<date>-<name>.md`;
-   `model` from `settings.json`, beside `output/`, is passed only when it
-   differs from the default `claude-opus-5-5`, the agent's own.
+4. Read `settings.json` through `settings.py`
+   (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
+   agent with `model` only when it differs from the agent's own. Dispatch
+   one `commander-deckhand:shopper`, `run_in_background` in the folder that
+   holds `output/`, its prompt giving the canonical list's path, the
+   requirements and the report path `output/carts/<date>-<name>.md`.
 5. Verify the live cart totals yourself before reporting. Once the owner
    says the cart was bought, clear `unowned` from the rows it bought.

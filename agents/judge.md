@@ -13,7 +13,8 @@ rulings (`card.py`'s output), and the Comprehensive Rules that bear on it
 (`rule.py`'s output).
 
 Answer the question from those texts: the cards' oracle text, their official
-rulings, and the Comprehensive Rules, which govern. For more, run
+rulings, and the Comprehensive Rules, which govern. Rules facts may be
+resolved from oracle text. For more, run
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py`: `702.87` prints a rule
 with its subrules, `--find word ...` lists the rules holding every word,
 `--glossary term` prints a glossary entry; and

@@ -1,8 +1,8 @@
 """Print Comprehensive Rules from output/data/rules.txt, which fetch-rules.py writes. Reads only; never fetches.
 usage (from the folder that holds output/):
-  python3 skills/judge/rule.py 800.4a [704.5 ...]      each rule with its subrules (800 prints every rule under 800)
-  python3 skills/judge/rule.py --find word [word ...]  number and first 100 characters of each rule holding every word
-  python3 skills/judge/rule.py --glossary term         the glossary entry for term"""
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py 800.4a [704.5 ...]      each rule with its subrules (800 prints every rule under 800)
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py --find word [word ...]  number and first 100 characters of each rule holding every word
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py --glossary term         the glossary entry for term"""
 import re, sys
 from pathlib import Path
 

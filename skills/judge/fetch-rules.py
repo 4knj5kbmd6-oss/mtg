@@ -1,16 +1,15 @@
 """Fetch the current Comprehensive Rules into output/data/rules.txt and write their headings to output/data/rules-index.md.
-usage (from the folder that holds output/): python3 skills/judge/fetch-rules.py
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/fetch-rules.py
 The rules file is the .txt linked from Wizards' rules page. The index heads with the rules' effective date and the
 file's link, so a later run downloads only when the page links a different, newer file. Prints the effective date."""
-import re, urllib.parse, urllib.request
+import re, sys, urllib.parse
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
+from merge import get
 
 PAGE = "https://magic.wizards.com/en/rules"
 RULES, INDEX = Path("output/data/rules.txt"), Path("output/data/rules-index.md")
 HEADING = re.compile(r"\d\. |\d{3}\. ")   # 1. Game Concepts, 100. General
-
-def get(url):
-    return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "mtg-judge/1.0"})).read()
 
 def decode(raw):
     """the file's text, UTF-8 (with or without a BOM) or else Windows-1252, with \\n line ends"""

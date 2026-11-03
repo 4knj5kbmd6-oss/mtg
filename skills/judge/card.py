@@ -1,17 +1,15 @@
-"""Print each named card's oracle text and Scryfall rulings, for the judge's brief.
-usage (from the folder that holds output/): python3 skills/judge/card.py "Card Name" [...]
+"""Print each named card's oracle text and Scryfall rulings, for the judge agent.
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/card.py "Card Name" [...]
 A name matches output/data/oracle.json case-insensitively, as a full name, else the front face of a Front // Back
 card, else its back face; a card not there is fetched singly from Scryfall by exact name, with its rulings."""
-import json, sys, urllib.parse, urllib.request
+import json, sys, urllib.parse
 from urllib.error import HTTPError
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
+from merge import get, SCRYFALL
 
 ORACLE = Path("output/data/oracle.json")
-NAMED = "https://api.scryfall.com/cards/named?exact="
-
-def get(url):
-    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "mtg-judge/1.0"})
-    return json.load(urllib.request.urlopen(req))
+NAMED = f"{SCRYFALL}/cards/named?exact="
 
 def card(name, oracle):
     """name's oracle entry, else Scryfall's card with its rulings; None if Scryfall has no such card"""
@@ -19,11 +17,11 @@ def card(name, oracle):
     for matches in (lambda n: n == want, lambda n: n.split(" // ")[0] == want, lambda n: want in n.split(" // ")[1:]):
         for n, e in oracle.items():
             if matches(n.casefold()): return e
-    try: c = get(NAMED + urllib.parse.quote(name))
+    try: c = json.loads(get(NAMED + urllib.parse.quote(name)))
     except HTTPError as e:
         if e.code == 404: return None
         raise
-    return {**c, "rulings": [r["comment"] for r in get(c["rulings_uri"])["data"]]}
+    return {**c, "rulings": [r["comment"] for r in json.loads(get(c["rulings_uri"]))["data"]]}
 
 def text(c):
     """each face's name and cost, type and stats, and oracle text, then the rulings"""

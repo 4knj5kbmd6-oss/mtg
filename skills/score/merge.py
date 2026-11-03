@@ -1,18 +1,27 @@
 """Merge the scorers' files to a deck's nonlands.md and lands.md: median and spread flags.
-usage (from the folder that holds output/): python3 skills/score/merge.py <run_dir> <slug>
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run_dir> <slug>
 reads every <run_dir>/<slug>-<LETTER>.md, one per scorer, the deck title from output/decks/<slug>/plan.md
-and the Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
-writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their shape lines with the count of scorers,
-and, with two or more scorers, <run_dir>/<slug>-flagged.md; prints the whole deck's shape line to
-stderr. One scorer's scores stand as they are: no spread, no flags. The deck-file helpers here are shared with upgrades/apply.py and
-sync/apply-changes.py."""
-import re, sys, json, statistics
+(from list.txt's first line when the plan is empty) and the Adds and Cuts tables from
+output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their
+shape lines with the count of scorers, and, with two or more scorers, <run_dir>/<slug>-flagged.md; prints the
+whole deck's shape line to stderr. One scorer's scores stand as they are: no spread, no flags."""
+import re, sys, json, statistics, time, urllib.request
 from pathlib import Path
 CARDS = "| Card | Score | Note |"
 ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
 KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
+SCRYFALL, UA = "https://api.scryfall.com", "commander-deckhand"
+last = 0.0
+
+def get(url, body=None):
+    """the response body to a GET of url, or a POST of body as JSON, at least 100 ms after the previous request"""
+    global last
+    time.sleep(max(0, last + 0.1 - time.monotonic()))
+    head = {"User-Agent": UA, "Accept": "application/json;q=0.9,*/*;q=0.8"} | ({"Content-Type": "application/json"} if body else {})
+    try: return urllib.request.urlopen(urllib.request.Request(url, body and json.dumps(body).encode(), head)).read()
+    finally: last = time.monotonic()
 
 def split(text):
     """[heading, lines] pairs, the title block first under heading None; join() undoes it"""
@@ -32,6 +41,10 @@ def cells(lines):
 def key(name):
     """name for matching across files: no count or parenthetical, front face only"""
     return re.sub(r"^\d+\s+|\s*(\(.*\)|[x×]\s*\d+)$", "", name.strip()).split(" // ")[0].strip()
+
+def match(name):
+    """test for a list line or table cell naming this card, by front face"""
+    k = key(name).lower(); return lambda s: key(s).lower() == k
 
 def table(head, rows):
     return "\n".join([head, "|" + "---|" * (head.count("|") - 1)] + ["| " + " | ".join(r) + " |" for r in rows])
@@ -85,7 +98,8 @@ def main():
     if len(sys.argv) != 3: sys.exit(__doc__)
     raw, slug = sys.argv[1], sys.argv[2]
     deck = Path(f"output/decks/{slug}")
-    title = re.sub(r"^#\s*|:\s*plan\s*$", "", (deck / "plan.md").read_text().splitlines()[0])
+    plan = (deck / "plan.md").read_text().strip()
+    title = re.sub(r"^#\s*|:\s*plan\s*$", "", plan.splitlines()[0]) if plan else norm((deck / "list.txt").read_text().splitlines()[0])
     files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
     if not files: sys.exit(f"no scorer files {raw}/{slug}-<LETTER>.md")
     letters, scorers = [p.stem[-1] for p in files], [parse(p) for p in files]
@@ -96,7 +110,7 @@ def main():
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
         if max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
         secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
-    cur = [p for p in (deck / f"{k}.md" for k in KINDS) if p.exists()] or [p for p in [deck / "scores.md"] if p.exists()]
+    cur = [p for p in (deck / f"{k}.md" for k in KINDS) if p.exists()]
     old = [dict(split(p.read_text())) for p in cur]
     rest = {k: [] for k in KINDS}
     if any("## Adds" in o for o in old):  # research metadata and order stay; scores, add notes and cut scores are this run's

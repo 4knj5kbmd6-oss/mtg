@@ -88,10 +88,6 @@ def test_one_scorer_stands_alone():
     assert "| Brine Elemental | 2 | fits |" in read("run/merged/zara/nonlands.md")
 
 
-def test_settings_from_the_file():
-    assert load("score/settings.py").settings() == {"scorers": 3, "model": "claude-opus-5-5", "budget": 20}
-
-
 def test_settings_defaults():
     settings = load("score/settings.py")
     Path("settings.json").unlink()

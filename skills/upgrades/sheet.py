@@ -1,30 +1,22 @@
 """Write each deck's changes sheet: an image of every suggested add and cut, as output/decks/<slug>/changes.png.
-usage (from the folder that holds output/): python3 skills/upgrades/sheet.py [slug ...]   (no slug: every deck)
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py [slug ...]   (no slug: every deck)
 Four bands top to bottom, each a plain heading over its cards in table order: nonland adds, nonland cuts
 (nonlands.md), land adds, land cuts (lands.md); a band with no rows is left out. The bands share one column
 count, the one that makes the sheet's longer side shortest. A card's image is Scryfall's normal image of its
 earliest paper printing (front face of a double-faced card), cached as output/data/images/<name>.jpg so a
 later run fetches only new cards. A card Scryfall does not find is printed and left a blank slot."""
-import json, sys, time, urllib.parse, urllib.request
+import json, sys, urllib.parse
 from urllib.error import HTTPError
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, cells, key, KINDS
+from merge import split, cells, key, get, SCRYFALL, KINDS
 DECKS, CACHE = Path("output/decks"), Path("output/data/images")
-SEARCH = "https://api.scryfall.com/cards/search?q="
+SEARCH = f"{SCRYFALL}/cards/search?q="
 BANDS = (("Nonland adds", "nonlands", "## Adds"), ("Nonland cuts", "nonlands", "## Cuts"),
          ("Land adds", "lands", "## Adds"), ("Land cuts", "lands", "## Cuts"))
 W, H, GAP, HEAD = 488, 680, 12, 72
 FONT = ImageFont.load_default(48)
-last = 0.0
-
-def get(url):
-    """the body at url, fetched at least 100 ms after the previous request"""
-    global last
-    time.sleep(max(0, last + 0.1 - time.monotonic()))
-    try: return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "mtg-sheet/1.0", "Accept": "*/*"})).read()
-    finally: last = time.monotonic()
 
 def image(name):
     """the image of name's earliest paper printing, from the cache or fetched into it; None if Scryfall has no such card"""

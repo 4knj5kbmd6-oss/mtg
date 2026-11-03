@@ -2,10 +2,12 @@
 for every deck there that came back as deck data and output/data/tokens.md once every deck did, drop the rows of
 changes.md the dump shows landed, except those noted unowned, then run apply-changes.py so every list is the
 intended deck again. A deck that came back as anything else (Cloudflare's challenge page, an error) is left as it was.
-usage (from the folder that holds output/): python3 skills/sync/sync.py mox.json
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw): {"user", "listing", "decks"}."""
 import json, os, re, sys, subprocess, unicodedata
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
+from merge import cells, match
 
 MOXFIELD, CHANGES = Path("moxfield.json"), Path("changes.md")
 UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync"
@@ -50,29 +52,22 @@ def tokens(decks):
             key = (t["name"], "".join(sorted(t["colors"] or [])), t["pt"], t["type"], t["text"])
             uniq.setdefault(key, {**t, "decks": set()})["decks"].add(slug)
     rows = sorted(uniq.values(), key=lambda e: (e["type"], e["name"], e["pt"]))
-    out = ["# Tokens", "", "Every token created by a card in the owned decks, from Moxfield's Tokens tab. Emblems and helper cards are left out.", "", "| Token | P/T | Colors | Type | Decks |", "|---|---|---|---|---|"]
+    out = ["# Tokens", "", "| Token | P/T | Colors | Type | Decks |", "|---|---|---|---|---|"]
     out += [f"| {e['name']} | {e['pt']} | {''.join(sorted(e['colors'] or [])) or '-'} | {e['type']} | {', '.join(sorted(e['decks']))} |" for e in rows]
     return "\n".join(out) + "\n"
 
-def names(lines):
-    """every card name and face in a list, lowercased"""
-    out = set()
-    for l in lines:
-        qty, _, name = l.partition(" ")
-        if qty.isdigit() and name.strip():
-            name = name.strip().lower()
-            out |= {name, *(f.strip() for f in name.split("//"))}
-    return out
-
 def drop_landed(dumped):
-    """remove the rows of changes.md that the dumped lists show landed, except unowned ones; print each"""
+    """remove the rows of changes.md that the dumped lists show landed (In card in the deck or In blank, Out card gone
+    or Out blank), except those noted unowned; print each. A card is matched by its front face, so a back face's name
+    alone never matches."""
     if not CHANGES.exists(): return
     keep, landed = [], []
     for l in CHANGES.read_text().splitlines(keepends=True):
-        c = [x.strip() for x in l.strip().strip("|").split("|")]
-        deck = names(dumped[c[0]]) if l.startswith("|") and len(c) >= 3 and c[0] in dumped else None
+        c = next(iter(cells([l])), [])
+        deck = dumped.get(c[0]) if len(c) >= 3 else None
+        has = lambda name: any(map(match(name), deck))
         unowned = len(c) > 3 and "unowned" in c[3].lower()  # still to buy: stays until the owner clears the note
-        if deck is not None and not unowned and (not c[1] or c[1].lower() in deck) and (not c[2] or c[2].lower() not in deck):
+        if deck is not None and not unowned and (not c[1] or has(c[1])) and (not c[2] or not has(c[2])):
             landed.append(c)
         else: keep.append(l)
     if landed: CHANGES.write_text("".join(keep))
@@ -105,7 +100,6 @@ def main():
     if not stale: open("output/data/tokens.md", "w").write(tokens(fetched))
     drop_landed(dumped)
     subprocess.run([sys.executable, str(Path(__file__).with_name("apply-changes.py"))], check=True)
-    print(subprocess.run(["git", "diff", "--stat"], capture_output=True, text=True).stdout or "no changes")
     if stale: print(f"not refreshed: {', '.join(stale)} (tokens.md left as it was)")
 
 if __name__ == "__main__": main()

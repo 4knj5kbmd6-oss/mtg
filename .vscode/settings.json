@@ -1,5 +1,0 @@
-{
-  "explorer.excludeGitIgnore": false,
-  "files.exclude": { ".claude/worktrees": true },
-  "search.useIgnoreFiles": false
-}

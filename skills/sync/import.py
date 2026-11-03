@@ -1,5 +1,5 @@
 """Write output/decks/<slug>/list.txt from a pasted decklist or a .txt export (Moxfield, Archidekt, MTGO or Arena text).
-usage (from the folder that holds output/): python3 skills/sync/import.py <slug> [file]   (no file: read stdin)
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/import.py <slug> [file]   (no file: read stdin)
 Counts, set codes, collector numbers, foil marks and categories are stripped. The commander is a Commander section
 (up to the next blank line) or category, else a lone block of one or two cards set apart by a blank line at the start or
 end of the list. A Sideboard or Companion section becomes the SIDEBOARD: block; maybeboards are left out. Prints the

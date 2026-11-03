@@ -1,35 +1,28 @@
 """Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt and in the
 Adds table of every output/decks/*/nonlands.md and lands.md, each card with its Scryfall rulings (the comment
 texts, oldest first) from Scryfall's bulk rulings file.
-usage (from the folder that holds output/): python3 skills/sync/fetch-oracle.py"""
-import gzip, json, re, sys, time, urllib.request
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py"""
+import gzip, json, re, sys
 from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, cells, KINDS
-API = "https://api.scryfall.com/cards/collection"
-BULK = "https://api.scryfall.com/bulk-data"
-HEADERS = {"Accept": "application/json", "User-Agent": "mtg-oracle/1.0"}
+from merge import split, cells, get, SCRYFALL, KINDS
+API = f"{SCRYFALL}/cards/collection"
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
 FACE = ["name", "mana_cost", "type_line", "oracle_text", "colors", "power", "toughness", "loyalty"]
 
 def post(names):
-    body = json.dumps({"identifiers": [{"name": n} for n in names]}).encode()
-    req = urllib.request.Request(API, data=body, headers={"Content-Type": "application/json", **HEADERS})
-    r = json.load(urllib.request.urlopen(req))
-    time.sleep(0.12)
+    r = json.loads(get(API, {"identifiers": [{"name": n} for n in names]}))
     return r["data"], [x["name"] for x in r.get("not_found", [])]
 
 def rulings():
     """oracle_id -> the comment of each of its Scryfall rulings, oldest first"""
-    get = lambda url: urllib.request.urlopen(urllib.request.Request(url, headers=HEADERS))
-    gz = next(b for b in json.load(get(BULK))["data"] if b["type"] == "rulings")["jsonl_download_uri"]
+    gz = next(b for b in json.loads(get(f"{SCRYFALL}/bulk-data"))["data"] if b["type"] == "rulings")["jsonl_download_uri"]
     out = {}
-    with gzip.open(get(gz)) as lines:
-        for r in sorted(map(json.loads, lines), key=lambda r: r["published_at"]):
-            out.setdefault(r["oracle_id"], []).append(r["comment"])
+    for r in sorted(map(json.loads, gzip.decompress(get(gz)).splitlines()), key=lambda r: r["published_at"]):
+        out.setdefault(r["oracle_id"], []).append(r["comment"])
     return out
 
 def entry(c):

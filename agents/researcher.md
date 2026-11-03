@@ -25,11 +25,7 @@ created date (the build date), updated date (the last edit) and bracket.
 - rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
-A rules question about a card you settle yourself as the judge agent's instructions,
-`${CLAUDE_PLUGIN_ROOT}/agents/judge.md`, direct, with
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/card.py "Card Name"` for its oracle text and rulings
-and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py` (`--find word ...` to locate rules, a
-number such as `702.87` for a rule and its subrules) for the Comprehensive Rules.
+Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
 
 ## What to do, per deck
 1. Read the plan, then the list.

@@ -2,7 +2,7 @@
 // Lists the user's decks, then fetches every id given and every public Commander deck listed. An answer that is not
 // JSON (Cloudflare's challenge page, an error) comes back as {status, body} for sync.py to report.
 const user = "";
-const ids = [/* "v156azYYskS5tYwPVChQyg", ... */];
+const ids = [/* "<deck id>", ... */];
 const get = async url => {
   try {
     const r = await fetch(url), body = await r.text();
@@ -23,6 +23,6 @@ for (const id of new Set([...ids, ...listed])) {
   const b = n => Object.values(d.boards?.[n]?.cards || {}).map(c => c.quantity + " " + c.card.name).sort((a, b) => a.slice(2).localeCompare(b.slice(2)));
   decks[id] = !d.boards ? d : { name: d.name, created: d.createdAtUtc, updated: d.lastUpdatedAtUtc,
     commanders: b('commanders'), mainboard: b('mainboard'), sideboard: b('sideboard'),
-    tokens: (d.tokens || []).map(t => ({ name: t.name, set: t.set, cn: t.cn, colors: t.colors, pt: t.power != null ? t.power + "/" + t.toughness : "", type: t.type_line, text: (t.oracle_text || "").slice(0, 80) })) };
+    tokens: (d.tokens || []).map(t => ({ name: t.name, colors: t.colors, pt: t.power != null ? t.power + "/" + t.toughness : "", type: t.type_line, text: (t.oracle_text || "").slice(0, 80) })) };
 }
 JSON.stringify({ user, listing, decks })

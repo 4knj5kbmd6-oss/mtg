@@ -1,5 +1,5 @@
-"""Write a planner's adds and cuts into a deck's nonlands.md and lands.md as their Adds and Cuts tables.
-usage (from the folder that holds output/): python3 skills/upgrades/apply.py <run_dir> <slug>
+"""Write the researcher's adds and cuts into a deck's nonlands.md and lands.md as their Adds and Cuts tables.
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run_dir> <slug>
 reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if output/data/oracle.json
 says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
 get "-" and the research reason; a cut gets its deck score. An add named on restricted.md or the deck's

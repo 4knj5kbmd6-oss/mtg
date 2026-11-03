@@ -1,4 +1,5 @@
 .DS_Store
+.vscode/
 .claude/worktrees/
 output
 !tests/fixture/output
