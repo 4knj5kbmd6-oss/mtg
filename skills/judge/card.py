@@ -29,7 +29,7 @@ def text(c):
 
 if __name__ == "__main__":
     oracle = json.loads(ORACLE.read_text())["cards"] if ORACLE.exists() else {}
-    found = {n: card(n, oracle) for n in sys.argv[1:]}
-    print("\n\n".join(text(c) for c in found.values() if c))
-    missing = [n for n, c in found.items() if not c]
+    got = {n: card(n, oracle) for n in sys.argv[1:]}
+    print("\n\n".join(text(c) for c in got.values() if c))
+    missing = [n for n, c in got.items() if not c]
     if missing: sys.exit(f"not on Scryfall: {', '.join(missing)}")

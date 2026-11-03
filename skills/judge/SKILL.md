@@ -6,13 +6,13 @@ argument-hint: "<question>"
 
 # judge
 
-The Comprehensive Rules are `output/data/rules.txt`, their headings
-`output/data/rules-index.md`, each card's Scryfall rulings the `rulings` key
-in `output/data/oracle.json`. The scripts run from the folder that holds
-`output/`, as `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`:
+The Comprehensive Rules are `output/data/rules.txt`, each card's Scryfall
+rulings the `rulings` key in `output/data/oracle.json`. The scripts run from
+the folder that holds `output/`, as
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`:
 
-- `fetch-rules.py` downloads the rules linked from Wizards' rules page and
-  writes the index; it downloads only when the page links a newer file.
+- `fetch-rules.py` downloads the rules linked from Wizards' rules page; it
+  downloads only when the page links a newer file.
 - `rule.py 800.4a [704.5 ...]` prints rules with their subrules;
   `rule.py --find word ...` the number and opening of every rule holding all
   the words; `rule.py --glossary term` a glossary entry.

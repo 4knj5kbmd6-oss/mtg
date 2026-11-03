@@ -4,7 +4,6 @@ texts, oldest first) from Scryfall's bulk rulings file. Given card names, instea
 lacks singly from Scryfall into it, with its rulings, every other entry as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py ["Card Name" ...]"""
 import gzip, json, re, sys
-from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
@@ -72,7 +71,7 @@ def rebuild():
             out.update({c["name"]: entry(c) for c in got})
     said = rulings()
     for e in out.values(): e["rulings"] = said.get(e.get("oracle_id"), [])
-    save({"fetched": date.today().isoformat(), "source": API, "cards": out})
+    save({"cards": out})
     fronts = {n.split(" // ")[0] for n in out}
     print(len(names), "requested,", len(out), "saved; missing:", [n for n in names if n.split(" // ")[0] not in fronts])
     print("game changers:", sorted(n for n, e in out.items() if e.get("game_changer")))

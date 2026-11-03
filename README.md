@@ -89,10 +89,6 @@ Your output, all under `output/` (gitignored):
 |---|---|
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts), `changes.png` (an image of every add and cut, redrawn by `/score` and `/upgrades`) |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings) and `tokens.md` |
-| `data/rules.txt`, `data/rules-index.md` | The Comprehensive Rules and their section headings, for `/judge` |
+| `data/rules.txt` | The Comprehensive Rules, for `/judge` |
 | `data/scryfall-syntax.md` | Scryfall's search reference, one section per docs page, for `/scryfall` |
 | `carts/` | One report per cart |
-
-## Contributing
-
-[CONTRIBUTING.md](CONTRIBUTING.md) has how work is proposed and landed.
