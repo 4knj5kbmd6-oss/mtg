@@ -14,7 +14,7 @@ prompt carries only the per-run inputs named below.
 1. Get each deck's `created` and `updated` (the `/sync` fetch returns
    them) and its bracket from `rankings.md`.
 2. Make a fresh scratchpad folder `<run>/`. Dispatch one
-   `commander-deckhand:researcher` per colour-sharing group of two or three
+   `edhtool:researcher` per colour-sharing group of two or three
    decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`) and the
    group's decks, each slug with its commander, created and updated dates

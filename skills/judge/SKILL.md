@@ -31,7 +31,7 @@ For `/judge <question>`:
 4. Read `settings.json` through `settings.py`
    (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
    agent with `model` only when it differs from the agent's own. Dispatch
-   one `commander-deckhand:judge`, `run_in_background` in the folder that
+   one `edhtool:judge`, `run_in_background` in the folder that
    holds `output/`, its prompt giving the question, card.py's output and
    rule.py's output.
 5. Give its answer in chat. Nothing is written to `output/`.

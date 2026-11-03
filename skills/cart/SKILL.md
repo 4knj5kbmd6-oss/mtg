@@ -31,7 +31,7 @@ in, enter credentials or payment details, or check out: the owner does that.
 4. Read `settings.json` through `settings.py`
    (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
    agent with `model` only when it differs from the agent's own. Dispatch
-   one `commander-deckhand:shopper`, `run_in_background` in the folder that
+   one `edhtool:shopper`, `run_in_background` in the folder that
    holds `output/`, its prompt giving the canonical list's path, the
    requirements and the report path `output/carts/<date>-<name>.md`.
 5. Verify the live cart totals yourself before reporting. Once the owner

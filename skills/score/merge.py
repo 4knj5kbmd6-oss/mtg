@@ -12,7 +12,7 @@ ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
 KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
-SCRYFALL, UA = "https://api.scryfall.com", "commander-deckhand"
+SCRYFALL, UA = "https://api.scryfall.com", "edhtool"
 last = 0.0
 
 def get(url, body=None):

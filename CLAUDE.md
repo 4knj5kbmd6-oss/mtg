@@ -17,7 +17,7 @@ Procedures are skills in `skills/`, each with its scripts beside it; the
 agents they dispatch are in `agents/`: `sync`, `score`, `upgrades`, `cart`,
 `judge`.
 
-The repo is the `commander-deckhand` plugin: the skills and agents load from an installed plugin or with
+The repo is the `edhtool` plugin: the skills and agents load from an installed plugin or with
 `claude --plugin-dir .`, and run from the folder that holds `output/`.
 
 ## Rules
