@@ -37,8 +37,11 @@ sections, with tokens and considering cards kept separate. Per card, buy
 `max(0, deck quantity - owned)`, then apply the exclusions. Save the list
 before shopping, with expected total copies, allowed extras labelled as
 such, and printing exceptions to review: it is the source of truth for every
-audit. "Buy what's pending" means the In column of `output/changes.md`,
-one copy per row, under the same rules as any other list. Ignore display labels such as "Foil" or "Transform" and normalize
+audit. "Buy what's pending" means every row of `output/changes.md` whose
+Note says `unowned` (optionally for one deck), its In card at the count the
+Note gives (`unowned, 10 copies`) or one copy, under the same rules as any
+other list. Once the owner says the cart was bought, the orchestrator
+clears `unowned` from those rows. Ignore display labels such as "Foil" or "Transform" and normalize
 double-faced names when comparing. If the buyer changes the deck or
 exclusions, update the list; never infer a card belongs because it is in the
 cart or Saved for later.

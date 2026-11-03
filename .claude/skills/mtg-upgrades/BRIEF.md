@@ -13,7 +13,8 @@ the repo; write your output to the scratchpad path named at the end.
 - output/rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 - output/changes.md, if present: the owner's pending swaps (Deck, In, Out, Note). A card in a
-  deck's In column is not recommended as an add for that deck; a card in its Out column is not
+  deck's In column and not yet in its list is not recommended as an add for that deck (one
+  already in the list is only noted `unowned`, still to buy); a card in its Out column is not
   listed as a cut (it is already going).
 
 ## Deck dates (Moxfield; "created" is the build date, "updated" the last edit)

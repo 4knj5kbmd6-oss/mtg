@@ -29,6 +29,8 @@ The owner's output, under `output/` (gitignored):
 - `output/rankings.md`: strength order and WotC-guideline brackets.
 - `output/changes.md`: the owner's intended swaps not yet made, one table
   (Deck, In, Out, Note) across all decks; mtg-sync drops a row once it lands.
+  A Note of `unowned` (`unowned, 10 copies` for basics) marks a card to buy,
+  possibly already in the list; the row stays until the owner clears it.
 - `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and
   `tokens.md`.
 - `output/carts/`: one report per cart.
