@@ -1,5 +1,6 @@
-"""Add the user's public Commander decks not seen before to moxfield.json, write output/decks/<slug>/list.txt
-for every deck there that came back as deck data and output/data/tokens.md once every deck did, drop the rows of
+"""Add the user's public Commander decks not seen before to moxfield.json, write output/decks/<slug>/list.txt and the
+deck's created and updated dates in moxfield.json for every deck there that came back as deck data, and
+output/data/tokens.md once every deck did, drop the rows of
 changes.md the dump shows landed, except those noted unowned, then apply changes.md with apply_changes.py so every list is the
 intended deck again, and print "rescore: <slug>" for each deck whose list.txt changed. A deck that came back as
 anything else (Cloudflare's challenge page, an error) is left as it was.
@@ -93,9 +94,8 @@ def main():
     else:
         taken = set(mox["decks"].values()) | {p.name for p in DECKS.glob("*") if p.is_dir()}
         for mid, slug in enlist(mox, dump["listing"], taken).items(): print(f"added: {slug} ({mid})")
-    MOXFIELD.write_text(json.dumps({k: mox[k] for k in ("user", "decks", "seen") if k in mox}, indent=2, ensure_ascii=False) + "\n")
 
-    fetched, dumped, stale = {}, {}, []
+    fetched, dumped, stale, dates = {}, {}, [], mox.get("dates", {})
     for mid, slug in mox["decks"].items():
         v = dump["decks"].get(mid)
         if v is None or (why := blocked(v)):
@@ -104,7 +104,11 @@ def main():
         lines = v["commanders"] + [""] + v["mainboard"] + [""]
         if v["sideboard"]: lines += ["SIDEBOARD:"] + v["sideboard"] + [""]
         fetched[slug], dumped[slug] = v, lines
+        dates[mid] = {k: v[k][:10] for k in ("created", "updated")}
         write(DECKS / slug / "list.txt", "\n".join(lines))
+    mox["dates"] = {mid: dates[mid] for mid in mox["decks"] if mid in dates}
+    MOXFIELD.write_text(json.dumps({k: mox[k] for k in ("user", "decks", "seen", "dates") if k in mox}, indent=2,
+                                   ensure_ascii=False) + "\n")
     if not stale: write(DATA / "tokens.md", tokens(fetched))
     drop_landed(dumped)
     apply_changes.main()

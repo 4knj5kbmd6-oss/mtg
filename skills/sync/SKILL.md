@@ -11,7 +11,8 @@ built-in browser pane from page context. Only public, owned decks are
 exported; theorycraft stays out. Never sign in to Moxfield. Decks are
 exported as card names only; maybeboards never. `moxfield.json`, beside
 `output/`, is the single list of Moxfield decks synced:
-`{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...]}`.
+`{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...],
+"dates": {"<id>": {"created": "<YYYY-MM-DD>", "updated": "<YYYY-MM-DD>"}}}`.
 
 Every script here runs from the folder that holds `output/`.
 

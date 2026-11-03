@@ -93,7 +93,7 @@ Your project-wide files, beside `output/` (gitignored):
 | Path | What |
 |---|---|
 | `settings.json` | Your [settings](#settings) |
-| `moxfield.json` | Your Moxfield username and the decks synced, written by `/sync <username>`; a deck you delete from it stays out |
+| `moxfield.json` | Your Moxfield username, the decks synced and each one's created and updated dates, written by `/sync <username>`; a deck you delete from it stays out |
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
 | `rankings.md` | Your decks in strength order: commander, colours, bracket, Game Changers, why, Moxfield link |

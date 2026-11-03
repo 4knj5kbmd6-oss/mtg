@@ -6,7 +6,8 @@ import pytest
 from conftest import read
 import fetch_oracle, fetch_rules, project, sync
 
-DECK = {"name": "Zara", "commanders": ["1 Zara, Tide Caller"], "mainboard": ["1 Sol Ring"], "sideboard": [],
+DECK = {"name": "Zara", "created": "2025-01-01T00:00:00Z", "updated": "2025-06-01T00:00:00Z",
+        "commanders": ["1 Zara, Tide Caller"], "mainboard": ["1 Sol Ring"], "sideboard": [],
         "tokens": [{"name": "Fish", "colors": ["U"], "pt": "1/1", "type": "Token Creature — Fish", "text": ""}]}
 RULES = "https://media.wizards.com/2025/downloads/MagicCompRules 20250101.txt"
 

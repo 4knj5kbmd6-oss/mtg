@@ -101,7 +101,9 @@ UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync
 
 
 def test_sync_adds_a_deck_and_leaves_blocked_and_stale_ones():
-    Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara", "b1": "blocked", "s1": "stale"}}))
+    old = {"created": "2024-01-01", "updated": "2024-02-01"}
+    Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara", "b1": "blocked", "s1": "stale"},
+                                                 "dates": {"z1": old, "s1": old, "gone": old}}))
     out = run("skills/sync/sync.py", str(MOX))
     assert out.returncode == 0, out.stderr
     assert out.stdout.splitlines() == ["added: krakens (k1)", f"blocked: blocked (Cloudflare challenge); {UNBLOCK}",
@@ -109,7 +111,9 @@ def test_sync_adds_a_deck_and_leaves_blocked_and_stale_ones():
                                        "rescore: krakens", "rescore: zara",
                                        "not refreshed: blocked, stale (tokens.md left as it was)"]
     assert json.loads(read("moxfield.json")) == {"user": "owner", "decks": {"z1": "zara", "b1": "blocked", "s1": "stale",
-                                                                          "k1": "krakens"}, "seen": ["b1", "k1", "s1", "z1"]}
+                                                                          "k1": "krakens"}, "seen": ["b1", "k1", "s1", "z1"],
+                                                 "dates": {"z1": {"created": "2025-01-01", "updated": "2025-06-01"}, "s1": old,
+                                                           "k1": {"created": "2026-01-01", "updated": "2026-02-01"}}}
     assert read("output/decks/krakens/list.txt") == "1 Kraken Lord\n\n9 Island\n1 Sol Ring\n\nSIDEBOARD:\n1 Spare Card\n"
     assert not Path("output/decks/blocked").exists() and not Path("output/data/tokens.md").exists()
 

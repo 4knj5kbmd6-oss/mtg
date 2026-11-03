@@ -12,9 +12,9 @@ arguments' `key=value` words for this run's settings. Dispatch every agent
 when it differs from the agent's own; its prompt carries only the per-run
 inputs named below.
 
-1. Get each deck's `created` and `updated` (run `fetch.js` as in `/sync`
-   step 1 when this session has no fetch result) and its bracket from
-   `rankings.md`.
+1. Get each deck's `created` and `updated` from `dates` in
+   `moxfield.json` and its bracket from `rankings.md`. Report each deck
+   with no dates there; its research runs with the dates unknown.
 2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
    files into it,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
