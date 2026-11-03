@@ -35,7 +35,8 @@ def apply(files, adds, cuts, land):
     old = [dict(s) for s in secs.values()]
     done = {key(r[0]): r[1:3] for o in old for r in cells(o.get("## Adds", [])) if r[1] != "-"}
     deck = {key(r[0]): r[1] for o in old for r in cells(o.get("## Cards", []))}
-    new = by_kind([[n, *done.get(key(n), ["-", why]), "Yes" if since.startswith("Yes") else "No", price]
+    known = lambda since: next((a for a in ("Yes", "No") if since.startswith(a)), "-")
+    new = by_kind([[n, *done.get(key(n), ["-", why]), known(since), price]
                    for _, n, since, why, price in cells(adds.splitlines())], land)
     cut = by_kind([[n, deck.get(key(n), "-"), why] for _, n, why in cells(cuts.splitlines())], land)
     intro = [l for l in adds.splitlines()[1:] if l.strip() and not l.startswith("|")]

@@ -26,9 +26,9 @@ CUTS = """# Zara, Tide Caller: top cuts (2026-11-02)
 """
 
 
-def research():
+def research(adds=ADDS):
     Path("run").mkdir(exist_ok=True)
-    Path("run/zara-adds.md").write_text(ADDS)
+    Path("run/zara-adds.md").write_text(adds)
     Path("run/zara-cuts.md").write_text(CUTS)
     return run("skills/upgrades/apply.py", "run", "zara")
 
@@ -62,6 +62,14 @@ def test_apply_routes_keeps_and_drops():
 | Misty Cove | 5 | Tapped land |
 """ in lands
     assert "Tundra" not in nonlands + lands and "Mana Vault" not in nonlands + lands
+
+
+def test_apply_keeps_an_unknown_new_since_built():
+    assert research(ADDS.replace("| Yes |", "| - |")).returncode == 0
+    nonlands = read("output/decks/zara/nonlands.md")
+    assert "| Deep Current | 7 | A card on every spell, stacks with Zara | - | $1.50 |" in nonlands
+    assert "| Pearl Diver | - | Cheap scry body | Yes | $0.25 |" in nonlands
+    assert "| Odd Relic | - | Price unknown | No | n/a |" in nonlands
 
 
 def test_apply_leaves_cards_and_shape():
