@@ -20,6 +20,6 @@ For `/scryfall <what to find>`:
 1. Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/fetch-syntax.py`; it
    writes the reference from scryfall.com/docs when the file is missing, or
    again with `--refresh`.
-2. Dispatch one `mtg-deckhand:librarian`, its prompt giving the request and
+2. Dispatch one `mtg-toolbox:librarian`, its prompt giving the request and
    the path `output/data/scryfall-syntax.md`.
 3. Give its answer in chat. Nothing else is written to `output/`.

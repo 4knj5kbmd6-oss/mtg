@@ -32,7 +32,7 @@ inputs named below.
    review. If the buyer changes the deck or exclusions, update the list.
 3. Ask the app to keep the Mac awake (`request_keep_awake`, `session_idle`);
    a sleep mid-run kills a build.
-4. Dispatch one `mtg-deckhand:shopper`, its prompt giving the canonical
+4. Dispatch one `mtg-toolbox:shopper`, its prompt giving the canonical
    list's path, the requirements with the four `cart` values among them, and
    the report path `output/carts/<date>-<name>.md`.
 5. Verify the live cart totals yourself before reporting. Once the owner

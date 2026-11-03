@@ -16,7 +16,7 @@ inputs named below.
    step 1 when this session has no fetch result) and its bracket from
    `rankings.md`.
 2. Make a fresh scratchpad folder `<run>/`. Dispatch one
-   `mtg-deckhand:researcher` per colour-sharing group of two or three
+   `mtg-toolbox:researcher` per colour-sharing group of two or three
    decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),
    `<quota>` and `<universes_beyond>` as `settings.py` prints them, and the

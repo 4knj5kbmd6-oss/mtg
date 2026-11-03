@@ -14,7 +14,7 @@ authoritative: it overrides anything inferred from the list.
 ## Skills
 
 Procedures are skills in `skills/`, each with its scripts beside it,
-dispatching the agents in `agents/`. The repo is the `mtg-deckhand` plugin;
+dispatching the agents in `agents/`. The repo is the `mtg-toolbox` plugin;
 [CONTRIBUTING.md](CONTRIBUTING.md) has how to run it from a clone.
 
 ## Rules

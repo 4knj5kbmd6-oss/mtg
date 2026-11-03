@@ -33,6 +33,6 @@ For `/judge <question>`:
    zones, game terms such as "leaves the battlefield" or "state-based"),
    then `rule.py <numbers>` for the rules that bear on the question and
    `rule.py --glossary` for its defined terms.
-4. Dispatch one `mtg-deckhand:judge`, its prompt giving the question,
+4. Dispatch one `mtg-toolbox:judge`, its prompt giving the question,
    card.py's output and rule.py's output.
 5. Give its answer in chat. Nothing is written to `output/`.

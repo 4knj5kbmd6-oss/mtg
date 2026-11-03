@@ -17,7 +17,7 @@ ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
 KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
-SCRYFALL, UA = "https://api.scryfall.com", "mtg-deckhand"
+SCRYFALL, UA = "https://api.scryfall.com", "mtg-toolbox"
 SEARCH = f"{SCRYFALL}/cards/search?q="
 ORACLE = Path("output/data/oracle.json")
 CHALLENGE = re.compile(r"cf[-_]chl|challenge-platform|Just a moment")

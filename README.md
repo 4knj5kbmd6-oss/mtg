@@ -1,4 +1,4 @@
-# mtg-deckhand
+# mtg-toolbox
 
 A rules judge and tooling for your Commander decks, run by Claude Code
 skills: a 0 to 10 fit score for every card in a deck, ranked adds and cuts, a
@@ -11,11 +11,11 @@ In Claude Code:
 
 ```
 /plugin marketplace add 4knj5kbmd6-oss/mtg
-/plugin install mtg-deckhand
+/plugin install mtg-toolbox
 ```
 
 Or in one step from a shell:
-`claude plugin install mtg-deckhand --marketplace 4knj5kbmd6-oss/mtg`.
+`claude plugin install mtg-toolbox --marketplace 4knj5kbmd6-oss/mtg`.
 
 The skills read and write `output/` in the folder you open Claude Code in.
 
