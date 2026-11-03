@@ -3,10 +3,12 @@ usage (repo root): python3 .claude/skills/mtg-score/merge.py <run_dir> <slug> [a
 reads <run_dir>/<slug>-A.md, -B.md, -C.md, the deck title from output/decks/<slug>/plan.md and the
 Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
 writes <run_dir>/merged/<slug>/nonlands.md and lands.md and <run_dir>/<slug>-flagged.md; prints the
-whole deck's shape line to stderr. The deck-file helpers here are shared with mtg-upgrades/apply.py."""
+whole deck's shape line to stderr. The deck-file helpers here are shared with mtg-upgrades/apply.py and
+mtg-sync/apply-changes.py."""
 import re, sys, json, statistics
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
+CARDS = "| Card | Score | Note |"
 ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
 KINDS = ("nonlands", "lands")
@@ -54,14 +56,14 @@ def by_kind(rows, land):
     return {k: [r for r in rows if land(r[0]) == (k == "lands")] for k in KINDS}
 
 def shape(cards):
-    """the shape line of [card, score, ...] rows, by card copy"""
-    s = [int(r[1]) for r in cards for _ in range(copies(r[0]))]
+    """the shape line of [card, score, ...] rows, by card copy; unscored ("-") rows left out"""
+    s = [int(r[1]) for r in cards if r[1].isdigit() for _ in range(copies(r[0]))]
     return (f"10: {sum(x==10 for x in s)} / 8-9: {sum(8<=x<=9 for x in s)} / 5-7: {sum(5<=x<=7 for x in s)}"
             f" / 4 or below: {sum(x<=4 for x in s)}, mean {sum(s)/max(len(s), 1):.1f} (by card copy).")
 
 def deck_file(title, kind, cards, rest):
     """nonlands.md or lands.md: the Cards table, rest (its Adds and Cuts sections, if any), the Shape line"""
-    return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table("| Card | Score | Note |", ranked(cards, True)), ""]],
+    return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table(CARDS, ranked(cards, True)), ""]],
                  *rest, ["## Shape", [shape(cards), ""]]])
 
 def norm(n):

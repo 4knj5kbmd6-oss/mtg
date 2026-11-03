@@ -7,15 +7,13 @@ the repo; write your output to the scratchpad path named at the end.
 
 ## Inputs
 - output/decks/<slug>/plan.md: the owner's intended lines, authoritative.
-- output/decks/<slug>/list.txt: the list, commander first, then the 99, optional SIDEBOARD block.
+- output/decks/<slug>/list.txt: the deck as the owner intends it, pending swaps applied; commander
+  first, then the 99, optional SIDEBOARD block. A card in it is never an add; a card not in it is
+  never a cut.
 - output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
   colours, Game Changer flag). Read this instead of fetching card by card.
 - output/rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
-- output/changes.md, if present: the owner's pending swaps (Deck, In, Out, Note). A card in a
-  deck's In column and not yet in its list is not recommended as an add for that deck (one
-  already in the list is only noted `unowned`, still to buy); a card in its Out column is not
-  listed as a cut (it is already going).
 
 ## Deck dates (Moxfield; "created" is the build date, "updated" the last edit)
 | slug | commander | created | updated | bracket |
@@ -31,7 +29,6 @@ the repo; write your output to the scratchpad path named at the end.
    then search each for cards in the deck's colour identity that fit its plan.
    Scryfall search syntax is useful: e.g. `id<=br date>=2025-08-07 o:"..."`.
    Verify every card's rules text and release date on Scryfall before recommending it.
-   Do not recommend a card that is already in the deck.
 3. SECONDARY: older cards that are clear upgrades the list is missing.
 4. Keep the deck at its bracket in output/rankings.md. An add that would push it over (a
    Game Changer past the cap, an infinite combo in a bracket-2 deck, etc.) is still

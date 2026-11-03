@@ -17,8 +17,10 @@ The owner's output, under `output/` (gitignored):
 - `output/decks/README.md`: the deck table (rank, commander, colours, bracket,
   Moxfield link).
 - `output/decks/<slug>/`: everything about one deck.
-  - `list.txt`: card names only ("1 Card Name"), commander first, then the
-    99, optional `SIDEBOARD:` block. No set codes or collector numbers.
+  - `list.txt`: the deck as the owner intends it: Moxfield's list with
+    `output/changes.md` applied. Card names only ("1 Card Name"), commander
+    first, then the 99, optional `SIDEBOARD:` block. No set codes or
+    collector numbers.
   - `plan.md`: the owner's statement of the deck's intended lines and
     interactions. Authoritative. Scorers and rankers read it first; it
     overrides anything inferred from the list.
@@ -28,7 +30,8 @@ The owner's output, under `output/` (gitignored):
     to `lands.md` if its front face is a Land.
 - `output/rankings.md`: strength order and WotC-guideline brackets.
 - `output/changes.md`: the owner's intended swaps not yet made, one table
-  (Deck, In, Out, Note) across all decks; mtg-sync drops a row once it lands.
+  (Deck, In, Out, Note) across all decks; mtg-sync drops a row once Moxfield
+  shows it and re-applies the rest to the lists.
   A Note of `unowned` (`unowned, 10 copies` for basics) marks a card to buy,
   possibly already in the list; the row stays until the owner clears it.
 - `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and

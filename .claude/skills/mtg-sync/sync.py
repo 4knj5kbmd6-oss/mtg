@@ -1,19 +1,22 @@
-"""Write output/decks/<slug>/list.txt and output/data/tokens.md from a Moxfield dump,
-then drop the rows of output/changes.md that have landed, except those noted unowned.
+"""Write output/decks/<slug>/list.txt and output/data/tokens.md from a Moxfield dump, drop the rows of
+output/changes.md the dump shows landed, except those noted unowned, then run apply-changes.py so every
+list is the intended deck again.
 usage (repo root): python3 .claude/skills/mtg-sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw)."""
 import json, os, sys, subprocess
+from pathlib import Path
 if len(sys.argv) != 2: sys.exit(__doc__)
 raw = open(sys.argv[1]).read().strip()
 if raw.startswith('"'): raw = json.loads(raw)
 d = json.loads(raw)
 slugs = json.load(open("output/decks/moxfield.json"))["decks"]
-uniq = {}
+uniq, dumped = {}, {}
 for mid, v in d.items():
     slug = slugs.get(mid)
     if not slug: print(f"skip {mid} ({v['name']}): not in output/decks/moxfield.json"); continue
     lines = v["commanders"] + [""] + v["mainboard"] + [""]
     if v["sideboard"]: lines += ["SIDEBOARD:"] + v["sideboard"] + [""]
+    dumped[slug] = lines
     os.makedirs(f"output/decks/{slug}", exist_ok=True)
     open(f"output/decks/{slug}/list.txt", "w").write("\n".join(lines))
     for t in v["tokens"]:
@@ -26,11 +29,10 @@ out += [f"| {e['name']} | {e['pt']} | {''.join(sorted(e['colors'] or [])) or '-'
 open("output/data/tokens.md", "w").write("\n".join(out) + "\n")
 
 def cards(slug):
-    """Every card name and face in a deck's list, lowercased; None if the deck has no list."""
-    try: lines = open(f"output/decks/{slug}/list.txt").read().splitlines()
-    except FileNotFoundError: return None
+    """Every card name and face in a deck's Moxfield list, lowercased; None if the dump has no such deck."""
+    if slug not in dumped: return None
     names = set()
-    for l in lines:
+    for l in dumped[slug]:
         qty, _, name = l.partition(" ")
         if qty.isdigit() and name.strip():
             name = name.strip().lower()
@@ -47,5 +49,6 @@ if os.path.exists("output/changes.md"):
             landed.append(c)
         else: keep.append(l)
     if landed: open("output/changes.md", "w").write("".join(keep))
-    for c in landed: print(f"landed: {c[0]} {c[1] or '-'} for {c[2] or '-'}")
+    for c in landed: print(f"landed: {c[0]} {c[1] or '-'} for {c[2] or '-'}", flush=True)
+subprocess.run([sys.executable, str(Path(__file__).with_name("apply-changes.py"))], check=True)
 print(subprocess.run(["git", "diff", "--stat"], capture_output=True, text=True).stdout or "no changes")

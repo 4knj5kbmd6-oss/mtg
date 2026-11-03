@@ -21,11 +21,14 @@ follow the new-deck steps below for every deck they name as owned.
    the Tokens-tab list. The result is large; it lands in a tool-results
    file. Save its text to the scratchpad as `mox.json`.
 2. `python3 .claude/skills/mtg-sync/sync.py <mox.json>` from the repo root
-   rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`,
-   removes every row of `output/changes.md` that has landed (In card in
-   the deck's list or In blank, Out card gone or Out blank) and is not
-   noted `unowned`, prints it as `landed: <deck> <In> for <Out>`, then
-   prints a diff summary.
+   rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`
+   from the dump, removes every row of `output/changes.md` the dump shows
+   landed (In card in the deck or In blank, Out card gone or Out blank) and
+   not noted `unowned`, prints it as `landed: <deck> <In> for <Out>`, then
+   runs `apply-changes.py`, which applies the rows left so each list is the
+   deck as the owner intends it again, moves each applied add's row from
+   Adds to Cards and drops each applied cut's rows, and prints a line per
+   deck: cards in, cards out. Last it prints a diff summary.
 3. `python3 .claude/skills/mtg-sync/fetch-oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall.
 
