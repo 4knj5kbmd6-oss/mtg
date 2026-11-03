@@ -56,6 +56,6 @@ if __name__ == "__main__":
         adds, dropped = drop(adds, lambda r: (p := price(r[-1])) is not None and p > budget)
         if dropped: print(f"{slug}: above the ${budget:g} budget, not added: {', '.join(dropped)}")
     cuts = Path(f"{run}/{slug}-cuts.md").read_text()
-    for k, text in apply({k: p.read_text() for k, p in paths.items()}, adds, cuts, lands("output/data/oracle.json")).items():
+    for k, text in apply({k: p.read_text() for k, p in paths.items()}, adds, cuts, lands()).items():
         paths[k].write_text(text)
     print(f"{slug}: Adds and Cuts written to {deck}/nonlands.md and lands.md")

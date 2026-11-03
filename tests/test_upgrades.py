@@ -84,6 +84,7 @@ def sheet(monkeypatch):
     module = load("upgrades/sheet.py")
     def offline(url): raise AssertionError(f"fetched {url}")
     monkeypatch.setattr(module, "get", offline)
+    monkeypatch.setattr(module, "found", offline)
     return module
 
 

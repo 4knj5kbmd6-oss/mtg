@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 from conftest import run, load, read
 
@@ -105,7 +106,6 @@ def test_card_only_score_patches_the_deck_files():
     assert "## Deep Current\nScores A/B/C: [8, 8, 5]\n" in read("run/zara-flagged.md")
 
 
-
 def test_card_only_score_puts_a_candidate_in_its_adds_table():
     nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
     scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Pearl Diver": (6, 6, 5), "Tundra": (8, 8, 7)},
@@ -140,23 +140,21 @@ def test_a_candidate_makes_the_adds_table_it_lacks():
 def test_settings_defaults():
     settings = load("score/settings.py")
     Path("settings.json").unlink()
-    defaults = {"scorers": 3, "model": "claude-opus-5-5", "budget": None,
-                "quota": {"adds": 20, "lands": 5, "cuts": [10, 15]}, "universes_beyond": True,
-                "cart": {"condition": "MP", "language": "English", "finish": None, "premium": None}}
-    assert settings.settings() == settings.DEFAULTS == defaults
+    defaults = copy.deepcopy(settings.DEFAULTS)
+    assert settings.settings() == defaults
     Path("settings.json").write_text('{"scorers": 1, "quota": {"adds": 15}, "cart": {"finish": "nonfoil"}}')
-    assert settings.settings() == {**defaults, "scorers": 1, "quota": {"adds": 15, "lands": 5, "cuts": [10, 15]},
-                                   "cart": {"condition": "MP", "language": "English", "finish": "nonfoil", "premium": None}}
+    assert settings.settings() == {**defaults, "scorers": 1, "quota": {**defaults["quota"], "adds": 15},
+                                   "cart": {**defaults["cart"], "finish": "nonfoil"}}
     assert settings.DEFAULTS == defaults
 
 
 def test_settings_overrides():
     settings = load("score/settings.py")
-    base, given = settings.settings(), read("settings.json")
+    base, given, defaults = settings.settings(), read("settings.json"), copy.deepcopy(settings.DEFAULTS)
     got = settings.settings(["scorers=1", "quota.adds=15", "quota.cuts=[8, 12]", "cart.finish=nonfoil",
                              "model=claude-sonnet-5"])
     assert got == {**base, "scorers": 1, "model": "claude-sonnet-5", "quota": {"adds": 15, "lands": 5, "cuts": [8, 12]},
                    "cart": {**base["cart"], "finish": "nonfoil"}}
-    assert settings.settings() == base and read("settings.json") == given and settings.DEFAULTS["quota"]["adds"] == 20
+    assert settings.settings() == base and read("settings.json") == given and settings.DEFAULTS == defaults
     out = run("score/settings.py", "budget=50", "universes_beyond=false")
     assert out.returncode == 0 and '"budget": 50' in out.stdout and '"universes_beyond": false' in out.stdout

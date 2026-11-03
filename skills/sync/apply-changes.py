@@ -7,7 +7,7 @@ count. Running it twice changes nothing. Prints one line per changed deck: cards
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import split, join, cells, match, norm, table, ranked, shape, CARDS, KINDS
+from merge import split, join, cells, match, norm, recount, KINDS
 
 def counted(name, n): return f"{name} ({n})" if n > 1 else name
 
@@ -48,11 +48,7 @@ def apply_scores(files, ins, outs):
         for k in sec:
             if left: cards[k] = [[counted(norm(r[0]), left), *r[1:]] if hit(r[0]) else r for r in cards[k]]
             else: cards[k] = [r for r in cards[k] if not hit(r[0])]; drop(k, "## Cuts", hit)
-    for k in sec:
-        if "## Cards" in sec[k]: sec[k]["## Cards"][:] = [table(CARDS, ranked(cards[k], True)), ""]
-        if "## Shape" in sec[k]:
-            n = re.search(r", (\d+) scorers?\.", "".join(sec[k]["## Shape"]))  # the scorer count the line carried
-            sec[k]["## Shape"][:] = [shape(cards[k], n and int(n.group(1))), ""]
+    for k in sec: recount(sec[k], cards[k])
     return {k: join(s) for k, s in secs.items()}
 
 def main():

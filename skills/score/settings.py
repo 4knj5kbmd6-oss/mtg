@@ -1,11 +1,5 @@
-"""The owner's settings.json, read from the folder that holds output/, with the DEFAULTS below for absent keys:
-scorers (independent scorers per deck), model (the model every dispatched agent runs on), budget
-(the highest TCGplayer market price in dollars an add may carry; None for no cap), quota (the researcher lists
-exactly `adds` nonland adds, up to `lands` land adds, and between cuts[0] and cuts[1] cuts), universes_beyond
-(False leaves Universes Beyond sets out of research) and cart (the worst condition allowed, as NM, LP, MP or HP;
-the language; the finish, nonfoil, foil or either; the premium in dollars the buyer pays to remove one package,
-0 for the lowest price, a large number for the fewest packages). A cart value of None is asked each cart; a value
-set is not asked. A partial quota or cart merges over its default key by key.
+"""The owner's settings.json, read from the folder that holds output/, over the DEFAULTS below (keys described in
+README.md); a partial quota or cart merges over its default key by key.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py [key=value ...]
 prints the effective settings as JSON, each key=value overriding that setting for this run (a dotted key reaches a
 nested one, quota.adds=15; a value is JSON when it parses, a string otherwise); settings.json is not written."""

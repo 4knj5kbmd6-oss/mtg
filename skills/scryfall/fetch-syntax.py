@@ -9,7 +9,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get
+from merge import get, CHALLENGE
 
 DOCS = "https://scryfall.com/docs/"
 PAGES = [DOCS + p for p in ("syntax", "regular-expressions", "api", "api/cards/search", "api/cards/named",
@@ -80,7 +80,7 @@ def page(url):
     """the page's HTML; a non-200 answer or Cloudflare's challenge exits naming the URL"""
     try: html = get(url).decode("utf-8", "replace")
     except HTTPError as e: sys.exit(f"{url}: HTTP {e.code}")
-    if re.search(r"cf[-_]chl|challenge-platform|Just a moment", html): sys.exit(f"{url}: Cloudflare challenge")
+    if CHALLENGE.search(html): sys.exit(f"{url}: Cloudflare challenge")
     return html
 
 if __name__ == "__main__":

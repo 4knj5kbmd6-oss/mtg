@@ -9,10 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "judge"))
-from merge import split, cells, get, SCRYFALL, KINDS
+from merge import split, cells, get, SCRYFALL, ORACLE, KINDS
 from card import card
 API = f"{SCRYFALL}/cards/collection"
-ORACLE = Path("output/data/oracle.json")
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
 FACE = ["name", "mana_cost", "type_line", "oracle_text", "colors", "power", "toughness", "loyalty"]

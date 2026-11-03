@@ -10,7 +10,7 @@ existing nonlands.md and lands.md are patched instead, each listed card's row re
 table in score order and its Adds row dropped, each card not in the list (a candidate) replaced or inserted in the
 Adds table of the file its type belongs to, keeping the New and ~Price of its old Adds row, else "-"; the Shape
 line recomputed, every other line as it was."""
-import re, sys, json, statistics, time, urllib.request
+import re, sys, json, statistics, time, urllib.error, urllib.request
 from pathlib import Path
 CARDS = "| Card | Score | Note |"
 ADDS = "| Card | Score | Note | New | ~Price |"
@@ -18,6 +18,10 @@ CUTS = "| Card | Score | Why it underperforms here |"
 KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 SCRYFALL, UA = "https://api.scryfall.com", "mtg-deckhand"
+SEARCH = f"{SCRYFALL}/cards/search?q="
+ORACLE = Path("output/data/oracle.json")
+CHALLENGE = re.compile(r"cf[-_]chl|challenge-platform|Just a moment")
+SPLIT = 3  # a card the scorers put this far apart is flagged
 last = 0.0
 
 def get(url, body=None):
@@ -27,6 +31,12 @@ def get(url, body=None):
     head = {"User-Agent": UA, "Accept": "application/json;q=0.9,*/*;q=0.8"} | ({"Content-Type": "application/json"} if body else {})
     try: return urllib.request.urlopen(urllib.request.Request(url, body and json.dumps(body).encode(), head)).read()
     finally: last = time.monotonic()
+
+def found(url):
+    """get(url) parsed as JSON, or None on a 404"""
+    try: return json.loads(get(url))
+    except urllib.error.HTTPError as e:
+        if e.code != 404: raise
 
 def split(text):
     """[heading, lines] pairs, the title block first under heading None; join() undoes it"""
@@ -63,10 +73,10 @@ def tail(intro, adds, cuts):
     return [["## Adds", intro + ["", table(ADDS, ranked(adds, True)), ""]],
             ["## Cuts", [table(CUTS, ranked(cuts, False)), ""]]]
 
-def lands(oracle):
-    """name -> whether its front face is a Land in the oracle.json at that path; a card not in it is a nonland"""
+def lands():
+    """name -> whether its front face is a Land in oracle.json; a card not in it is a nonland"""
     front = {n.split(" // ")[0]: (e.get("card_faces") or [e])[0].get("type_line", "")
-             for n, e in json.load(open(oracle))["cards"].items()}
+             for n, e in json.loads(ORACLE.read_text())["cards"].items()}
     return lambda name: "Land" in front.get(key(name), "").split()
 
 def by_kind(rows, land):
@@ -86,6 +96,14 @@ def deck_file(title, kind, cards, rest, scorers):
     return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table(CARDS, ranked(cards, True)), ""]],
                  *rest, ["## Shape", [shape(cards, scorers), ""]]])
 
+def recount(sec, cards):
+    """sec, a deck file's {heading: lines}, with its Cards table rewritten from these rows and its Shape line
+    recomputed, keeping the scorer count it carried"""
+    if "## Cards" in sec: sec["## Cards"][:] = [table(CARDS, ranked(cards, True)), ""]
+    if "## Shape" in sec:
+        n = re.search(r", (\d+) scorers?\.", "".join(sec["## Shape"]))
+        sec["## Shape"][:] = [shape(cards, n and int(n.group(1))), ""]
+
 def patch(text, cards, adds, scored):
     """a deck file's text with these [card, score, note] rows in its Cards table and these [card, score, note, new,
     price] rows in its Adds table (made after Cards if it has none), each table in score order and each row in
@@ -95,12 +113,10 @@ def patch(text, cards, adds, scored):
     if adds and "## Adds" not in dict(secs): secs.insert([h for h, _ in secs].index("## Cards") + 1, tail([], [], [])[0])
     sec = dict(secs); new = {key(r[0]): r for r in cards}
     cards = [new.pop(key(r[0]), r) for r in cells(sec["## Cards"])] + list(new.values())
-    sec["## Cards"][:] = [table(CARDS, ranked(cards, True)), ""]
     if "## Adds" in sec:
         lines = sec["## Adds"]; at = [i for i, l in enumerate(lines) if l.startswith("|")]
         lines[at[0]:at[-1] + 1] = [table(ADDS, ranked([r for r in cells(lines) if key(r[0]) not in scored] + adds, True))]
-    n = re.search(r", (\d+) scorers?\.", "".join(sec["## Shape"]))
-    sec["## Shape"][:] = [shape(cards, n and int(n.group(1))), ""]
+    recount(sec, cards)
     return join(secs)
 
 def norm(n):
@@ -124,7 +140,7 @@ def whole(deck, rows, scorers):
     old = [dict(split(p.read_text())) for p in (deck / f"{k}.md" for k in KINDS) if p.exists()]
     rest = {k: [] for k in KINDS}
     if any("## Adds" in o for o in old):  # research metadata and order stay; scores, add notes and cut scores are this run's
-        land = lands("output/data/oracle.json")
+        land = lands()
         got = {norm(r[0]): r[1:3] for r in rows["adds"]}
         score = {key(r[0]): r[1] for k in KINDS for r in rows[k]}
         adds = by_kind([[r[0], *got.get(norm(r[0]), r[1:3]), *r[3:]] for o in old for r in cells(o.get("## Adds", []))], land)
@@ -145,7 +161,7 @@ def main():
         got = [d.get(k) for d in scorers]; sc = [g[1] for g in got if g]
         disp = next(g[0] for g in got if g); med = round(statistics.median(sc))
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
-        if max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
+        if max(sc) - min(sc) >= SPLIT: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
         secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
     scored = {key(r[0]) for k in rows for r in rows[k]}
     listed = {key(l) for l in (deck / "list.txt").read_text().split("SIDEBOARD:")[0].splitlines() if l.strip()}
@@ -154,14 +170,14 @@ def main():
         old = {k: (deck / f"{k}.md").read_text() for k in KINDS}
         kept = {key(r[0]): r[3:5] for t in old.values() for r in cells(dict(split(t)).get("## Adds", []))}
         adds = by_kind([[*r, *kept.get(key(r[0]), ["-", "-"])] for k in rows for r in rows[k] if key(r[0]) not in listed],
-                       lands("output/data/oracle.json"))
+                       lands())
         text = {k: patch(old[k], [r for r in rows[k] if key(r[0]) in listed], adds[k], scored) for k in KINDS}
     else: text = whole(deck, rows, len(files))
     out = Path(raw) / "merged" / slug; out.mkdir(parents=True, exist_ok=True)
     for k in KINDS: (out / f"{k}.md").write_text(text[k])
     line = f"{slug}: {shape([r for k in KINDS for r in cells(dict(split(text[k]))['## Cards'])], len(files))}"
     if len(files) > 1:
-        Path(f"{raw}/{slug}-flagged.md").write_text(f"# {slug}: cards with spread >= 3\n\n" + "".join(
+        Path(f"{raw}/{slug}-flagged.md").write_text(f"# {slug}: cards with spread >= {SPLIT}\n\n" + "".join(
             f"## {d}\nScores {'/'.join(letters)}: {sc}\n" + "".join(f"- {x}: {n}\n" for x, n in zip(letters, notes)) + "\n"
             for d, sc, notes in flagged))
         line += f" {len(flagged)} flagged"

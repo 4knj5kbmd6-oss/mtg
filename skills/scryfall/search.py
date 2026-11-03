@@ -6,9 +6,8 @@ import json, sys, urllib.parse
 from pathlib import Path
 from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import get, SCRYFALL
+from merge import get, SEARCH
 
-SEARCH = f"{SCRYFALL}/cards/search?q="
 SHOWN = 20
 
 def answer(body):

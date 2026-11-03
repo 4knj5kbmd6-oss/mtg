@@ -7,7 +7,7 @@ mox.json is the JSON string returned by fetch.js (quoted or raw): {"user", "list
 import json, os, re, sys, subprocess, unicodedata
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
-from merge import cells, match
+from merge import cells, match, CHALLENGE
 
 MOXFIELD, CHANGES = Path("moxfield.json"), Path("changes.md")
 UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync"
@@ -16,7 +16,7 @@ def blocked(v):
     """why a fetched entry is not Moxfield data, or None when it is"""
     if isinstance(v, list) or "mainboard" in v: return None
     body = str(v.get("body", ""))
-    if re.search(r"cf[-_]chl|challenge-platform|Just a moment", body): return "Cloudflare challenge"
+    if CHALLENGE.search(body): return "Cloudflare challenge"
     return f"unexpected answer, HTTP {v.get('status', '?')}"
 
 def wanted(d):
