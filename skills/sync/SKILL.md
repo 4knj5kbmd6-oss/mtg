@@ -1,6 +1,7 @@
 ---
 name: sync
 description: Refresh your owned Commander decks from Moxfield into output/decks/<slug>/list.txt, regenerate output/data/tokens.md and output/data/oracle.json; /sync <moxfield username> picks up every public deck, and a pasted decklist or .txt export imports a deck with no Moxfield. Use when asked to sync, refresh, re-export or pull decks from Moxfield, to import a decklist, or before scoring a deck Moxfield says was edited since the last export.
+argument-hint: "[moxfield username]"
 ---
 
 # sync

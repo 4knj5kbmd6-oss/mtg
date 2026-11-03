@@ -1,6 +1,7 @@
 ---
 name: judge
 description: Answer a Magic rules question with a judge agent given the named cards' oracle text and Scryfall rulings and the matching Comprehensive Rules, citing the rule numbers; fetch the Comprehensive Rules into output/data/rules.txt. Use for /judge <question>, when the owner asks how cards or rules interact, or when an agent meets a rules question.
+argument-hint: "<question>"
 ---
 
 # judge
@@ -29,8 +30,10 @@ For `/judge <question>`:
    then `rule.py <numbers>` for the rules that bear on the question and
    `rule.py --glossary` for its defined terms.
 4. Read `settings.json` through `settings.py`
-   (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
-   agent with `model` only when it differs from the agent's own. Dispatch
+   (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
+   every `key=value` word of the arguments, which overrides that setting
+   for this run (a dotted key, `quota.adds=15`, reaches a nested one);
+   dispatch each agent with `model` only when it differs from the agent's own. Dispatch
    one `edhtool:judge`, `run_in_background` in the folder that
    holds `output/`, its prompt giving the question, card.py's output and
    rule.py's output.

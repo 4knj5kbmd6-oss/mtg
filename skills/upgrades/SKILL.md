@@ -1,12 +1,15 @@
 ---
 name: upgrades
 description: Research ranked adds and cuts for one or more of your Commander decks, weighting cards released after the deck was built, and write them as the Adds and Cuts tables of output/decks/<slug>/nonlands.md and lands.md. Use when asked for upgrades, new cards, what to cut, or to refresh the adds and cuts lists.
+argument-hint: "[slug ...] [key=value ...]"
 ---
 
 # upgrades
 
 Read `settings.json` through `settings.py`
-(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
+(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
+every `key=value` word of the arguments, which overrides that setting for
+this run (a dotted key, `quota.adds=15`, reaches a nested one); dispatch each
 agent with `model` only when it differs from the agent's own. Every agent
 here runs `run_in_background` in the folder that holds `output/`; its
 prompt carries only the per-run inputs named below.

@@ -1,6 +1,7 @@
 ---
 name: cart
 description: Build and optimize a TCGplayer shopping cart from a card list (a deck, a set of tokens, a shopping list), balancing delivered price against package count, then audit it against the source list. Use when asked to build a cart, price a list, or buy cards on TCGplayer.
+argument-hint: "<list> [key=value ...]"
 ---
 
 # cart
@@ -9,7 +10,9 @@ The cart is built in the built-in browser pane as a guest cart. Never sign
 in, enter credentials or payment details, or check out: the owner does that.
 
 Read `settings.json` through `settings.py`
-(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
+(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
+every `key=value` word of the arguments, which overrides that setting for
+this run (a dotted key, `quota.adds=15`, reaches a nested one); dispatch each
 agent with `model` only when it differs from the agent's own.
 
 1. **Requirements.** Record before adding cards: source deck URL and

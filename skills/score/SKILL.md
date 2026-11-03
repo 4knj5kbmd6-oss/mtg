@@ -1,6 +1,7 @@
 ---
 name: score
 description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
+argument-hint: "[slug ...] [key=value ...]"
 ---
 
 # score
@@ -11,7 +12,9 @@ skill only applies it. Scores are never hand-edited: when one looks wrong,
 fix the metric or the deck's `plan.md` and rescore.
 
 Read `settings.json` through `settings.py`
-(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`); dispatch each
+(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
+every `key=value` word of the arguments, which overrides that setting for
+this run (a dotted key, `quota.adds=15`, reaches a nested one); dispatch each
 agent with `model` only when it differs from the agent's own. Every agent
 here runs `run_in_background` in the folder that holds `output/`; its
 prompt carries only the per-run inputs named below.

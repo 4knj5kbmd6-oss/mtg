@@ -99,3 +99,15 @@ def test_settings_defaults():
     assert settings.settings() == {**defaults, "scorers": 1, "quota": {"adds": 15, "lands": 5, "cuts": [10, 15]},
                                    "cart": {"condition": "MP", "language": "English", "finish": "nonfoil", "premium": None}}
     assert settings.DEFAULTS == defaults
+
+
+def test_settings_overrides():
+    settings = load("score/settings.py")
+    base, given = settings.settings(), read("settings.json")
+    got = settings.settings(["scorers=1", "quota.adds=15", "quota.cuts=[8, 12]", "cart.finish=nonfoil",
+                             "model=claude-sonnet-5"])
+    assert got == {**base, "scorers": 1, "model": "claude-sonnet-5", "quota": {"adds": 15, "lands": 5, "cuts": [8, 12]},
+                   "cart": {**base["cart"], "finish": "nonfoil"}}
+    assert settings.settings() == base and read("settings.json") == given and settings.DEFAULTS["quota"]["adds"] == 20
+    out = run("score/settings.py", "budget=50", "universes_beyond=false")
+    assert out.returncode == 0 and '"budget": 50' in out.stdout and '"universes_beyond": false' in out.stdout
