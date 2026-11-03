@@ -87,3 +87,6 @@ The repo is the `commander-deckhand` plugin: the skills load from an installed p
 - Agents write to the scratchpad; the orchestrator copies results in.
   Output paths are gitignored, so nothing there is committed; a change to
   a core file is committed as it lands.
+- Every landing on `main` bumps the patch number of `version` in
+  `.claude-plugin/plugin.json`, so installed copies update; minor and
+  major numbers are the owner's.
