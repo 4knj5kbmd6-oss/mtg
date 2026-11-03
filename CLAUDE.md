@@ -7,8 +7,9 @@ Changer, fit score, decklist.
 
 ## Layout
 
-[README.md](README.md#layout) lays out the repo, the owner's project-wide
-files and `output/`. A deck's `output/decks/<slug>/plan.md` is
+[CONTRIBUTING.md](CONTRIBUTING.md#layout) lays out the repo and
+[README.md](README.md#layout) the owner's project-wide files and `output/`.
+A deck's `output/decks/<slug>/plan.md` is
 authoritative: it overrides anything inferred from the list.
 
 ## Skills

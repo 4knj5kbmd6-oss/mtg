@@ -18,6 +18,8 @@ Or in one step from a shell:
 `claude plugin install mtg-toolbox --marketplace 4knj5kbmd6-oss/mtg`.
 
 The skills read and write `output/` in the folder you open Claude Code in.
+They need Python 3.9 or later with Pillow (`pip install pillow`), and
+`/sync` and `/cart` need the Claude desktop app's browser pane.
 
 ## Judge
 
@@ -41,45 +43,58 @@ first use and looks up on Scryfall any card it has not seen.
 ## Your decks
 
 1. `/sync <moxfield username>` adds your public Commander decks to
-   `moxfield.json` and writes each deck's `list.txt`. A deck
-   Moxfield answers with Cloudflare's check is reported and left as it was;
-   pass the check in the browser pane and run `/sync` again. With no
-   Moxfield, paste a decklist or name a `.txt` export (Moxfield, Archidekt,
-   MTGO or Arena) and ask to import it.
+   `moxfield.json` and writes each deck's `list.txt`.
 2. Write each deck's `output/decks/<slug>/plan.md`: the lines the deck means
    to play.
 3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
-   Both `/score` and `/upgrades` first compute two fact files per deck for
-   their agents: its combos from Commander Spellbook, and its mana (sources
-   against pips, land count, curve).
 
 **Cost.** Every deck in a `/score` run is read by `scorers` scorers on `model`
 (defaults in [`settings.py`](skills/score/settings.py)), each taking a group of
 decks that share colours, and a run of more than one deck ends with one
 ranker. `scorers` and `model` in `settings.json` lower it.
 
-## Layout
+## Settings
 
-Core (tracked):
+`settings.json`, beside `output/`, holds any of these keys. An absent file
+or key takes its default from [`settings.py`](skills/score/settings.py), and
+a partial `quota` or `cart` keeps the rest of its default. A `key=value` on
+the command line overrides one for that run (`/score budget=50 quota.adds=15`).
 
-| Path | What |
+| Key | What |
 |---|---|
-| [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
-| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge`, `librarian` and `shopper` |
-| [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge`, `scryfall` |
-| [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
-| [`tests/`](tests/) | The scripts' tests, run on a fixture project |
-| [`.github/`](.github/) | Issue templates and the test workflow |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How work is proposed and landed |
-| [`LICENSE`](LICENSE) | The licence |
+| `scorers` | Scorers per deck |
+| `model` | The model every dispatched agent runs on; null: each agent's own |
+| `budget` | The highest TCGplayer price in dollars an add may carry |
+| `quota` | The adds, land adds and cuts each deck's research lists |
+| `universes_beyond` | true: research searches Universes Beyond sets |
+| `new_sets` | true: research recommends only cards from the sets released since each deck's last edit, searched exhaustively |
+| `cart` | Condition, language, finish and premium per package removed; asked each cart while null |
+
+## changes.md
+
+`changes.md`, beside `output/`, holds your intended swaps not yet made on
+Moxfield, one row each. `/sync` re-applies them to each `list.txt` and drops
+each row once Moxfield shows it.
+
+```
+| Deck | In | Out | Note |
+|---|---|---|---|
+| <slug> | <card to add> | <card to cut> | |
+```
+
+Either card may be blank. A Note of `unowned` keeps the row until you clear
+it; `<n> copies` adds n copies of the In card and cuts every copy of the
+Out card.
+
+## Layout
 
 Your project-wide files, beside `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `settings.json` | `scorers` per deck, `model` every dispatched agent runs on, null: each agent's own, `budget`: the highest TCGplayer price in dollars an add may carry, `quota`: the adds, land adds and cuts each deck's research lists, `universes_beyond` (true: research searches Universes Beyond sets), `new_sets` (true: research recommends only cards from the sets released since each deck's last edit, searched exhaustively), `cart`: condition, language, finish and premium per package removed (asked each cart while null); an absent file or key takes its default from [`settings.py`](skills/score/settings.py), and a partial `quota` or `cart` keeps the rest of its default; a `key=value` on the command line overrides one for that run (`/score budget=50 quota.adds=15`) |
+| `settings.json` | Your [settings](#settings) |
 | `moxfield.json` | Your Moxfield username and the decks synced, written by `/sync <username>`; a deck you delete from it stays out |
-| `changes.md` | Your intended swaps not yet made on Moxfield; `/sync` re-applies them to each `list.txt` and drops each once Moxfield shows it, except a card noted `unowned`, which stays until you clear the note |
+| `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
 | `rankings.md` | Your decks in strength order: commander, colours, bracket, Game Changers, why, Moxfield link |
 

@@ -15,3 +15,16 @@
 6. **Instruction files** (`CLAUDE.md`, `SKILL.md`, agents, this file) state
    each rule as it now stands, with no attribution, dates or history; those
    go in the commit message.
+
+## Layout
+
+| Path | What |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
+| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge`, `librarian` and `shopper` |
+| [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge`, `scryfall` |
+| [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
+| [`tests/`](tests/) | The scripts' tests, run on a fixture project |
+| [`.github/`](.github/) | Issue templates and the test workflow |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How work is proposed and landed |
+| [`LICENSE`](LICENSE) | The licence |
