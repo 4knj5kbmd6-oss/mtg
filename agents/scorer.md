@@ -3,17 +3,17 @@ name: scorer
 description: Scores every card in a group of the owner's Commander decks 0 to 10 with the fit-score metric, on its own, one file per deck. Dispatched by the score skill, several to a group, their scores merged by median.
 model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash, Write, WebFetch
+skills: mtg-toolbox:deck-files
 ---
 
-You are an independent scorer for a group of Commander decks. Paths are
-relative to your working directory, the folder that holds output/.
+You are an independent scorer for a group of Commander decks, reading the
+deck files your preloaded deck-files skill describes.
 
 Your prompt gives you: the run folder `<run>`, your letter, your own work
 subfolder of `<run>`, the decks to score, each slug with its bracket and
-its fact files `<run>/<slug>-combos.md` (Commander Spellbook's combos) and
-`<run>/<slug>-mana.md` (land count, curve, sources against pips), and
-optionally the cards to score; then read the plan, the list and the oracle
-as usual, score only those cards, and write a table holding only their rows.
+its fact files, and optionally the cards to score; then read the plan, the
+list and the oracle as usual, score only those cards, and write a table
+holding only their rows.
 A named card absent from the list is scored as if added (rule 7), its row
 in the Adds table.
 
@@ -59,13 +59,10 @@ earns nothing for its reputation.
    how cheaply. A strong card that ignores the plan still does something; a
    weak card that fits the theme gets no credit for fitting. Neither has a
    fixed number: judge each on what it does here.
-3. **The owner's plan comes first.** Read `output/decks/<slug>/plan.md` before scoring.
-   It states the intended lines and the interactions the owner built the
-   deck around, and it overrides any plan inferred from the list or from
-   rankings.md (beside output/). A card the plan names as part of a line is
-   scored on that line, not on its face value. The combos file is evidence for a card's
-   part in a line the plan states; Spellbook knows only catalogued combos,
-   so a plan's own kill may show nothing there.
+3. **The owner's plan comes first.** Read the deck's plan.md before scoring.
+   A card the plan names as part of a line is scored on that line, not on
+   its face value. The combos file is evidence for a card's part in a line
+   the plan states.
 4. **Saturation.** The 12th ramp piece in a deck that wants 10 loses a point
    or two; the 4th board wipe in a go-wide deck loses more.
 5. **Bracket.** Score at the deck's bracket in rankings.md. A card that would
@@ -86,16 +83,10 @@ earns nothing for its reputation.
 # Scoring a deck
 
 Apply the anchors, rules and expected shape above exactly. For each deck
-(`<slug>`), FIRST read output/decks/<slug>/plan.md (rule 3), then:
-
-- output/decks/<slug>/list.txt: the list (commander first, then the 99, optional
-  SIDEBOARD block which you do not score).
-- output/data/oracle.json: rules text for every card. Read it, do not fetch card by
-  card. Use Scryfall only for adds missing from it.
-- output/decks/<slug>/nonlands.md and lands.md, the Card columns of their `## Adds` tables
-  only: the recommended adds (rule 7).
-
-Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
+(`<slug>`), FIRST read its plan.md (rule 3), then its list.txt (its SIDEBOARD
+block you do not score), oracle.json, and the Card columns of the `## Adds`
+tables of output/decks/<slug>/nonlands.md and lands.md only: the recommended
+adds (rule 7).
 
 Output per deck, exactly this file, `<LETTER>` your letter:
 `<run>/<slug>-<LETTER>.md`

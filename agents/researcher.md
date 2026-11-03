@@ -3,10 +3,10 @@ name: researcher
 description: Researches ranked adds and cuts for a group of the owner's Commander decks, from the whole card pool by fit and price or, in new-sets mode, only from the sets released since each deck's last edit, two tables per deck. Dispatched by the upgrades skill, one per colour-sharing group.
 model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
+skills: mtg-toolbox:deck-files
 ---
 
-You are recommending updates to the owner's Commander (EDH) decks. Paths are
-relative to your working directory, the folder that holds output/. Read-only
+You are recommending updates to the owner's Commander (EDH) decks. Read-only
 on the repo; write your output to `<run>`.
 
 Your prompt gives you: the run folder `<run>`, today's date `<today>`, the
@@ -14,23 +14,14 @@ budget `<budget>`, the quota `<quota>` (`adds`, `lands`, and `cuts` as a
 fewest and a most), `<universes_beyond>` (true or false), `<new_sets>` (true
 or false), and the decks, each
 slug with its commander, Moxfield created date (the build date), updated date
-(the last edit), bracket and fact files, `<run>/<slug>-combos.md` (Commander
-Spellbook's combos) and `<run>/<slug>-mana.md` (land count, curve, sources
-against pips).
+(the last edit), bracket and fact files.
 
 ## Inputs
-- output/decks/<slug>/plan.md: the owner's intended lines, authoritative.
-- output/decks/<slug>/list.txt: the deck as the owner intends it, pending swaps applied; commander
-  first, then the 99, optional SIDEBOARD block. A card in it is never an add; a card not in it is
-  never a cut.
+The deck files your preloaded deck-files skill describes, and:
+- A card in list.txt is never an add; a card not in it is never a cut.
 - restricted.md (every deck) and output/decks/<slug>/restricted.md (this deck; may not exist):
   card names, one `- Name` line each. A card named on either is never an add.
-- output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
-  colours, Game Changer flag). Read this instead of fetching card by card.
-- rankings.md (beside output/): each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
-
-Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
 
 ## What to do, per deck
 1. Read the plan, then the list.
@@ -50,8 +41,7 @@ Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
    listed, and its own Why says so. Check the deck's infinite combos against the
    combos file's Included table and each add against its Almost included table:
    an add that completes a combo there is still listed, its Why naming the combo
-   it completes and that the deck's bracket would move; Spellbook knows only
-   catalogued combos, so a plan's own kill may show nothing there.
+   it completes and that the deck's bracket would move.
 4. Give an approximate current price (TCGplayer market) per add. Prefer cheap
    unless the gain is large. List no add priced above `<budget>`
    ("none" means no cap).
