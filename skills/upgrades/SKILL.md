@@ -11,10 +11,16 @@ Scryfall; every add carries an approximate TCGplayer price, and an add
 that would change the deck's bracket says so in its own row. The adds are
 the top 20 nonlands plus up to 5 utility lands.
 
+`output/settings.json` sets `model`, the model every agent here is
+dispatched on (default `claude-opus-5-5`), and `budget`, the highest
+TCGplayer market price in dollars an add may carry (default none, no cap);
+an absent file or key takes the default.
+
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/sync`
    fetch returns them) and its bracket from `output/rankings.md`.
 2. Copy `BRIEF.md` to a fresh scratchpad folder with the dates table,
-   `<today>` and `<plugin>` (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one `planner` (`model: claude-opus-5-5`,
+   `<today>`, `<budget>` (`budget` as `$<n>`, or `none`) and `<plugin>`
+   (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one `planner` (`model`,
    `run_in_background`) per colour-sharing group of two or three decks, so
    each researches a colour's new cards once. Planners have web search;
    they must verify rules text and release date on Scryfall.
@@ -22,7 +28,8 @@ the top 20 nonlands plus up to 5 utility lands.
    writes the results into `output/decks/<slug>/nonlands.md` and
    `lands.md`, each card by its type in `output/data/oracle.json`: cuts carry
    their deck score, new adds score `-` until `/score` scores them as
-   part of the deck. Then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py`
+   part of the deck. It drops, and prints, any add priced above `budget`.
+   Then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py`
    caches the adds in `output/data/oracle.json` for the scorers, and
    `apply.py` runs once more so an add the oracle had not seen is filed by
    its type. Last, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>`

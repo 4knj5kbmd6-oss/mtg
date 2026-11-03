@@ -2,12 +2,12 @@
 
 Paths are relative to your working directory, the folder that holds output/.
 
-You are one of three independent scorers for a group of Commander decks. Your
-scores will be compared with two other scorers' and the median taken, so
-score honestly and on your own: do NOT read any existing output/decks/*/nonlands.md or
-lands.md beyond the Card columns of their Adds tables, or any other scorer's output in
-the scratchpad. Work only in your own subfolder of the scratchpad (named in your
-prompt) so you never collide with the other scorers.
+You are an independent scorer for a group of Commander decks. Where other
+scorers score the same decks, your scores will be compared with theirs and the
+median taken, so score honestly and on your own: do NOT read any existing
+output/decks/*/nonlands.md or lands.md beyond the Card columns of their Adds tables,
+or any other scorer's output in the scratchpad. Work only in your own subfolder of
+the scratchpad (named in your prompt) so you never collide with the other scorers.
 
 Read <scoring> in full and apply the anchors, rules and expected shape
 exactly.

@@ -3,7 +3,7 @@
 Paths are relative to your working directory, the folder that holds output/.
 
 Read <scoring> (anchors and rules). Read <run>/<slug>-flagged.md: cards
-where three independent scorers differed by 3 or more, with their scores and
+where the independent scorers differed by 3 or more, with their scores and
 notes. For each card read the owner's output/decks/<slug>/plan.md (authoritative on
 the deck's lines), the card's text in output/data/oracle.json and the list
 output/decks/<slug>/list.txt. Where scorers disagree on a rules question, settle the

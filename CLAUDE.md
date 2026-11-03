@@ -13,6 +13,12 @@ manifests in `.claude-plugin/`.
 
 The owner's output, under `output/` (gitignored):
 
+- `output/settings.json`: the owner's settings, read by the skills that
+  dispatch agents or write adds; an absent file or key takes the default.
+  `scorers`: independent scorers per deck in `score` (default 3). `model`:
+  the model every dispatched agent runs on (default `claude-opus-5-5`).
+  `budget`: the highest TCGplayer market price in dollars an add may carry
+  (default none, no cap).
 - `output/decks/moxfield.json`: the owner's Moxfield username and owned decks,
   `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}}`.
 - `output/decks/README.md`: the deck table (rank, commander, colours, bracket,
@@ -51,11 +57,11 @@ Procedures are skills in `skills/`, each with its scripts and agent briefs
 beside it:
 
 - `sync`: refresh lists and tokens from Moxfield through the browser pane.
-- `score`: three independent Opus scorers per deck, median, arbitration,
-  one score kept; optional rankings recompute.
+- `score`: independent scorers per deck, median, arbitration, one score
+  kept; optional rankings recompute.
 - `upgrades`: ranked adds and cuts per deck, new-since-built weighted.
 - `cart`: build and optimize a TCGplayer guest cart from a list.
-- `judge`: the Comprehensive Rules on disk and an Opus judge for rules
+- `judge`: the Comprehensive Rules on disk and a judge agent for rules
   questions, citing rule numbers.
 
 The repo is the `commander-deckhand` plugin: the skills load from an installed plugin or with

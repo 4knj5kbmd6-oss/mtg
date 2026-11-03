@@ -41,7 +41,8 @@ and `python3 <plugin>/skills/judge/rule.py` (`--find word ...` to locate rules, 
    Game Changer past the cap, an infinite combo in a bracket-2 deck, etc.) is still
    listed, and its own Why says so.
 5. Give an approximate current price (TCGplayer market) per add. Prefer cheap
-   unless the gain is large.
+   unless the gain is large. The budget is <budget>: list no add priced above it
+   ("none" means no cap).
 6. A card is in only if you can say what it does for this deck's specific plan.
 
 ## Output

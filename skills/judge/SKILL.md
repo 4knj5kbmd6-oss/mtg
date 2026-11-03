@@ -1,6 +1,6 @@
 ---
 name: judge
-description: Answer a Magic rules question with an Opus judge given the named cards' oracle text and Scryfall rulings and the matching Comprehensive Rules, citing the rule numbers; fetch the Comprehensive Rules into output/data/rules.txt. Use for /judge <question>, when the owner asks how cards or rules interact, or when an agent meets a rules question.
+description: Answer a Magic rules question with a judge agent given the named cards' oracle text and Scryfall rulings and the matching Comprehensive Rules, citing the rule numbers; fetch the Comprehensive Rules into output/data/rules.txt. Use for /judge <question>, when the owner asks how cards or rules interact, or when an agent meets a rules question.
 ---
 
 # judge
@@ -31,8 +31,9 @@ For `/judge <question>`:
 4. Make a fresh scratchpad folder and copy `JUDGE-BRIEF.md` into it with
    `<question>`, `<cards>` (card.py's output), `<rules>` (rule.py's output)
    and `<plugin>` (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one
-   `planner` (`model: claude-opus-5-5`, `run_in_background`) with it,
-   working in the folder that holds `output/`.
+   `planner` (`model` from `output/settings.json`, default
+   `claude-opus-5-5`, `run_in_background`) with it, working in the folder
+   that holds `output/`.
 5. Give its answer in chat: the ruling in a few lines, the CR numbers it
    rests on, a card ruling quoted only when it decides the case. Nothing is
    written to `output/`.

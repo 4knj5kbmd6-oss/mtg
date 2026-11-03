@@ -1,9 +1,10 @@
-"""Merge three scorers' files to a deck's nonlands.md and lands.md: median, spread flags, optional arbitration.
+"""Merge the scorers' files to a deck's nonlands.md and lands.md: median, spread flags, optional arbitration.
 usage (from the folder that holds output/): python3 skills/score/merge.py <run_dir> <slug> [arb.json]
-reads <run_dir>/<slug>-A.md, -B.md, -C.md, the deck title from output/decks/<slug>/plan.md and the
-Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
-writes <run_dir>/merged/<slug>/nonlands.md and lands.md and <run_dir>/<slug>-flagged.md; prints the
-whole deck's shape line to stderr. The deck-file helpers here are shared with upgrades/apply.py and
+reads every <run_dir>/<slug>-<LETTER>.md, one per scorer, the deck title from output/decks/<slug>/plan.md
+and the Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
+writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their shape lines with the count of scorers,
+and, with two or more scorers, <run_dir>/<slug>-flagged.md; prints the whole deck's shape line to
+stderr. One scorer's scores stand as they are: no spread, no flags. The deck-file helpers here are shared with upgrades/apply.py and
 sync/apply-changes.py."""
 import re, sys, json, statistics
 from pathlib import Path
@@ -54,16 +55,18 @@ def by_kind(rows, land):
     """{"nonlands": rows, "lands": rows}, split on whether a row's first cell names a land"""
     return {k: [r for r in rows if land(r[0]) == (k == "lands")] for k in KINDS}
 
-def shape(cards):
-    """the shape line of [card, score, ...] rows, by card copy; unscored ("-") rows left out"""
+def shape(cards, scorers=None):
+    """the shape line of [card, score, ...] rows, by card copy, unscored ("-") rows left out; with the
+    count of scorers when given"""
     s = [int(r[1]) for r in cards if r[1].isdigit() for _ in range(copies(r[0]))]
+    by = f", {scorers} scorer{'s' * (scorers != 1)}" if scorers else ""
     return (f"10: {sum(x==10 for x in s)} / 8-9: {sum(8<=x<=9 for x in s)} / 5-7: {sum(5<=x<=7 for x in s)}"
-            f" / 4 or below: {sum(x<=4 for x in s)}, mean {sum(s)/max(len(s), 1):.1f} (by card copy).")
+            f" / 4 or below: {sum(x<=4 for x in s)}, mean {sum(s)/max(len(s), 1):.1f} (by card copy){by}.")
 
-def deck_file(title, kind, cards, rest):
+def deck_file(title, kind, cards, rest, scorers):
     """nonlands.md or lands.md: the Cards table, rest (its Adds and Cuts sections, if any), the Shape line"""
     return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table(CARDS, ranked(cards, True)), ""]],
-                 *rest, ["## Shape", [shape(cards), ""]]])
+                 *rest, ["## Shape", [shape(cards, scorers), ""]]])
 
 def norm(n):
     n = re.sub(COUNT, "", n.strip()).strip(); return re.sub(r"^\d+\s+", "", n)
@@ -84,11 +87,13 @@ def main():
     arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
     deck = Path(f"output/decks/{slug}")
     title = re.sub(r"^#\s*|:\s*plan\s*$", "", (deck / "plan.md").read_text().splitlines()[0])
-    A, B, C = (parse(f"{raw}/{slug}-{x}.md") for x in "ABC")
+    files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
+    if not files: sys.exit(f"no scorer files {raw}/{slug}-<LETTER>.md")
+    letters, scorers = [p.stem[-1] for p in files], [parse(p) for p in files]
     rows = {"nonlands": [], "lands": [], "adds": []}; flagged = []
-    for k in sorted(set(A) | set(B) | set(C)):
-        got = [d.get(k) for d in (A, B, C)]; sc = [g[1] for g in got if g]
-        disp = next(g[0] for g in got if g); med = int(statistics.median(sc)) if len(sc) == 3 else round(sum(sc)/len(sc))
+    for k in sorted(set().union(*scorers)):
+        got = [d.get(k) for d in scorers]; sc = [g[1] for g in got if g]
+        disp = next(g[0] for g in got if g); med = round(statistics.median(sc))
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
         if k in arb: med, note = arb[k]["score"], arb[k]["note"]
         elif max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
@@ -105,9 +110,13 @@ def main():
         intro = [l for o in old for l in o.get("## Adds", []) if l.strip() and not l.startswith("|")]
         rest = {k: tail(intro if k == "nonlands" else [], adds[k], cuts[k]) for k in KINDS}
     out = Path(raw) / "merged" / slug; out.mkdir(parents=True, exist_ok=True)
-    for k in KINDS: (out / f"{k}.md").write_text(deck_file(title, k, rows[k], rest[k]))
-    with open(f"{raw}/{slug}-flagged.md", "w") as f:
-        f.write(f"# {slug}: cards with spread >= 3\n\n" + "".join(f"## {d}\nScores A/B/C: {sc}\n- A: {n[0]}\n- B: {n[1]}\n- C: {n[2]}\n\n" for d, sc, n in flagged))
-    print(f"{slug}: {shape(rows['nonlands'] + rows['lands'])} {len(flagged)} flagged", file=sys.stderr)
+    for k in KINDS: (out / f"{k}.md").write_text(deck_file(title, k, rows[k], rest[k], len(files)))
+    line = f"{slug}: {shape(rows['nonlands'] + rows['lands'], len(files))}"
+    if len(files) > 1:
+        Path(f"{raw}/{slug}-flagged.md").write_text(f"# {slug}: cards with spread >= 3\n\n" + "".join(
+            f"## {d}\nScores {'/'.join(letters)}: {sc}\n" + "".join(f"- {x}: {n}\n" for x, n in zip(letters, notes)) + "\n"
+            for d, sc, notes in flagged))
+        line += f" {len(flagged)} flagged"
+    print(line, file=sys.stderr)
 
 if __name__ == "__main__": main()
