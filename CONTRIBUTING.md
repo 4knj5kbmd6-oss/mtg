@@ -23,6 +23,7 @@
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
 | [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge`, `librarian` and `shopper` |
 | [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge`, `scryfall` |
+| [`lib/`](lib/) | The code the scripts share: `net` (Scryfall, Spellbook and Wizards over HTTP), `project` (paths, deck readers, file writes), `tables` (the Markdown tables) and `settings` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 | [`tests/`](tests/) | The scripts' tests, run on a fixture project |
 | [`.github/`](.github/) | Issue templates and the test workflow |
