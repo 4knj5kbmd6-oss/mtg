@@ -7,9 +7,9 @@ Changer, fit score, decklist.
 
 ## Layout
 
-Core (tracked): `CLAUDE.md`, `README.md`, `scoring.md` (the 0 to 10 metric
-the owner tunes), the skills in `skills/` and the plugin and marketplace
-manifests in `.claude-plugin/`.
+Core (tracked): `CLAUDE.md`, `README.md`, the agents in `agents/`
+(`scorer.md` holds the 0 to 10 metric the owner tunes), the skills in
+`skills/` and the plugin and marketplace manifests in `.claude-plugin/`.
 
 The owner's settings, `settings.json` beside `output/` (gitignored), read
 by the skills that dispatch agents or write adds; an absent file or key
@@ -61,14 +61,14 @@ Procedures are skills in `skills/`, each with its scripts and agent briefs
 beside it:
 
 - `sync`: refresh lists and tokens from Moxfield through the browser pane.
-- `score`: independent scorers per deck, median, arbitration, one score
-  kept; optional rankings recompute.
+- `score`: independent scorers per deck, median kept, split cards
+  reported; optional rankings recompute.
 - `upgrades`: ranked adds and cuts per deck, new-since-built weighted.
 - `cart`: build and optimize a TCGplayer guest cart from a list.
 - `judge`: the Comprehensive Rules on disk and a judge agent for rules
   questions, citing rule numbers.
 
-The repo is the `commander-deckhand` plugin: the skills load from an installed plugin or with
+The repo is the `commander-deckhand` plugin: the skills and agents load from an installed plugin or with
 `claude --plugin-dir .`, and run from the folder that holds `output/`.
 
 ## Rules
@@ -77,8 +77,8 @@ The repo is the `commander-deckhand` plugin: the skills load from an installed p
   score on each card and the recommended adds; every generated file is a
   table with one short reason per row and no prose around it. Rankings
   are the table alone. Briefs, skills and docs say each thing once.
-- Scores are never hand-edited. When one looks wrong, fix `scoring.md` or
-  the deck's `plan.md` and rescore.
+- Scores are never hand-edited. When one looks wrong, fix the metric in
+  `agents/scorer.md` or the deck's `plan.md` and rescore.
 - Rankings judge strength at a four-player table, not a sum of scores;
   brackets follow WotC's published guidelines, not a Game Changer count.
 - Plans are the owner's. Draft changes for their review; add no intent they

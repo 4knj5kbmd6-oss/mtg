@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from conftest import run, load, read
 
@@ -79,14 +78,6 @@ Built 2025-01-01, last edited 2025-06-01, bracket 2.
     assert lands.endswith("mean 5.8 (by card copy), 3 scorers.\n")
     flagged = read("run/zara-flagged.md")
     assert "## Brine Elemental\nScores A/B/C: [2, 5, 6]\n" in flagged and "Sol Ring" not in flagged
-
-
-def test_arbitration_settles_a_flag():
-    scorers()
-    Path("arb.json").write_text(json.dumps({"Brine Elemental": {"score": 4, "note": "arbitrated"}}))
-    out = run("score/merge.py", "run", "zara", "arb.json")
-    assert out.stderr.endswith("0 flagged\n")
-    assert "| Brine Elemental | 4 | arbitrated |" in read("run/merged/zara/nonlands.md")
 
 
 def test_one_scorer_stands_alone():

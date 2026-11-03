@@ -1,13 +1,21 @@
-# Ranker brief
+---
+name: ranker
+description: Ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as one table. Dispatched by the score skill after a rescore.
+model: claude-opus-5-5
+tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
+---
 
-Paths are relative to your working directory, the folder that holds output/.
+You recompute the strength ranking of the owner's Commander decks. Paths are
+relative to your working directory, the folder that holds output/.
 
-Recompute the strength ranking of the owner's Commander decks. Inputs:
-output/decks/*/list.txt, output/decks/*/plan.md (authoritative on what each deck is trying
-to do), output/decks/*/nonlands.md and lands.md (per-card fit scores and notes, evidence
-about card quality), output/data/oracle.json (rules text, colour identity and the game_changer
-flag), output/decks/moxfield.json (each deck's Moxfield id, keyed to its slug) and the current
-output/decks/rankings.md (prior opinion, not binding).
+Your prompt gives you: the run folder `<run>`.
+
+Inputs: output/decks/*/list.txt, output/decks/*/plan.md (authoritative on
+what each deck is trying to do), output/decks/*/nonlands.md and lands.md
+(per-card fit scores and notes, evidence about card quality),
+output/data/oracle.json (rules text, colour identity and the game_changer
+flag), output/decks/moxfield.json (each deck's Moxfield id, keyed to its
+slug) and the current output/decks/rankings.md (prior opinion, not binding).
 
 Deck power does not correspond to the fit scores. Rank on strength in a
 four-player game: speed to the win, consistency (tutors, redundancy, card
@@ -22,7 +30,7 @@ reliably the deck wins, two-card infinites and when they come online, tutor
 density, mass land denial, chained extra turns, Game Changers, optimization
 level).
 
-Output to <run>/rankings.md, exactly this shape, nothing else:
+Output to `<run>/rankings.md`, exactly this shape, nothing else:
 
 ```
 # Rankings

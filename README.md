@@ -51,10 +51,9 @@ first use and looks up on Scryfall any card it has not seen.
 3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
 
 **Cost.** At the defaults every deck in a `/score` run is read by three Opus
-scorers, each taking a group of two or three decks that share colours; cards
-the scorers split on go to one arbiter per batch, and a run of more than one
-deck ends with one ranker. `scorers` and `model` in `settings.json`
-lower it.
+scorers, each taking a group of two or three decks that share colours, and a
+run of more than one deck ends with one ranker. `scorers` and `model` in
+`settings.json` lower it.
 
 ## Layout
 
@@ -63,7 +62,7 @@ Core (tracked):
 | Path | What |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
-| [`scoring.md`](scoring.md) | The fit-score metric, yours to tune |
+| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune) and `ranker` |
 | [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 

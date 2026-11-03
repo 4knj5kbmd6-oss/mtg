@@ -1,5 +1,5 @@
-"""Merge the scorers' files to a deck's nonlands.md and lands.md: median, spread flags, optional arbitration.
-usage (from the folder that holds output/): python3 skills/score/merge.py <run_dir> <slug> [arb.json]
+"""Merge the scorers' files to a deck's nonlands.md and lands.md: median and spread flags.
+usage (from the folder that holds output/): python3 skills/score/merge.py <run_dir> <slug>
 reads every <run_dir>/<slug>-<LETTER>.md, one per scorer, the deck title from output/decks/<slug>/plan.md
 and the Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
 writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their shape lines with the count of scorers,
@@ -82,9 +82,8 @@ def parse(p):
     return out
 
 def main():
-    if len(sys.argv) < 3: sys.exit(__doc__)
+    if len(sys.argv) != 3: sys.exit(__doc__)
     raw, slug = sys.argv[1], sys.argv[2]
-    arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
     deck = Path(f"output/decks/{slug}")
     title = re.sub(r"^#\s*|:\s*plan\s*$", "", (deck / "plan.md").read_text().splitlines()[0])
     files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
@@ -95,8 +94,7 @@ def main():
         got = [d.get(k) for d in scorers]; sc = [g[1] for g in got if g]
         disp = next(g[0] for g in got if g); med = round(statistics.median(sc))
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
-        if k in arb: med, note = arb[k]["score"], arb[k]["note"]
-        elif max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
+        if max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
         secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
     cur = [p for p in (deck / f"{k}.md" for k in KINDS) if p.exists()] or [p for p in [deck / "scores.md"] if p.exists()]
     old = [dict(split(p.read_text())) for p in cur]
