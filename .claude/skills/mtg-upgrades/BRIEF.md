@@ -44,7 +44,12 @@ Two files per deck, judged independently and never paired, at
 table, nothing else. A Why cell is one clause of at most about 15 words naming
 the card's role and the interaction it joins (or, for a cut, why it falls short).
 
-<slug>-adds.md, exactly 20 adds, ranked best first:
+<slug>-adds.md: exactly 20 nonland adds ranked best first, then up to 5
+land adds ranked best first, in one table. A land is listed only when it
+does something for the plan (a utility land, a landfall or sacrifice
+piece); fewer than 5, or none, is fine. Never list a dual land: a land
+whose job is producing two or more colours (typed duals, shocks, fetches,
+bounce lands, pain and check lands and the like).
 
 ```
 # <deck>: top adds (<date>)
