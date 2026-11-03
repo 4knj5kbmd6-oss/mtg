@@ -22,18 +22,16 @@ inputs named below.
 2. Make a fresh scratchpad folder `<run>/`. Per deck write its two fact
    files, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/combos.py <run> <slug>`
    and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/mana.py <run> <slug>`.
-   Commander Spellbook knows only catalogued combos, so a plan's own kill may
-   show nothing in `<run>/<slug>-combos.md`; when Spellbook is unreachable
-   the run goes on without that file. Group decks by shared colours
-   (two or three per group). Dispatch `scorers` `mtg-toolbox:scorer`
-   agents per group, lettered A, B, C and on, each prompt giving `<run>`,
-   the letter, the scorer's own `<run>/work-<group>-<letter>/` subfolder
-   and the group's slugs, each with its bracket from `rankings.md` and its
-   two fact files.
+   When Spellbook is unreachable the run goes on without the combos file.
+   Group decks by shared colours (two or three per group). Dispatch
+   `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and
+   on, each prompt giving `<run>`, the letter, the scorer's own
+   `<run>/work-<group>-<letter>/` subfolder and the group's slugs, each with
+   its bracket from `rankings.md` and its two fact files.
 3. When all of a group are back, per deck
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`. It
    prints the deck's shape line and, with two or more scorers, the count of
-   split cards (scores 3 or more apart), listed in `<run>/<slug>-flagged.md`.
+   split cards (merge.py's SPLIT apart), listed in `<run>/<slug>-flagged.md`.
 4. Copy each deck's merged pair, `<run>/merged/<slug>/`, into
    `output/decks/<slug>/`. Check the shape line merge.py printed for each
    deck against rule 8 of the metric. Then per deck

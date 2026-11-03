@@ -153,7 +153,7 @@ def test_settings_overrides():
     base, given, defaults = settings.settings(), read("settings.json"), copy.deepcopy(settings.DEFAULTS)
     got = settings.settings(["scorers=1", "quota.adds=15", "quota.cuts=[8, 12]", "cart.finish=nonfoil",
                              "model=claude-sonnet-5"])
-    assert got == {**base, "scorers": 1, "model": "claude-sonnet-5", "quota": {"adds": 15, "lands": 5, "cuts": [8, 12]},
+    assert got == {**base, "scorers": 1, "model": "claude-sonnet-5", "quota": {**base["quota"], "adds": 15, "cuts": [8, 12]},
                    "cart": {**base["cart"], "finish": "nonfoil"}}
     assert settings.settings() == base and read("settings.json") == given and settings.DEFAULTS == defaults
     out = run("score/settings.py", "budget=50", "universes_beyond=false", "new_sets=true")

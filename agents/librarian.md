@@ -15,7 +15,7 @@ docs page.
 Read the sections that bear on the request (grep the file for its keywords)
 and write the query. Run it with
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/search.py "<query>"`, which
-prints the count and the first 20 names with their type lines, or
+prints the count and the first names with their type lines, or
 Scryfall's error, with a `Warning:` line for each term Scryfall ignored.
 Adjust the query and run it again until no term is ignored and the results
 match the request.

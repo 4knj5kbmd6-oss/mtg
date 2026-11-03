@@ -9,15 +9,7 @@ argument-hint: "<question>"
 The Comprehensive Rules are `output/data/rules.txt`, each card's Scryfall
 rulings the `rulings` key in `output/data/oracle.json`. The scripts run from
 the folder that holds `output/`, as
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`:
-
-- `fetch-rules.py` downloads the rules linked from Wizards' rules page; it
-  downloads only when the page links a newer file.
-- `rule.py 800.4a [704.5 ...]` prints rules with their subrules;
-  `rule.py --find word ...` the number and opening of every rule holding all
-  the words; `rule.py --glossary term` a glossary entry.
-- `card.py "Card Name" ...` prints each card's oracle text and rulings, from
-  `oracle.json` or, for a card not there, singly from Scryfall.
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`.
 
 Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent

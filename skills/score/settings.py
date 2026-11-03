@@ -5,7 +5,7 @@ prints the effective settings as JSON, each key=value overriding that setting fo
 nested one, quota.adds=15; a value is JSON when it parses, a string otherwise); settings.json is not written."""
 import json, sys
 from pathlib import Path
-DEFAULTS = {"scorers": 3, "model": "claude-opus-5-5", "budget": None,
+DEFAULTS = {"scorers": 3, "model": None, "budget": None,
             "quota": {"adds": 20, "lands": 5, "cuts": [10, 15]}, "universes_beyond": True, "new_sets": False,
             "cart": {"condition": "MP", "language": "English", "finish": None, "premium": None}}
 
