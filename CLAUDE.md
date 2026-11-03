@@ -39,8 +39,10 @@ The owner's output, under `output/` (gitignored):
   shows it and re-applies the rest to the lists.
   A Note of `unowned` (`unowned, 10 copies` for basics) marks a card to buy,
   possibly already in the list; the row stays until the owner clears it.
-- `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`) and
-  `tokens.md`.
+- `output/data/`: `oracle.json` (rebuilt by mtg-sync's `fetch-oracle.py`,
+  each card with its Scryfall rulings), `tokens.md`, and `rules.txt` with
+  `rules-index.md` (the Comprehensive Rules and their headings, from
+  mtg-rules' `fetch-rules.py`).
 - `output/carts/`: one report per cart.
 
 ## Skills
@@ -53,6 +55,8 @@ beside it:
   one score kept; optional rankings recompute.
 - `mtg-upgrades`: ranked adds and cuts per deck, new-since-built weighted.
 - `tcg-cart`: build and optimize a TCGplayer guest cart from a list.
+- `mtg-rules`: the Comprehensive Rules on disk and an Opus judge for rules
+  questions, citing rule numbers.
 
 The repo is a plugin: the skills load from an installed plugin or with
 `claude --plugin-dir .`, and run from the folder that holds `output/`.

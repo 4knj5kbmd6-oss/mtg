@@ -34,7 +34,7 @@ Core (tracked):
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
 | [`scoring.md`](scoring.md) | The fit-score metric, yours to tune |
-| [`skills/`](skills/) | `mtg-sync`, `mtg-score`, `mtg-upgrades`, `tcg-cart` |
+| [`skills/`](skills/) | `mtg-sync`, `mtg-score`, `mtg-upgrades`, `tcg-cart`, `mtg-rules` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 
 Your output, all under `output/` (gitignored):
@@ -47,5 +47,6 @@ Your output, all under `output/` (gitignored):
 | `rankings.md` | Strength order and brackets |
 | `restricted.md`, `decks/<slug>/restricted.md` | Cards, by name or kind, never considered as adds: for every deck, and for one deck |
 | `changes.md` | Your intended swaps not yet made on Moxfield; `/mtg-sync` re-applies them to each `list.txt` and drops each once Moxfield shows it, except a card noted `unowned`, which stays until you clear the note |
-| `data/` | `oracle.json` (Scryfall) and `tokens.md` |
+| `data/` | `oracle.json` (Scryfall, with each card's rulings) and `tokens.md` |
+| `data/rules.txt`, `data/rules-index.md` | The Comprehensive Rules and their section headings, for `/mtg-rules` |
 | `carts/` | One report per cart |

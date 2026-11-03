@@ -16,7 +16,8 @@ the Card columns of the `## Adds` tables in `nonlands.md` and `lands.md`
 1. If Moxfield's `lastUpdatedAtUtc` may be newer than the list, run
    `/mtg-sync` first.
 2. Make a fresh scratchpad folder `<run>/` and copy `SCORER-BRIEF.md` into
-   it with `<run>` and `<scoring>` (the metric's path) filled in. Dispatch
+   it with `<run>`, `<scoring>` (the metric's path) and `<plugin>`
+   (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch
    three `planner` agents per deck group (`model: claude-opus-5-5`,
    `run_in_background`), lettered A, B, C, each with its own
    `work-<group>-<letter>/` subfolder (every scorer in the run gets a

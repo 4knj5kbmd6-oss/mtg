@@ -13,8 +13,8 @@ the top 20 nonlands plus up to 5 utility lands.
 
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/mtg-sync`
    fetch returns them) and its bracket from `output/rankings.md`.
-2. Copy `BRIEF.md` to a fresh scratchpad folder with the dates table and
-   `<today>` filled in. Dispatch one `planner` (`model: claude-opus-5-5`,
+2. Copy `BRIEF.md` to a fresh scratchpad folder with the dates table,
+   `<today>` and `<plugin>` (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one `planner` (`model: claude-opus-5-5`,
    `run_in_background`) per colour-sharing group of two or three decks, so
    each researches a colour's new cards once. Planners have web search;
    they must verify rules text and release date on Scryfall.

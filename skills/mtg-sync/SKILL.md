@@ -32,7 +32,7 @@ follow the new-deck steps below for every deck they name as owned.
    says `n copies`, so a basic cut by count is applied once per sync, not
    on a manual rerun. Last it prints a diff summary.
 3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-sync/fetch-oracle.py` rebuilds
-   `output/data/oracle.json` from Scryfall.
+   `output/data/oracle.json` from Scryfall, each card with its rulings.
 
 Only when the owner names a new deck as owned, run `collect.js` on the
 profile page first to list their deck ids (it clicks "View More"), add the
