@@ -36,7 +36,10 @@ inputs named below.
    split cards (scores 3 or more apart), listed in `<run>/<slug>-flagged.md`.
 4. Copy each deck's merged pair, `<run>/merged/<slug>/`, into
    `output/decks/<slug>/`. Check the shape line merge.py printed for each
-   deck against rule 8 of the metric.
+   deck against rule 8 of the metric. Then per deck
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>` redraws
+   `output/decks/<slug>/changes.png` from its Adds and Cuts tables; a deck
+   with neither prints "no adds or cuts" and gets no image.
 5. If more than one deck was rescored, or the owner asks, write the two
    fact files into `<run>` for every deck not rescored this run, as in
    step 2, then recompute the rankings with one `mtg-toolbox:ranker`, its
