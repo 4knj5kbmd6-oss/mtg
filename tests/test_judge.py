@@ -1,4 +1,6 @@
+import pytest
 from conftest import run
+import fetch_rules
 
 
 def rule(*args):
@@ -48,3 +50,9 @@ def test_a_card_name_beats_another_cards_face():
     assert card("Tidal Insight") == "Tidal Insight {2}{U}\nInstant\nDraw two cards.\nRulings: none\n"
     assert card("Drowned Scholar").startswith("Drowned Scholar {1}{U}\n")
     assert card("Tidal Flats").startswith("Rising Tide {1}{U}\n")
+
+
+def test_a_rules_page_with_no_link_exits_naming_it(monkeypatch):
+    monkeypatch.setattr(fetch_rules, "get", lambda url: b"<html>moved</html>")
+    with pytest.raises(SystemExit, match="^https://magic.wizards.com/en/rules: no link to the Comprehensive Rules .txt$"):
+        fetch_rules.main()

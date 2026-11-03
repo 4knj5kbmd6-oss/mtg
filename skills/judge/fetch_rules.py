@@ -21,7 +21,9 @@ def effective(text):
 
 def main():
     page = get(PAGE).decode("utf-8", "replace")
-    link = urllib.parse.quote(re.search(r'href="([^"]*CompRules[^"]*\.txt)"', page).group(1), safe=":/%")
+    if not (href := re.search(r'href="([^"]*CompRules[^"]*\.txt)"', page)):
+        sys.exit(f"{PAGE}: no link to the Comprehensive Rules .txt")
+    link = urllib.parse.quote(href.group(1), safe=":/%")
     if RULES.exists() and RULES.read_text().partition("\n")[0] == f"Source: {link}":
         print("Comprehensive Rules effective", effective(RULES.read_text()), "(already current)")
     else:

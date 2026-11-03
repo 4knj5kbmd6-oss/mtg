@@ -4,6 +4,7 @@ from urllib.error import URLError
 import pytest
 from conftest import ROOT, run, read
 import combos as script
+from net import Failed
 
 SAVED = ROOT / "tests" / "spellbook"  # Spellbook's answers for two real decks, trimmed to a few combos
 
@@ -87,13 +88,14 @@ def test_included_combos_carry_spellbooks_two_card_mark_and_flags(combos, monkey
 
 @pytest.mark.parametrize("answer, url", [
     (URLError("down"), "find-my-combos"),
+    (Failed("https://backend.commanderspellbook.com/find-my-combos/: HTTP 503"), "find-my-combos"),
     (b"<title>Just a moment...</title>", "estimate-bracket"),
 ])
 def test_no_answer_from_spellbook_names_the_url_and_writes_nothing(combos, monkeypatch, capsys, answer, url):
     deck("beamtown", "The Beamtown Bullies", {"Seeker of Skybreak": 1})
     def get(u, body):
         if url not in u: return (SAVED / "beamtown-find-my-combos.json").read_bytes()
-        if isinstance(answer, Exception): raise answer
+        if isinstance(answer, BaseException): raise answer
         return answer
     monkeypatch.setattr(combos, "get", get)
     monkeypatch.setattr(sys, "argv", ["combos.py", "run", "beamtown"])

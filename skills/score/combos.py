@@ -8,7 +8,7 @@ unreachable or answers with no JSON, prints one line naming the URL and writes n
 import json, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from net import get
+from net import get, Failed
 from project import key, decklist, DECKS
 from tables import table, adds
 
@@ -19,7 +19,7 @@ def ask(endpoint, body):
     """Spellbook's JSON answer to body at endpoint, or None after printing the URL when there is none"""
     url = f"{SPELLBOOK}/{endpoint}/"
     try: return json.loads(get(url, body))
-    except (OSError, ValueError): print(f"Commander Spellbook unreachable: {url}")
+    except (OSError, ValueError, Failed): print(f"Commander Spellbook unreachable: {url}")
 
 def names(variant): return [u["card"]["name"] for u in variant["uses"]]
 

@@ -40,7 +40,11 @@ def card_names():
               if (m := re.match(r"\d+ (.+)", line.strip()))}
     return sorted(listed | {r[0] for d in DECKS.glob("*") for r in adds(d)})
 
-def save(oracle): write(ORACLE, json.dumps(oracle, indent=1, sort_keys=True))
+def save(oracle):
+    """oracle.json written whole to a temp file renamed over it, so a failed run leaves the old file"""
+    tmp = ORACLE.with_suffix(".tmp")
+    write(tmp, json.dumps(oracle, indent=1, sort_keys=True))
+    tmp.replace(ORACLE)
 
 def add(names):
     """fetch each of names oracle.json lacks singly into it, with its rulings; the names Scryfall has no card for"""

@@ -82,3 +82,14 @@ def test_card_names():
     assert names == ["Brine Elemental", "Coral Signet", "Deep Current", "Island", "Kelp Weaver", "Misty Cove",
                      "Sol Ring", "Sunken Grotto", "Tidal Insight", "Tidepool Ruins", "Wave Breaker", "Zara, Tide Caller"]
     assert set(names) <= set(json.loads(read("output/data/oracle.json"))["cards"])
+
+
+def test_a_failed_save_leaves_oracle_json(monkeypatch):
+    before = read("output/data/oracle.json")
+    def broken(path, text):
+        path.write_text(text[:10])
+        raise OSError("disk full")
+    monkeypatch.setattr(fetch_oracle, "write", broken)
+    with pytest.raises(OSError):
+        fetch_oracle.save({"cards": {}})
+    assert read("output/data/oracle.json") == before
