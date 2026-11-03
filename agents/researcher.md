@@ -57,7 +57,7 @@ Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
    ("none" means no cap).
 5. A card is in only if you can say what it does for this deck's specific plan.
 6. Read the mana file's Colours rows for a colour short of sources against its
-   pips; the remedy stays within the land rule below, never a dual land.
+   pips; the remedy stays within the land rule below and off the restricted lists; every other two-colour land is eligible.
 
 ## Output
 
