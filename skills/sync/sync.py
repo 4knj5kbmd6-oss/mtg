@@ -8,7 +8,7 @@ import json, re, sys, unicodedata
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from net import CHALLENGE
-from project import match, DECKS, DATA, CHANGES
+from project import match, write, DECKS, DATA, CHANGES
 from tables import cells
 import apply_changes
 
@@ -98,9 +98,8 @@ def main():
         lines = v["commanders"] + [""] + v["mainboard"] + [""]
         if v["sideboard"]: lines += ["SIDEBOARD:"] + v["sideboard"] + [""]
         fetched[slug], dumped[slug] = v, lines
-        (DECKS / slug).mkdir(parents=True, exist_ok=True)
-        (DECKS / slug / "list.txt").write_text("\n".join(lines))
-    if not stale: (DATA / "tokens.md").write_text(tokens(fetched))
+        write(DECKS / slug / "list.txt", "\n".join(lines))
+    if not stale: write(DATA / "tokens.md", tokens(fetched))
     drop_landed(dumped)
     apply_changes.main()
     if stale: print(f"not refreshed: {', '.join(stale)} (tokens.md left as it was)")

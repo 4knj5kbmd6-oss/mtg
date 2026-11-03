@@ -6,7 +6,7 @@ import re, sys, urllib.parse
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from net import get
-from project import RULES
+from project import write, RULES
 
 PAGE = "https://magic.wizards.com/en/rules"
 
@@ -19,12 +19,14 @@ def decode(raw):
 def effective(text):
     return re.search(r"These rules are effective as of ([^.\n]+)\.", text).group(1)
 
-if __name__ == "__main__":
+def main():
     page = get(PAGE).decode("utf-8", "replace")
     link = urllib.parse.quote(re.search(r'href="([^"]*CompRules[^"]*\.txt)"', page).group(1), safe=":/%")
     if RULES.exists() and RULES.read_text().partition("\n")[0] == f"Source: {link}":
         print("Comprehensive Rules effective", effective(RULES.read_text()), "(already current)")
     else:
         text = decode(get(link))
-        RULES.write_text(f"Source: {link}\n{text}")
+        write(RULES, f"Source: {link}\n{text}")
         print("Comprehensive Rules effective", effective(text), "(fetched)")
+
+if __name__ == "__main__": main()

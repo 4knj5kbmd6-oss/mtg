@@ -10,7 +10,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from net import get, found, SEARCH
-from project import key, KINDS, DECKS, DATA
+from project import key, write, KINDS, DECKS, DATA
 from tables import split, cells
 CACHE = DATA / "images"
 BANDS = (("Nonland adds", "nonlands", "## Adds"), ("Nonland cuts", "nonlands", "## Cuts"),
@@ -25,8 +25,7 @@ def image(name):
         query = urllib.parse.quote(f'!"{name}" game:paper unique:prints order:released dir:asc')
         if (r := found(SEARCH + query)) is None: return None
         card = r["data"][0]
-        CACHE.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(get((card.get("image_uris") or card["card_faces"][0]["image_uris"])["normal"]))
+        write(path, get((card.get("image_uris") or card["card_faces"][0]["image_uris"])["normal"]))
     return Image.open(path).convert("RGB").resize((W, H))
 
 def bands(slug):

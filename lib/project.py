@@ -9,6 +9,11 @@ KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 NAMED = f"{SCRYFALL}/cards/named?exact="
 
+def write(path, data):
+    """data, text or bytes, written to path, its folder made first"""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data) if isinstance(data, bytes) else path.write_text(data)
+
 def key(name):
     """name for matching across files: no count or parenthetical, front face only"""
     return re.sub(r"^\d+\s+|\s*(\(.*\)|[x×]\s*\d+)$", "", name.strip()).split(" // ")[0].strip()

@@ -7,7 +7,7 @@ import gzip, json, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from net import get, SCRYFALL
-from project import card, ORACLE, DECKS
+from project import card, write, ORACLE, DECKS
 from tables import adds
 API, BATCH = f"{SCRYFALL}/cards/collection", 75  # Scryfall's most names per collection request
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
@@ -40,7 +40,7 @@ def card_names():
               if (m := re.match(r"\d+ (.+)", line.strip()))}
     return sorted(listed | {r[0] for d in DECKS.glob("*") for r in adds(d)})
 
-def save(oracle): json.dump(oracle, open(ORACLE, "w"), indent=1, sort_keys=True)
+def save(oracle): write(ORACLE, json.dumps(oracle, indent=1, sort_keys=True))
 
 def add(names):
     """fetch each of names oracle.json lacks singly into it, with its rulings; the names Scryfall has no card for"""

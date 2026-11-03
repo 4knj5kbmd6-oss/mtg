@@ -7,7 +7,7 @@ card count and every line it could not parse; those lines are not written."""
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from project import DECKS
+from project import write, DECKS
 
 SECTIONS = {"commander": "commander", "commanders": "commander", "deck": "main", "main": "main", "mainboard": "main",
             "sideboard": "side", "companion": "side", "maybeboard": None, "considering": None, "tokens": None, "about": "about"}
@@ -62,9 +62,7 @@ def main():
     if len(sys.argv) not in (2, 3): sys.exit(__doc__)
     slug = sys.argv[1]
     boards, bad = parse(open(sys.argv[2]).read() if len(sys.argv) == 3 else sys.stdin.read())
-    deck = DECKS / slug
-    deck.mkdir(parents=True, exist_ok=True)
-    (deck / "list.txt").write_text(listing(boards))
+    write(DECKS / slug / "list.txt", listing(boards))
     count = lambda b: sum(boards[b].values())
     print(f"{slug}: {count('commander') + count('main')} cards, {count('commander')} of them commander"
           + (f", {count('side')} in the sideboard" if boards["side"] else ""))

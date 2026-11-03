@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from net import get, CHALLENGE
-from project import DATA
+from project import write, DATA
 
 DOCS = "https://scryfall.com/docs/"
 PAGES = [DOCS + p for p in ("syntax", "regular-expressions", "api", "api/cards/search", "api/cards/named",
@@ -89,6 +89,5 @@ if __name__ == "__main__":
         print(f"{SYNTAX} (already fetched)")
     else:
         sections = [section(page(u), u) for u in PAGES]
-        SYNTAX.parent.mkdir(parents=True, exist_ok=True)
-        SYNTAX.write_text("\n".join(sections))
+        write(SYNTAX, "\n".join(sections))
         for s in sections: print(f"{s.splitlines()[0]}  ({len(s):,} characters)")
