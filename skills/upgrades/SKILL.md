@@ -17,7 +17,7 @@ prompt carries only the per-run inputs named below.
 1. Get each deck's `created` and `updated` (the `/sync` fetch returns
    them) and its bracket from `rankings.md`.
 2. Make a fresh scratchpad folder `<run>/`. Dispatch one
-   `edhtool:researcher` per colour-sharing group of two or three
+   `mtg-deckhand:researcher` per colour-sharing group of two or three
    decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),
    `<quota>` and `<universes_beyond>` as `settings.py` prints them, and the

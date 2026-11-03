@@ -33,7 +33,7 @@ agent with `model` only when it differs from the agent's own.
    review. If the buyer changes the deck or exclusions, update the list.
 3. Ask the app to keep the Mac awake (`request_keep_awake`, `session_idle`);
    a sleep mid-run kills a build.
-4. Dispatch one `edhtool:shopper`, `run_in_background` in the folder that
+4. Dispatch one `mtg-deckhand:shopper`, `run_in_background` in the folder that
    holds `output/`, its prompt giving the canonical list's path, the
    requirements with the four `cart` values among them, and the report path
    `output/carts/<date>-<name>.md`.

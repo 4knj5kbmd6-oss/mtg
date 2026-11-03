@@ -1,8 +1,8 @@
 {
-  "name": "edhtool",
-  "description": "The edhtool plugin: tooling for your Commander decks, run by Claude Code skills.",
+  "name": "mtg-deckhand",
+  "description": "The mtg-deckhand plugin: tooling for your Commander decks, run by Claude Code skills.",
   "owner": { "name": "4knj5kbmd6-oss" },
   "plugins": [
-    { "name": "edhtool", "source": "./" }
+    { "name": "mtg-deckhand", "source": "./" }
   ]
 }

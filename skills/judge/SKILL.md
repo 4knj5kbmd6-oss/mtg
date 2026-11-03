@@ -34,7 +34,7 @@ For `/judge <question>`:
    every `key=value` word of the arguments, which overrides that setting
    for this run (a dotted key, `quota.adds=15`, reaches a nested one);
    dispatch each agent with `model` only when it differs from the agent's own. Dispatch
-   one `edhtool:judge`, `run_in_background` in the folder that
+   one `mtg-deckhand:judge`, `run_in_background` in the folder that
    holds `output/`, its prompt giving the question, card.py's output and
    rule.py's output.
 5. Give its answer in chat. Nothing is written to `output/`.

@@ -6,7 +6,7 @@ argument-hint: "[slug ...] [key=value ...] | <slug> <card name> [<card name> ...
 
 # score
 
-The metric lives in the `edhtool:scorer` agent,
+The metric lives in the `mtg-deckhand:scorer` agent,
 `${CLAUDE_PLUGIN_ROOT}/agents/scorer.md`; the owner tunes it there, this
 skill only applies it. Scores are never hand-edited: when one looks wrong,
 fix the metric or the deck's `plan.md` and rescore.
@@ -20,9 +20,9 @@ here runs `run_in_background` in the folder that holds `output/`; its
 prompt carries only the per-run inputs named below.
 
 1. If Moxfield's `updated` may be newer than the list, run
-   `edhtool:sync` first.
+   `mtg-deckhand:sync` first.
 2. Make a fresh scratchpad folder `<run>/`. Group decks by shared colours
-   (two or three per group). Dispatch `scorers` `edhtool:scorer`
+   (two or three per group). Dispatch `scorers` `mtg-deckhand:scorer`
    agents per group, lettered A, B, C and on, each prompt giving `<run>`,
    the letter, the scorer's own `<run>/work-<group>-<letter>/` subfolder
    and the group's slugs, each with its bracket from `rankings.md`.
@@ -34,7 +34,7 @@ prompt carries only the per-run inputs named below.
    `output/decks/<slug>/`. Check the shape line merge.py printed for each
    deck against rule 8 of the metric.
 5. If more than one deck was rescored, or the owner asks, recompute the
-   rankings with one `edhtool:ranker`, its prompt giving `<run>`;
+   rankings with one `mtg-deckhand:ranker`, its prompt giving `<run>`;
    copy `<run>/rankings.md` over `rankings.md`.
 
 Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
