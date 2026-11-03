@@ -62,7 +62,7 @@ Core (tracked):
 | Path | What |
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
-| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher` and `judge` |
+| [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge` and `shopper` |
 | [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 

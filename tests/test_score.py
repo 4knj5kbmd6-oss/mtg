@@ -12,7 +12,7 @@ SCORES = {
 
 
 def scorers(letters="ABC"):
-    """one scorer file per letter in run/, as the scorer brief shapes them"""
+    """one scorer file per letter in run/, as the scorer agent shapes them"""
     Path("run").mkdir()
     for i, letter in enumerate(letters):
         text = f"# Zara, Tide Caller: fit scores ({letter})\n"

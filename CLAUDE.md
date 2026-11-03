@@ -64,7 +64,8 @@ agents they dispatch are in `agents/`:
 - `score`: independent scorers per deck, median kept, split cards
   reported; optional rankings recompute.
 - `upgrades`: ranked adds and cuts per deck, new-since-built weighted.
-- `cart`: build and optimize a TCGplayer guest cart from a list.
+- `cart`: a shopper agent builds and optimizes a TCGplayer guest cart from
+  a list.
 - `judge`: the Comprehensive Rules on disk and a judge agent for rules
   questions, citing rule numbers.
 
