@@ -1,10 +1,10 @@
-"""A fresh project, an empty folder with no output/, through its first /sync, import and /judge, every server
+"""A fresh project, an empty folder with no output/, through its first /sync, import, single-card fetch and /judge, every server
 answered by a stub."""
 import gzip, importlib, json, sys
 from pathlib import Path
 import pytest
 from conftest import read
-import fetch_oracle, fetch_rules, sync
+import fetch_oracle, fetch_rules, project, sync
 
 DECK = {"name": "Zara", "commanders": ["1 Zara, Tide Caller"], "mainboard": ["1 Sol Ring"], "sideboard": [],
         "tokens": [{"name": "Fish", "colors": ["U"], "pt": "1/1", "type": "Token Creature — Fish", "text": ""}]}
@@ -47,6 +47,16 @@ def test_first_import_writes_the_list_and_oracle(monkeypatch):
     importlib.import_module("import").main()
     assert read("output/decks/zara/list.txt") == "1 Zara, Tide Caller\n\n1 Sol Ring\n"
     assert sorted(oracle(monkeypatch)) == ["Sol Ring", "Zara, Tide Caller"]
+
+
+def test_first_single_card_fetch_writes_oracle(monkeypatch):
+    ring = {"name": "Sol Ring", "type_line": "Artifact", "legalities": {"commander": "legal"}, "rulings_uri": "ring-rulings"}
+    monkeypatch.setattr(project, "found", lambda url: ring if url == project.NAMED + "Sol%20Ring" else None)
+    monkeypatch.setattr(project, "get", lambda url: b'{"data": [{"comment": "Taps for two."}]}')
+    assert fetch_oracle.add(["Sol Ring"]) == []
+    assert json.loads(read("output/data/oracle.json")) == {"cards": {"Sol Ring": {
+        "name": "Sol Ring", "type_line": "Artifact", "legalities": {"commander": "legal"}, "related_tokens": [],
+        "rulings": ["Taps for two."]}}}
 
 
 def test_first_judge_writes_the_rules(monkeypatch, capsys):

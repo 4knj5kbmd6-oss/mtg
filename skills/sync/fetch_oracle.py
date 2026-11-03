@@ -47,8 +47,8 @@ def save(oracle):
     tmp.replace(ORACLE)
 
 def add(names):
-    """fetch each of names oracle.json lacks singly into it, with its rulings; the names Scryfall has no card for"""
-    oracle = json.loads(ORACLE.read_text()); missing = []
+    """fetch each of names oracle.json, if any, lacks singly into it, with its rulings; the names Scryfall has no card for"""
+    oracle = json.loads(ORACLE.read_text()) if ORACLE.exists() else {"cards": {}}; missing = []
     for n in names:
         c = card(n, oracle["cards"])
         if c is None: missing.append(n)
