@@ -19,10 +19,10 @@ inputs named below.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
-2. Make a fresh scratchpad folder `<run>/`. Per deck write its two fact
-   files, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/combos.py <run> <slug>`
-   and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/mana.py <run> <slug>`.
-   When Spellbook is unreachable the run goes on without the combos file.
+2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
+   files into it,
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
+   When Spellbook is unreachable the run goes on without the combos files.
    Group decks by shared colours (two or three per group). Dispatch
    `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and
    on, each prompt giving `<run>`, the letter, the scorer's own
@@ -38,10 +38,10 @@ inputs named below.
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>` redraws
    `output/decks/<slug>/changes.png` from its Adds and Cuts tables; a deck
    with neither prints "no adds or cuts" and gets no image.
-5. If more than one deck was rescored, or the owner asks, write the two
-   fact files into `<run>` for every deck not rescored this run, as in
-   step 2, then recompute the rankings with one `mtg-toolbox:ranker`, its
-   prompt giving `<run>`; copy `<run>/rankings.md` over `rankings.md`.
+5. If more than one deck was rescored, or the owner asks, run `facts.py`
+   on `<run>` with every deck not rescored this run, then recompute the
+   rankings with one `mtg-toolbox:ranker`, its prompt giving `<run>`; copy
+   `<run>/rankings.md` over `rankings.md`.
 
 Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
 score only those cards for that deck, usually a card just added through

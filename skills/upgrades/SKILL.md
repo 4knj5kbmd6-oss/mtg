@@ -16,9 +16,10 @@ inputs named below.
    step 1 when this session has no fetch result) and its bracket from
    `rankings.md`.
 2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
-   files into it, as in `/score` step 2. Dispatch one
-   `mtg-toolbox:researcher` per colour-sharing group of two or three
-   decks, so each researches a colour's new cards once, its prompt giving
+   files into it,
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
+   Dispatch one `mtg-toolbox:researcher` per colour-sharing group of two
+   or three decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),
    `<quota>`, `<universes_beyond>` and `<new_sets>` as `settings.py` prints
    them, and the

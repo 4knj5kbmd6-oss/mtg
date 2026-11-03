@@ -1,7 +1,8 @@
 """Add the user's public Commander decks not seen before to moxfield.json, write output/decks/<slug>/list.txt
 for every deck there that came back as deck data and output/data/tokens.md once every deck did, drop the rows of
 changes.md the dump shows landed, except those noted unowned, then apply changes.md with apply_changes.py so every list is the
-intended deck again. A deck that came back as anything else (Cloudflare's challenge page, an error) is left as it was.
+intended deck again, and print "rescore: <slug>" for each deck whose list.txt changed. A deck that came back as
+anything else (Cloudflare's challenge page, an error) is left as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw): {"user", "listing", "decks"}."""
 import json, re, sys, unicodedata
@@ -76,9 +77,14 @@ def drop_landed(dumped):
     if landed: CHANGES.write_text("".join(keep))
     for c in landed: print(f"landed: {c[0]} {c[1] or '-'} for {c[2] or '-'}", flush=True)
 
+def lists():
+    """{slug: list.txt text} of every deck"""
+    return {p.parent.name: p.read_text() for p in DECKS.glob("*/list.txt")}
+
 def main():
     if len(sys.argv) != 2: sys.exit(__doc__)
     raw = open(sys.argv[1]).read().strip()
+    before = lists()
     dump = json.loads(json.loads(raw) if raw.startswith('"') else raw)
     mox = json.loads(MOXFIELD.read_text()) if MOXFIELD.exists() else {"decks": {}}
     mox["user"] = dump["user"]
@@ -102,6 +108,9 @@ def main():
     if not stale: write(DATA / "tokens.md", tokens(fetched))
     drop_landed(dumped)
     apply_changes.main()
+    after = lists()
+    for slug in sorted(after):
+        if after[slug] != before.get(slug): print(f"rescore: {slug}")
     if stale: print(f"not refreshed: {', '.join(stale)} (tokens.md left as it was)")
 
 if __name__ == "__main__": main()

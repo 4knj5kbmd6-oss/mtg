@@ -1,4 +1,5 @@
-import json
+import json, sys
+from pathlib import Path
 import pytest
 from conftest import run, read, snapshot
 import fetch_oracle, sync
@@ -93,3 +94,18 @@ def test_a_failed_save_leaves_oracle_json(monkeypatch):
     with pytest.raises(OSError):
         fetch_oracle.save({"cards": {}})
     assert read("output/data/oracle.json") == before
+
+
+def test_sync_names_each_deck_whose_list_changed(tmp_path, monkeypatch, capsys):
+    listing = [{"publicId": "z1", "name": "Zara", "format": "commander", "visibility": "public"},
+               {"publicId": "n1", "name": "New Deck", "format": "commander", "visibility": "public"}]
+    deck = lambda *cards: {"name": "-", "commanders": [cards[0]], "mainboard": list(cards[1:]), "sideboard": [], "tokens": []}
+    zara = read(LIST).split("SIDEBOARD:")[0].strip().splitlines()
+    dump = {"user": "owner", "listing": listing, "decks": {"z1": deck(zara[0], *zara[2:]), "n1": deck("1 Newcomer", "1 Sol Ring")}}
+    Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara"}}))
+    Path("mox.json").write_text(json.dumps(dump))
+    monkeypatch.setattr(sys, "argv", ["sync.py", "mox.json"])
+    sync.main()
+    assert [l for l in capsys.readouterr().out.splitlines() if l.startswith("rescore")] == ["rescore: new", "rescore: zara"]
+    sync.main()
+    assert "rescore" not in capsys.readouterr().out

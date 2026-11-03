@@ -29,8 +29,9 @@ Every script here runs from the folder that holds `output/`.
 2. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/sync.py <mox.json>` prints
    `added: <slug> (<id>)` per new deck, `landed: <deck> <In> for <Out>` per
    row of `changes.md` it drops, a line per changed deck (cards in, cards
-   out), and a `blocked:` line per deck left as it was, the last line naming
-   every deck not refreshed.
+   out), `rescore: <slug>` per deck whose list changed, and a `blocked:`
+   line per deck left as it was, the last line naming every deck not
+   refreshed.
 3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall, each card with its rulings.
 
@@ -44,8 +45,6 @@ line it could not parse, then `fetch_oracle.py`. A deck imported this way
 has no `moxfield.json` entry, and the Moxfield pass leaves it alone.
 
 Report in a line per changed deck: cards in, cards out; then the added
-decks, the landed changes and any blocked deck `sync.py` printed. A deck
-whose `updated` is newer than the modification date of
-`output/decks/<slug>/nonlands.md` (`stat -f %Sm -t %F <file>` on macOS,
-`date -r <file> +%F` on Linux) needs rescoring (`/score`); say so, do not
-start it unasked.
+decks, the landed changes and any blocked deck `sync.py` printed. A
+`rescore:` deck needs rescoring (`/score`); say so, do not start it
+unasked.

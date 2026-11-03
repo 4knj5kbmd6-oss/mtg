@@ -1,6 +1,5 @@
-"""Write a deck's mana facts from its list and oracle.json to <run_dir>/<slug>-mana.md.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/mana.py <run_dir> <slug>
-counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands, their mean mana
+"""A deck's mana facts from its list and oracle.json, its <run_dir>/<slug>-mana.md, for facts.py.
+write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands, their mean mana
 value and curve; the odds of exactly 2, 3 and 4 lands in an opening seven drawn from the deck without its
 commanders; and per colour of the commanders' identity, the land sources, the nonland sources, the pips, the cards
 with two or more pips of it and the lowest mana value among those. A card's colours are its produced_mana within the
@@ -55,15 +54,11 @@ def page(slug, commanders, rest):
                       "## Colours", table("| Colour | Land sources | Nonland sources | Pips | Cards with 2+ pips |"
                                           " Lowest mana value of those |", rows), ""])
 
-def main():
-    if len(sys.argv) != 3: sys.exit(__doc__)
-    run, slug = sys.argv[1], sys.argv[2]
+def write(run, slug):
     cards = json.loads(ORACLE.read_text())["cards"]
     named = {f.casefold(): e for n, e in cards.items() for f in n.split(" // ")} | {n.casefold(): e for n, e in cards.items()}
     commanders, rest = decklist(slug)
     if missing := [n for _, n in commanders + rest if n.casefold() not in named]:
-        print("not in oracle.json:", ", ".join(missing))
+        print(f"{slug}: not in oracle.json:", ", ".join(missing))
     entries = lambda part: [(c, named[n.casefold()]) for c, n in part if n.casefold() in named]
     Path(run, f"{slug}-mana.md").write_text(page(slug, entries(commanders), entries(rest)))
-
-if __name__ == "__main__": main()

@@ -1,6 +1,5 @@
-"""Write a deck's combo facts from Commander Spellbook to <run_dir>/<slug>-combos.md.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/combos.py <run_dir> <slug>
-posts output/decks/<slug>/list.txt, commanders first, to Spellbook's find-my-combos and estimate-bracket; writes the
+"""A deck's combo facts from Commander Spellbook, its <run_dir>/<slug>-combos.md, for facts.py.
+write() posts output/decks/<slug>/list.txt, commanders first, to Spellbook's find-my-combos and estimate-bracket; writes the
 Included table (each combo's cards, its result, whether Spellbook marks it a definite or arguable two-card combo),
 the Almost included table (combos one card away whose missing card is in the deck's Adds tables) and the cards
 Spellbook flags as mass land denial or extra turns. Prints the deck's names Spellbook does not know. If Spellbook is
@@ -45,16 +44,12 @@ def page(slug, combos, bracket, adds):
                       "## Almost included", table("| Missing | Present | Result |", almost), "",
                       "## Flagged cards", table("| Card | Flag |", flagged), ""])
 
-def main():
-    if len(sys.argv) != 3: sys.exit(__doc__)
-    run, slug = sys.argv[1], sys.argv[2]
+def write(run, slug):
     commanders, rest = decklist(slug)
     body = {"commanders": [{"card": n} for _, n in commanders], "main": [{"card": n, "quantity": c} for c, n in rest]}
     if (combos := ask("find-my-combos", body)) is None or (bracket := ask("estimate-bracket", body)) is None: return
     known = {key(c["card"]["name"]).lower() for c in bracket["cards"]}
     if unknown := [n for _, n in commanders + rest if key(n).lower() not in known]:
-        print("not on Commander Spellbook:", ", ".join(unknown))
+        print(f"{slug}: not on Commander Spellbook:", ", ".join(unknown))
     candidates = {key(r[0]).lower() for r in adds(DECKS / slug)}
     Path(run, f"{slug}-combos.md").write_text(page(slug, combos["results"], bracket, candidates))
-
-if __name__ == "__main__": main()

@@ -3,10 +3,11 @@ from pathlib import Path
 from urllib.error import URLError
 import pytest
 from conftest import ROOT, run, read
-import combos as script
+import combos as script, facts, mana
 from net import Failed
 
 SAVED = ROOT / "tests" / "spellbook"  # Spellbook's answers for two real decks, trimmed to a few combos
+SLUG = {"The Beamtown Bullies": "beamtown", "Braids, Arisen Nightmare": "braids"}  # each saved deck by its commander
 
 
 def deck(slug, commander, cards, adds=()):
@@ -19,20 +20,19 @@ def deck(slug, commander, cards, adds=()):
 
 @pytest.fixture
 def combos(monkeypatch):
-    """combos.py with Spellbook answering from the saved files of the deck named on the command line"""
+    """combos.py with Spellbook answering from the saved files of the deck whose commander is posted"""
     module, posted = script, []
     def get(url, body):
         posted.append((url, body))
-        return (SAVED / f"{sys.argv[2]}-{url.rstrip('/').rsplit('/', 1)[1]}.json").read_bytes()
+        return (SAVED / f"{SLUG[body['commanders'][0]['card']]}-{url.rstrip('/').rsplit('/', 1)[1]}.json").read_bytes()
     monkeypatch.setattr(module, "get", get)
     module.posted = posted
     Path("run").mkdir()
     return module
 
 
-def write(combos, monkeypatch, slug):
-    monkeypatch.setattr(sys, "argv", ["combos.py", "run", slug])
-    combos.main()
+def write(combos, slug):
+    combos.write("run", slug)
     return read(f"run/{slug}-combos.md")
 
 
@@ -40,7 +40,7 @@ def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, monkey
     deck("beamtown", "The Beamtown Bullies", {"Bloom Tender": 1, "Seeker of Skybreak": 1, "Bronze Bombshell": 1,
                                               "Not A Card": 1},
          adds=["Illusionist's Bracers", "Thornbite Staff"])
-    assert write(combos, monkeypatch, "beamtown") == """# beamtown: Commander Spellbook combos
+    assert write(combos, "beamtown") == """# beamtown: Commander Spellbook combos
 
 ## Included
 | Cards | Result | Two-card |
@@ -61,7 +61,7 @@ def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, monkey
     assert combos.posted[0][1] == {"commanders": [{"card": "The Beamtown Bullies"}], "main": [
         {"card": "Bloom Tender", "quantity": 1}, {"card": "Seeker of Skybreak", "quantity": 1},
         {"card": "Bronze Bombshell", "quantity": 1}, {"card": "Not A Card", "quantity": 1}]}
-    assert capsys.readouterr().out == "not on Commander Spellbook: Not A Card\n"
+    assert capsys.readouterr().out == "beamtown: not on Commander Spellbook: Not A Card\n"
 
 
 def test_included_combos_carry_spellbooks_two_card_mark_and_flags(combos, monkeypatch):
@@ -72,7 +72,7 @@ def test_included_combos_carry_spellbooks_two_card_mark_and_flags(combos, monkey
     bracket["cards"][0]["massLandDenial"] = bracket["cards"][0]["extraTurn"] = True
     saved = combos.get
     monkeypatch.setattr(combos, "get", lambda url, body: json.dumps(bracket).encode() if "bracket" in url else saved(url, body))
-    text = write(combos, monkeypatch, "braids")
+    text = write(combos, "braids")
     assert text.split("## Almost included")[0] == """# braids: Commander Spellbook combos
 
 ## Included
@@ -98,8 +98,7 @@ def test_no_answer_from_spellbook_names_the_url_and_writes_nothing(combos, monke
         if isinstance(answer, BaseException): raise answer
         return answer
     monkeypatch.setattr(combos, "get", get)
-    monkeypatch.setattr(sys, "argv", ["combos.py", "run", "beamtown"])
-    combos.main()
+    combos.write("run", "beamtown")
     assert capsys.readouterr().out == f"Commander Spellbook unreachable: https://backend.commanderspellbook.com/{url}/\n"
     assert not Path("run/beamtown-combos.md").exists()
 
@@ -128,14 +127,14 @@ CARDS = {  # name: (type, cost, mana value, produced_mana, oracle text)
 }
 
 
-def test_mana_counts_fetch_lands_by_the_types_they_find():
+def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
     oracle = {n: {"name": n, "type_line": t, "cmc": v, "oracle_text": o, "color_identity": ["B", "U"] if n.startswith("Lazav") else [],
                   **({"mana_cost": c} if c else {}), **({"produced_mana": p} if p else {})} for n, (t, c, v, p, o) in CARDS.items()}
     Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
     deck("lazav", "Lazav, Dimir Mastermind", {**{n: 1 for n in list(CARDS)[1:]}, "Island": 4, "Swamp": 3, "Mystery Card": 1})
     Path("run").mkdir()
-    out = run("skills/score/mana.py", "run", "lazav")
-    assert (out.returncode, out.stdout) == (0, "not in oracle.json: Mystery Card\n"), out.stderr
+    mana.write("run", "lazav")
+    assert capsys.readouterr().out == "lazav: not in oracle.json: Mystery Card\n"
     # 13 lands and 8 nonlands in the 21 drawn from; 9 nonlands with the commander, 26 mana value between them
     # U: Delta, Strand, Path, Passage, Wilds, Tower, 4 Island; Mox, Signet; Lazav 2, Counterspell 2, Sphinx 2
     # B: Delta, Passage, Wilds, Tower, 3 Swamp; Mox, Ritual, Signet; Lazav 2, Ritual 1, Arena 2, Wurm 3
@@ -157,3 +156,12 @@ def test_mana_counts_fetch_lands_by_the_types_they_find():
 | U | 10 | 2 | 6 | 3 | 2 |
 | B | 7 | 3 | 8 | 3 | 3 |
 """
+
+
+def test_facts_writes_both_files_per_deck(combos, monkeypatch):
+    deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1, "Island": 7})
+    deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1, "Island": 7})
+    monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown", "braids"])
+    facts.main()
+    assert sorted(p.name for p in Path("run").iterdir()) == ["beamtown-combos.md", "beamtown-mana.md",
+                                                             "braids-combos.md", "braids-mana.md"]
