@@ -1,12 +1,13 @@
 """Merge the scorers' files to a deck's nonlands.md and lands.md: median and spread flags.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run_dir> <slug>
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run_dir> <slug> [card ...]
 reads every <run_dir>/<slug>-<LETTER>.md, one per scorer, the deck title from output/decks/<slug>/plan.md
 (from list.txt's first line when the plan is empty) and the Adds and Cuts tables from
 output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their
 shape lines with the count of scorers, and, with two or more scorers, <run_dir>/<slug>-flagged.md; prints the
-whole deck's shape line to stderr. One scorer's scores stand as they are: no spread, no flags.
-When the scorer files hold fewer of list.txt's cards than it has, the run scored only those cards: the deck's
-existing nonlands.md and lands.md are patched instead, each listed card's row replaced or inserted in the Cards
+whole deck's shape line to stderr. One scorer's scores stand as they are: no spread, no flags. Without cards, a
+card of list.txt the scorer files lack stops the run, naming it.
+Given cards, only their rows are merged, a card the scorer files lack stopping the run, and the deck's existing
+nonlands.md and lands.md are patched instead: each listed card's row replaced or inserted in the Cards
 table in score order and its Adds row dropped, each card not in the list (a candidate) replaced or inserted in the
 Adds table of the file its type belongs to, keeping the New and ~Price of its old Adds row, else "-"; the Shape
 line recomputed, every other line as it was."""
@@ -61,8 +62,9 @@ def whole(deck, rows, scorers):
     return {k: deck_file(title, k, rows[k], rest[k], scorers) for k in KINDS}
 
 def main():
-    if len(sys.argv) != 3: sys.exit(__doc__)
-    raw, slug = sys.argv[1], sys.argv[2]
+    if len(sys.argv) < 3: sys.exit(__doc__)
+    raw, slug, named = sys.argv[1], sys.argv[2], sys.argv[3:]
+    want = {key(c).lower() for c in named}
     deck = DECKS / slug
     files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
     if not files: sys.exit(f"no scorer files {raw}/{slug}-<LETTER>.md")
@@ -73,6 +75,7 @@ def main():
         got = [d.get(k) for d in scorers]
         sc = [g[1] for g in got if g]
         disp = next(g[0] for g in got if g)
+        if named and key(disp).lower() not in want: continue
         med = round(statistics.median(sc))
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
         if max(sc) - min(sc) >= SPLIT: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
@@ -80,7 +83,10 @@ def main():
         rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
     scored = {key(r[0]) for k in rows for r in rows[k]}
     listed = {key(n) for part in decklist(slug) for _, n in part}
-    if len(scored & listed) < len(listed):  # fewer of the list's cards: a card-only score, patched into the deck's files
+    have = {s.lower() for s in scored}
+    lacked = [c for c in named if key(c).lower() not in have] if named else sorted(listed - scored)
+    if lacked: sys.exit(f"{slug}: not in the scorer files: {', '.join(lacked)}")
+    if named:  # a card-only score, patched into the deck's files
         if not all((deck / f"{k}.md").exists() for k in KINDS): sys.exit(f"no {deck}/nonlands.md and lands.md to patch")
         old = {k: (deck / f"{k}.md").read_text() for k in KINDS}
         kept = {key(r[0]): r[3:5] for r in adds(deck)}

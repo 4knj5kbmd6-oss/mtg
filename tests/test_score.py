@@ -93,7 +93,7 @@ def test_card_only_score_patches_the_deck_files():
     with open("output/decks/zara/list.txt", "a") as f: f.write("1 Deep Current\n")
     nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
     scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Deep Current": (8, 8, 5)}})
-    out = run("skills/score/merge.py", "run", "zara")
+    out = run("skills/score/merge.py", "run", "zara", "Kelp Weaver", "deep current")
     assert out.returncode == 0, out.stderr
     assert out.stderr == "zara: 10: 1 / 8-9: 2 / 5-7: 9 / 4 or below: 2, mean 6.3 (by card copy), 3 scorers. 1 flagged\n"
     assert read("run/merged/zara/nonlands.md") == (nonlands
@@ -110,7 +110,7 @@ def test_card_only_score_puts_a_candidate_in_its_adds_table():
     nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
     scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Pearl Diver": (6, 6, 5), "Tundra": (8, 8, 7)},
                     "Adds": {"Deep Current": (8, 8, 5)}})
-    out = run("skills/score/merge.py", "run", "zara")
+    out = run("skills/score/merge.py", "run", "zara", "Kelp Weaver", "Pearl Diver", "Tundra", "Deep Current")
     assert out.returncode == 0, out.stderr
     assert out.stderr == "zara: 10: 1 / 8-9: 1 / 5-7: 9 / 4 or below: 2, mean 6.2 (by card copy), 3 scorers. 1 flagged\n"
     assert read("run/merged/zara/nonlands.md") == (nonlands
@@ -127,7 +127,7 @@ def test_a_candidate_makes_the_adds_table_it_lacks():
     bare = lands[:lands.index("## Adds")] + lands[lands.index("## Shape"):]
     Path("output/decks/zara/lands.md").write_text(bare)
     scorers(scores={"Lands": {"Tundra": (8, 8, 7)}})
-    assert run("skills/score/merge.py", "run", "zara").returncode == 0
+    assert run("skills/score/merge.py", "run", "zara", "Tundra").returncode == 0
     assert read("run/merged/zara/lands.md") == bare.replace("## Shape", """## Adds
 
 | Card | Score | Note | New | ~Price |
@@ -135,6 +135,22 @@ def test_a_candidate_makes_the_adds_table_it_lacks():
 | Tundra | 8 | fits | - | - |
 
 ## Shape""")
+
+
+def test_card_mode_patches_only_the_named_cards():
+    scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Sol Ring": (1, 1, 1)}})
+    assert run("skills/score/merge.py", "run", "zara", "Kelp Weaver").returncode == 0
+    nonlands = read("run/merged/zara/nonlands.md")
+    assert "| Kelp Weaver | 7 | fits |" in nonlands and "| Sol Ring | 8 |" in nonlands
+
+
+def test_a_card_the_scorers_lack_stops_the_run_naming_it():
+    scorers(scores={k: {c: s for c, s in v.items() if c not in ("Sol Ring", "Misty Cove")} for k, v in SCORES.items()})
+    out = run("skills/score/merge.py", "run", "zara")
+    assert (out.returncode, out.stderr) == (1, "zara: not in the scorer files: Misty Cove, Sol Ring\n")
+    out = run("skills/score/merge.py", "run", "zara", "Kelp Weaver", "Pearl Diver")
+    assert (out.returncode, out.stderr) == (1, "zara: not in the scorer files: Pearl Diver\n")
+    assert not Path("run/merged").exists()
 
 
 def test_settings_defaults():

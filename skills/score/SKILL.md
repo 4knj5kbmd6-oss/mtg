@@ -49,10 +49,11 @@ score only those cards for that deck, usually a card just added through
 if added; one missing from `oracle.json` is fetched into it first with
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py "<card name>" ...`,
 which reports any name Scryfall does not know. Run steps 2 to 4 for that
-deck alone, each scorer's prompt also naming the cards. merge.py patches
-those rows into the deck's `nonlands.md` and `lands.md` (a candidate's into
-Adds) instead of rewriting them; a later `/upgrades` drops a candidate its
-research does not list. The ranker does not run.
+deck alone, each scorer's prompt also naming the cards, and merge.py
+given them after the slug, `merge.py <run> <slug> "<card name>" ...`; it
+patches those rows into the deck's `nonlands.md` and `lands.md` (a
+candidate's into Adds) instead of rewriting them; a later `/upgrades`
+drops a candidate its research does not list. The ranker does not run.
 
 Report: per deck the shape line, the 10s and the split cards in one line
 ("split: X, Y"), a sign the plan is unclear on them; anything that moved by
