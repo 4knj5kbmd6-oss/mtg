@@ -1,4 +1,4 @@
-// Run from any moxfield.com page. Paste in the username and the ids (the keys of "decks" in output/decks/moxfield.json).
+// Run from any moxfield.com page. Paste in the username and the ids (the keys of "decks" in moxfield.json).
 // Lists the user's decks, then fetches every id given and every public Commander deck listed. An answer that is not
 // JSON (Cloudflare's challenge page, an error) comes back as {status, body} for sync.py to report.
 const user = "";

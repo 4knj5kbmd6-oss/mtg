@@ -1,4 +1,4 @@
-"""Apply every row of output/changes.md to its deck, so output/decks/<slug>/list.txt is the deck as the owner intends it.
+"""Apply every row of changes.md to its deck, so output/decks/<slug>/list.txt is the deck as the owner intends it.
 usage (from the folder that holds output/): python3 skills/sync/apply-changes.py
 An In card not in the list is appended before any SIDEBOARD block (n copies from an "n copies" note, else 1) and its
 Adds row in nonlands.md or lands.md moves to that file's Cards table. An Out card in the list loses one copy (all with
@@ -60,7 +60,7 @@ def apply_scores(files, ins, outs):
     return {k: join(s) for k, s in secs.items()}
 
 def main():
-    changes = Path("output/changes.md")
+    changes = Path("changes.md")
     if not changes.exists(): return
     decks = {}
     for c in cells(changes.read_text().splitlines()):

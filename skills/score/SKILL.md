@@ -1,6 +1,6 @@
 ---
 name: score
-description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute output/decks/rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
+description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
 ---
 
 # score
@@ -29,7 +29,7 @@ its standing instructions.
    agents per group, lettered A, B, C and on, each prompt giving `<run>`,
    the letter, the scorer's own `<run>/work-<group>-<letter>/` subfolder
    (two scorers sharing one overwrite each other's helpers) and the group's
-   slugs, each with its bracket from `output/decks/rankings.md`.
+   slugs, each with its bracket from `rankings.md`.
 3. When all of a group are back:
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`.
    It writes `<run>/merged/<slug>/nonlands.md` and `lands.md` with the
@@ -43,7 +43,7 @@ its standing instructions.
    line merge.py printed for each deck against rule 8 of the metric.
 5. If more than one deck was rescored, or the owner asks, recompute the
    rankings with one `commander-deckhand:ranker`, its prompt giving `<run>`;
-   copy `<run>/rankings.md` over `output/decks/rankings.md`.
+   copy `<run>/rankings.md` over `rankings.md`.
 
 Report: per deck the shape line, the 10s and the split cards in one line
 ("split: X, Y"), a sign the plan is unclear on them, since the owner's fix

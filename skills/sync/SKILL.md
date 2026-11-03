@@ -7,7 +7,7 @@ description: Refresh your owned Commander decks from Moxfield into output/decks/
 
 Moxfield blocks curl (Cloudflare 403), so every call goes through the
 built-in browser pane from page context. Decks are exported as card names
-only; maybeboards never. `output/decks/moxfield.json` is the single list of
+only; maybeboards never. `moxfield.json`, beside `output/`, is the single list of
 Moxfield decks synced:
 `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...]}`.
 Each sync adds the user's public Commander decks not in `seen`, so a deck
@@ -29,7 +29,7 @@ the owner deletes from `decks` by hand stays out.
    deck to `moxfield.json` with a slug from its name and prints it as
    `added: <slug> (<id>)`. It rewrites every `output/decks/<slug>/list.txt`
    and `output/data/tokens.md` from the dump, removes every row of
-   `output/changes.md` the dump shows landed (In card in the deck or In
+   `changes.md` the dump shows landed (In card in the deck or In
    blank, Out card gone or Out blank) and not noted `unowned`, prints it as
    `landed: <deck> <In> for <Out>`, then runs `apply-changes.py`, which
    applies the rows left so each list is the deck as the owner intends it

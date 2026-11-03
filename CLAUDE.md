@@ -11,25 +11,34 @@ Core (tracked): `CLAUDE.md`, `README.md`, the agents in `agents/`
 (`scorer.md` holds the 0 to 10 metric the owner tunes), the skills in
 `skills/` and the plugin and marketplace manifests in `.claude-plugin/`.
 
-The owner's settings, `settings.json` beside `output/` (gitignored), read
-by the skills that dispatch agents or write adds; an absent file or key
-takes the default. `scorers`: independent scorers per deck in `score`
-(default 3). `model`: the model every dispatched agent runs on (default
-`claude-opus-5-5`). `budget`: the highest TCGplayer market price in dollars
-an add may carry (default none, no cap).
+The owner's project-wide files, beside `output/` (gitignored):
+
+- `settings.json`: read by the skills that dispatch agents or write adds; an
+  absent file or key takes the default. `scorers`: independent scorers per
+  deck in `score` (default 3). `model`: the model every dispatched agent runs
+  on (default `claude-opus-5-5`). `budget`: the highest TCGplayer market price
+  in dollars an add may carry (default none, no cap).
+- `moxfield.json`: the owner's Moxfield username and the decks synced,
+  `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...]}`,
+  written by `/sync <username>` with every public Commander deck not yet
+  seen and trimmed by hand; a deck deleted from `decks` stays out.
+- `changes.md`: the owner's intended swaps not yet made, one table
+  (Deck, In, Out, Note) across all decks; `sync` drops a row once Moxfield
+  shows it and re-applies the rest to the lists.
+  A Note of `unowned` (`unowned, 10 copies` for basics) marks a card to buy,
+  possibly already in the list; the row stays until the owner clears it.
+- `restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
+  deck): card names, one `- Name` line each and nothing else; `upgrades`'
+  `apply.py` drops an add named on either.
+- `rankings.md`: the decks in strength order, one table: commander
+  (linking to the deck folder), colours, WotC-guideline bracket, Game Changers, one
+  line why, Moxfield link.
 
 The owner's output, under `output/` (gitignored):
 
-- `output/decks/moxfield.json`: the owner's Moxfield username and the decks
-  synced, `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...]}`,
-  written by `/sync <username>` with every public Commander deck not yet
-  seen and trimmed by hand; a deck deleted from `decks` stays out.
-- `output/decks/rankings.md`: the decks in strength order, one table: commander
-  (linking to the deck folder), colours, WotC-guideline bracket, Game Changers, one
-  line why, Moxfield link.
 - `output/decks/<slug>/`: everything about one deck.
   - `list.txt`: the deck as the owner intends it: Moxfield's list with
-    `output/changes.md` applied. Card names only ("1 Card Name"), commander
+    `changes.md` applied. Card names only ("1 Card Name"), commander
     first, then the 99, optional `SIDEBOARD:` block. No set codes or
     collector numbers.
   - `plan.md`: the owner's statement of the deck's intended lines and
@@ -41,14 +50,6 @@ The owner's output, under `output/` (gitignored):
     to `lands.md` if its front face is a Land.
   - `changes.png`: the earliest-printing image of every add and cut, in four
     bands: nonland adds, nonland cuts, land adds, land cuts.
-- `output/restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
-  deck): card names, one `- Name` line each and nothing else; `upgrades`'
-  `apply.py` drops an add named on either.
-- `output/changes.md`: the owner's intended swaps not yet made, one table
-  (Deck, In, Out, Note) across all decks; `sync` drops a row once Moxfield
-  shows it and re-applies the rest to the lists.
-  A Note of `unowned` (`unowned, 10 copies` for basics) marks a card to buy,
-  possibly already in the list; the row stays until the owner clears it.
 - `output/data/`: `oracle.json` (rebuilt by `sync`'s `fetch-oracle.py`,
   each card with its Scryfall rulings), `tokens.md`, and `rules.txt` with
   `rules-index.md` (the Comprehensive Rules and their headings, from

@@ -18,11 +18,11 @@ created date (the build date), updated date (the last edit) and bracket.
 - output/decks/<slug>/list.txt: the deck as the owner intends it, pending swaps applied; commander
   first, then the 99, optional SIDEBOARD block. A card in it is never an add; a card not in it is
   never a cut.
-- output/restricted.md (every deck) and output/decks/<slug>/restricted.md (this deck; may not exist):
+- restricted.md (every deck) and output/decks/<slug>/restricted.md (this deck; may not exist):
   card names, one `- Name` line each. A card named on either is never an add.
 - output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
   colours, Game Changer flag). Read this instead of fetching card by card.
-- output/decks/rankings.md: each deck's bracket and its strength relative to the others.
+- rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
 A rules question about a card you settle yourself as the judge agent's instructions,

@@ -1,13 +1,13 @@
-"""Add the user's public Commander decks not seen before to output/decks/moxfield.json, write output/decks/<slug>/list.txt
+"""Add the user's public Commander decks not seen before to moxfield.json, write output/decks/<slug>/list.txt
 for every deck there that came back as deck data and output/data/tokens.md once every deck did, drop the rows of
-output/changes.md the dump shows landed, except those noted unowned, then run apply-changes.py so every list is the
+changes.md the dump shows landed, except those noted unowned, then run apply-changes.py so every list is the
 intended deck again. A deck that came back as anything else (Cloudflare's challenge page, an error) is left as it was.
 usage (from the folder that holds output/): python3 skills/sync/sync.py mox.json
 mox.json is the JSON string returned by fetch.js (quoted or raw): {"user", "listing", "decks"}."""
 import json, os, re, sys, subprocess, unicodedata
 from pathlib import Path
 
-MOXFIELD = Path("output/decks/moxfield.json")
+MOXFIELD, CHANGES = Path("moxfield.json"), Path("changes.md")
 UNBLOCK = "open moxfield.com in the browser pane, pass the check and rerun /sync"
 
 def blocked(v):
@@ -66,16 +66,16 @@ def names(lines):
 
 def drop_landed(dumped):
     """remove the rows of changes.md that the dumped lists show landed, except unowned ones; print each"""
-    if not os.path.exists("output/changes.md"): return
+    if not CHANGES.exists(): return
     keep, landed = [], []
-    for l in open("output/changes.md").read().splitlines(keepends=True):
+    for l in CHANGES.read_text().splitlines(keepends=True):
         c = [x.strip() for x in l.strip().strip("|").split("|")]
         deck = names(dumped[c[0]]) if l.startswith("|") and len(c) >= 3 and c[0] in dumped else None
         unowned = len(c) > 3 and "unowned" in c[3].lower()  # still to buy: stays until the owner clears the note
         if deck is not None and not unowned and (not c[1] or c[1].lower() in deck) and (not c[2] or c[2].lower() not in deck):
             landed.append(c)
         else: keep.append(l)
-    if landed: open("output/changes.md", "w").write("".join(keep))
+    if landed: CHANGES.write_text("".join(keep))
     for c in landed: print(f"landed: {c[0]} {c[1] or '-'} for {c[2] or '-'}", flush=True)
 
 def main():
@@ -89,7 +89,6 @@ def main():
     else:
         taken = set(mox["decks"].values()) | {p.name for p in Path("output/decks").glob("*") if p.is_dir()}
         for mid, slug in enlist(mox, dump["listing"], taken).items(): print(f"added: {slug} ({mid})")
-    MOXFIELD.parent.mkdir(parents=True, exist_ok=True)
     MOXFIELD.write_text(json.dumps({k: mox[k] for k in ("user", "decks", "seen") if k in mox}, indent=2, ensure_ascii=False) + "\n")
 
     fetched, dumped, stale = {}, {}, []

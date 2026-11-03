@@ -27,15 +27,15 @@ def test_changes_twice_change_nothing():
 
 
 def test_changes_rows_stay():
-    before = read("output/changes.md")
+    before = read("changes.md")
     run("sync/apply-changes.py")
-    assert read("output/changes.md") == before
+    assert read("changes.md") == before
 
 
 def test_sync_drops_landed_rows_but_unowned():
     landed = ["1 Zara, Tide Caller", "", "1 Deep Current", "1 Pearl Diver", ""]
     load("sync/sync.py").drop_landed({"zara": landed})
-    rows = [l for l in read("output/changes.md").splitlines() if l.startswith("| zara")]
+    rows = [l for l in read("changes.md").splitlines() if l.startswith("| zara")]
     assert rows == ["| zara | Pearl Diver |  | unowned |"]
 
 

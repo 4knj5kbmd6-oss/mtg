@@ -57,11 +57,11 @@ earns nothing for its reputation.
 3. **The owner's plan comes first.** Read `output/decks/<slug>/plan.md` before scoring.
    It states the intended lines and the interactions the owner built the
    deck around, and it overrides any plan inferred from the list or from
-   output/rankings.md. A card the plan names as part of a line is scored on that
+   rankings.md. A card the plan names as part of a line is scored on that
    line, not on its face value.
 4. **Saturation.** The 12th ramp piece in a deck that wants 10 loses a point
    or two; the 4th board wipe in a go-wide deck loses more.
-5. **Bracket.** Score at the deck's bracket in output/rankings.md. A card that would
+5. **Bracket.** Score at the deck's bracket in rankings.md. A card that would
    push the deck up a bracket is scored as if it stayed, and flagged in the
    note instead.
 6. **Mana base.** Basics are 5 unless the deck is mono-colour (then 6, they

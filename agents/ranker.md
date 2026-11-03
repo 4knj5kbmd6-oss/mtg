@@ -14,8 +14,8 @@ Inputs: output/decks/*/list.txt, output/decks/*/plan.md (authoritative on
 what each deck is trying to do), output/decks/*/nonlands.md and lands.md
 (per-card fit scores and notes, evidence about card quality),
 output/data/oracle.json (rules text, colour identity and the game_changer
-flag), output/decks/moxfield.json (each deck's Moxfield id, keyed to its
-slug) and the current output/decks/rankings.md (prior opinion, not binding).
+flag), moxfield.json (each deck's Moxfield id, keyed to its
+slug) and the current rankings.md (prior opinion, not binding).
 
 Deck power does not correspond to the fit scores. Rank on strength in a
 four-player game: speed to the win, consistency (tutors, redundancy, card
@@ -37,7 +37,7 @@ Output to `<run>/rankings.md`, exactly this shape, nothing else:
 
 | # | Commander | Colours | Bracket | Game Changers | Why | |
 |---|---|---|---|---|---|---|
-| 1 | [<commander>](<slug>/) | <colours> | <bracket> | <game changers> | <why> | [Moxfield](https://moxfield.com/decks/<id>) |
+| 1 | [<commander>](output/decks/<slug>/) | <colours> | <bracket> | <game changers> | <why> | [Moxfield](https://moxfield.com/decks/<id>) |
 ...one row per deck, strongest first...
 ```
 

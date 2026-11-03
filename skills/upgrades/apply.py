@@ -2,7 +2,7 @@
 usage (from the folder that holds output/): python3 skills/upgrades/apply.py <run_dir> <slug>
 reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if output/data/oracle.json
 says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
-get "-" and the research reason; a cut gets its deck score. An add named on output/restricted.md or the deck's
+get "-" and the research reason; a cut gets its deck score. An add named on restricted.md or the deck's
 own restricted.md (either face of a double-faced card) is dropped, and so is an add whose ~Price is above
 the budget in settings.json (a price that does not parse is kept); the drops are printed."""
 import sys
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     run, slug = sys.argv[1], sys.argv[2]
     deck = Path(f"output/decks/{slug}")
     paths = {k: deck / f"{k}.md" for k in KINDS}
-    names = restricted([Path("output/restricted.md"), deck / "restricted.md"])
+    names = restricted([Path("restricted.md"), deck / "restricted.md"])
     adds, dropped = drop(Path(f"{run}/{slug}-adds.md").read_text(), lambda r: set(map(str.strip, r[1].split(" // "))) & names)
     if dropped: print(f"{slug}: restricted, not added: {', '.join(dropped)}")
     if (budget := settings()["budget"]) is not None:

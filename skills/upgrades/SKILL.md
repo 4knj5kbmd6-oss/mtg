@@ -21,7 +21,7 @@ only the per-run inputs named below, since the agent holds its standing
 instructions.
 
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/sync`
-   fetch returns them) and its bracket from `output/decks/rankings.md`.
+   fetch returns them) and its bracket from `rankings.md`.
 2. Make a fresh scratchpad folder `<run>/`. Dispatch one
    `commander-deckhand:researcher` per colour-sharing group of two or three
    decks, so each researches a colour's new cards once, its prompt giving

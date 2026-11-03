@@ -3,5 +3,9 @@
 output
 !tests/fixture/output
 /settings.json
+/moxfield.json
+/changes.md
+/restricted.md
+/rankings.md
 __pycache__/
 .pytest_cache/

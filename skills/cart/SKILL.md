@@ -21,7 +21,7 @@ in, enter credentials or payment details, or check out: the owner does that.
    quantities from the requested sections, with tokens and considering
    cards kept separate. Per card, buy `max(0, deck quantity - owned)`, then
    apply the exclusions. "Buy what's pending" means every row of
-   `output/changes.md` whose Note says `unowned` (optionally for one deck),
+   `changes.md` whose Note says `unowned` (optionally for one deck),
    its In card at the count the Note gives (`unowned, 10 copies`) or one
    copy. Save the list in a scratchpad file before shopping, with expected
    total copies, allowed extras labelled as such, and printing exceptions to
