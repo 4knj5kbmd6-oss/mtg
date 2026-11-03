@@ -11,10 +11,10 @@ Scryfall; every add carries an approximate TCGplayer price, and an add
 that would change the deck's bracket says so in its own row. The adds are
 the top 20 nonlands plus up to 5 utility lands.
 
-`output/settings.json` sets `model`, the model every agent here is
-dispatched on (default `claude-opus-5-5`), and `budget`, the highest
-TCGplayer market price in dollars an add may carry (default none, no cap);
-an absent file or key takes the default.
+`settings.json`, beside `output/`, sets `model`, the model every agent
+here is dispatched on (default `claude-opus-5-5`), and `budget`, the
+highest TCGplayer market price in dollars an add may carry (default none,
+no cap); an absent file or key takes the default.
 
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/sync`
    fetch returns them) and its bracket from `output/decks/rankings.md`.

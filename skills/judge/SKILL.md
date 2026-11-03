@@ -31,7 +31,7 @@ For `/judge <question>`:
 4. Make a fresh scratchpad folder and copy `JUDGE-BRIEF.md` into it with
    `<question>`, `<cards>` (card.py's output), `<rules>` (rule.py's output)
    and `<plugin>` (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one
-   `planner` (`model` from `output/settings.json`, default
+   `planner` (`model` from `settings.json`, default
    `claude-opus-5-5`, `run_in_background`) with it, working in the folder
    that holds `output/`.
 5. Give its answer in chat: the ruling in a few lines, the CR numbers it

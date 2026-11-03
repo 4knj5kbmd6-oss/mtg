@@ -4,7 +4,7 @@ reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if 
 says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
 get "-" and the research reason; a cut gets its deck score. An add named on output/restricted.md or the deck's
 own restricted.md (either face of a double-faced card) is dropped, and so is an add whose ~Price is above
-the budget in output/settings.json (a price that does not parse is kept); the drops are printed."""
+the budget in settings.json (a price that does not parse is kept); the drops are printed."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))

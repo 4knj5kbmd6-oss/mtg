@@ -103,7 +103,7 @@ def test_settings_from_the_file():
 
 def test_settings_defaults():
     settings = load("score/settings.py")
-    Path("output/settings.json").unlink()
+    Path("settings.json").unlink()
     assert settings.settings() == settings.DEFAULTS == {"scorers": 3, "model": "claude-opus-5-5", "budget": None}
-    Path("output/settings.json").write_text('{"scorers": 1}')
+    Path("settings.json").write_text('{"scorers": 1}')
     assert settings.settings() == {"scorers": 1, "model": "claude-opus-5-5", "budget": None}

@@ -53,7 +53,7 @@ first use and looks up on Scryfall any card it has not seen.
 **Cost.** At the defaults every deck in a `/score` run is read by three Opus
 scorers, each taking a group of two or three decks that share colours; cards
 the scorers split on go to one arbiter per batch, and a run of more than one
-deck ends with one ranker. `scorers` and `model` in `output/settings.json`
+deck ends with one ranker. `scorers` and `model` in `settings.json`
 lower it.
 
 ## Layout
@@ -67,11 +67,15 @@ Core (tracked):
 | [`skills/`](skills/) | `sync`, `score`, `upgrades`, `cart`, `judge` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 
+Your settings, `settings.json` beside `output/` (gitignored): `scorers` per
+deck (default 3), `model` every dispatched agent runs on (default
+`claude-opus-5-5`), `budget`: the highest TCGplayer price in dollars an add
+may carry (default none); an absent file or key takes the default.
+
 Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `settings.json` | `scorers` per deck (default 3), `model` every dispatched agent runs on (default `claude-opus-5-5`), `budget`: the highest TCGplayer price in dollars an add may carry (default none); an absent file or key takes the default |
 | `decks/moxfield.json` | Your Moxfield username and the decks synced, written by `/sync <username>`; a deck you delete from it stays out |
 | `decks/rankings.md` | Your decks in strength order: commander, colours, bracket, Game Changers, why, Moxfield link |
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts), `changes.png` (an image of every add and cut: nonland adds, nonland cuts, land adds, land cuts) |

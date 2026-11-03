@@ -11,14 +11,15 @@ Core (tracked): `CLAUDE.md`, `README.md`, `scoring.md` (the 0 to 10 metric
 the owner tunes), the skills in `skills/` and the plugin and marketplace
 manifests in `.claude-plugin/`.
 
+The owner's settings, `settings.json` beside `output/` (gitignored), read
+by the skills that dispatch agents or write adds; an absent file or key
+takes the default. `scorers`: independent scorers per deck in `score`
+(default 3). `model`: the model every dispatched agent runs on (default
+`claude-opus-5-5`). `budget`: the highest TCGplayer market price in dollars
+an add may carry (default none, no cap).
+
 The owner's output, under `output/` (gitignored):
 
-- `output/settings.json`: the owner's settings, read by the skills that
-  dispatch agents or write adds; an absent file or key takes the default.
-  `scorers`: independent scorers per deck in `score` (default 3). `model`:
-  the model every dispatched agent runs on (default `claude-opus-5-5`).
-  `budget`: the highest TCGplayer market price in dollars an add may carry
-  (default none, no cap).
 - `output/decks/moxfield.json`: the owner's Moxfield username and the decks
   synced, `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...]}`,
   written by `/sync <username>` with every public Commander deck not yet

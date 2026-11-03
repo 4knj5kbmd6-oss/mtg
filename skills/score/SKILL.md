@@ -13,9 +13,9 @@ Inputs per deck: `output/decks/<slug>/list.txt`, `plan.md` (authoritative),
 the Card columns of the `## Adds` tables in `nonlands.md` and `lands.md`
 (adds are scored too), `output/data/oracle.json`.
 
-`output/settings.json` sets `scorers`, the scorers per deck (default 3), and
-`model`, the model every agent here is dispatched on (default
-`claude-opus-5-5`); an absent file or key takes the default.
+`settings.json`, beside `output/`, sets `scorers`, the scorers per deck
+(default 3), and `model`, the model every agent here is dispatched on
+(default `claude-opus-5-5`); an absent file or key takes the default.
 
 1. If Moxfield's `lastUpdatedAtUtc` may be newer than the list, run
    `commander-deckhand:sync` first.
