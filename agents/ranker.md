@@ -16,7 +16,8 @@ lands.md (per-card fit scores and notes, evidence about card quality),
 oracle.json, moxfield.json (each deck's Moxfield id, keyed to its slug), the
 current rankings.md (prior opinion, not binding) and each deck's fact files:
 evidence for the two-card-infinite, extra-turn and mass-land-denial criteria
-and for speed.
+and for speed. A deck with no nonlands.md or lands.md yet is ranked from its
+list, plan and fact files.
 
 Deck power does not correspond to the fit scores. Rank on strength in a
 four-player game: speed to the win, consistency (tutors, redundancy, card

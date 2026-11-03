@@ -12,13 +12,16 @@ arguments' `key=value` words for this run's settings. Dispatch every agent
 when it differs from the agent's own; its prompt carries only the per-run
 inputs named below.
 
-1. Get each deck's `created` and `updated` from `dates` in
-   `moxfield.json` and its bracket from `rankings.md`. Report each deck
-   with no dates there; its research runs with the dates unknown.
-2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
+1. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
    files into it,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
-   Dispatch one `mtg-toolbox:researcher` per colour-sharing group of two
+   Get each deck's `created` and `updated` from `dates` in
+   `moxfield.json`; report each deck with no dates there, its research
+   runs with the dates unknown. Get each deck's bracket from
+   `rankings.md`; if it is missing or has no row for one of the run's
+   decks, first rank every deck with one `mtg-toolbox:ranker`, its prompt
+   giving `<run>`, and copy `<run>/rankings.md` over `rankings.md`.
+2. Dispatch one `mtg-toolbox:researcher` per colour-sharing group of two
    or three decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),
    `<quota>`, `<universes_beyond>` and `<new_sets>` as `settings.py` prints

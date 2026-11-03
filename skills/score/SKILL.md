@@ -23,7 +23,9 @@ inputs named below.
    files into it,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
    When Spellbook is unreachable the run goes on without the combos files.
-   Group decks by shared colours (two or three per group). Dispatch
+   If `rankings.md` is missing or has no row for one of the run's decks,
+   first rank every deck with one `mtg-toolbox:ranker`, its prompt giving
+   `<run>`, and copy `<run>/rankings.md` over `rankings.md`. Group decks by shared colours (two or three per group). Dispatch
    `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and
    on, each prompt giving `<run>`, the letter, the scorer's own
    `<run>/work-<group>-<letter>/` subfolder and the group's slugs, each with
