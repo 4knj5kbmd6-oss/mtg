@@ -14,7 +14,7 @@ the repo; write your output to the scratchpad path named at the end.
   bullets naming cards or describing kinds of card. A card named or described on either is never an add.
 - output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
   colours, Game Changer flag). Read this instead of fetching card by card.
-- output/rankings.md: each deck's bracket and its strength relative to the others.
+- output/decks/rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
 A rules question about a card you settle yourself as <plugin>/skills/judge/JUDGE-BRIEF.md
@@ -25,7 +25,7 @@ and `python3 <plugin>/skills/judge/rule.py` (`--find word ...` to locate rules, 
 ## Deck dates (Moxfield; "created" is the build date, "updated" the last edit)
 | slug | commander | created | updated | bracket |
 |---|---|---|---|---|
-<fill in from the sync fetch and output/rankings.md>
+<fill in from the sync fetch and output/decks/rankings.md>
 
 ## What to do, per deck
 1. Read the plan, then the list.
@@ -37,7 +37,7 @@ and `python3 <plugin>/skills/judge/rule.py` (`--find word ...` to locate rules, 
    Scryfall search syntax is useful: e.g. `id<=br date>=2025-08-07 o:"..."`.
    Verify every card's rules text and release date on Scryfall before recommending it.
 3. SECONDARY: older cards that are clear upgrades the list is missing.
-4. Keep the deck at its bracket in output/rankings.md. An add that would push it over (a
+4. Keep the deck at its bracket in output/decks/rankings.md. An add that would push it over (a
    Game Changer past the cap, an infinite combo in a bracket-2 deck, etc.) is still
    listed, and its own Why says so.
 5. Give an approximate current price (TCGplayer market) per add. Prefer cheap

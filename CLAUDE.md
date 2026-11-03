@@ -23,8 +23,9 @@ The owner's output, under `output/` (gitignored):
   synced, `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...]}`,
   written by `/sync <username>` with every public Commander deck not yet
   seen and trimmed by hand; a deck deleted from `decks` stays out.
-- `output/decks/README.md`: the deck table (rank, commander, colours, bracket,
-  Moxfield link).
+- `output/decks/rankings.md`: the decks in strength order, one table: commander
+  (linking to the deck folder), colours, WotC-guideline bracket, Game Changers, one
+  line why, Moxfield link.
 - `output/decks/<slug>/`: everything about one deck.
   - `list.txt`: the deck as the owner intends it: Moxfield's list with
     `output/changes.md` applied. Card names only ("1 Card Name"), commander
@@ -39,7 +40,6 @@ The owner's output, under `output/` (gitignored):
     to `lands.md` if its front face is a Land.
   - `changes.png`: the earliest-printing image of every add and cut, in four
     bands: nonland adds, nonland cuts, land adds, land cuts.
-- `output/rankings.md`: strength order and WotC-guideline brackets.
 - `output/restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
   deck): bullets of cards, by name or kind, never considered as adds.
 - `output/changes.md`: the owner's intended swaps not yet made, one table

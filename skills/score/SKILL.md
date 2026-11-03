@@ -1,6 +1,6 @@
 ---
 name: score
-description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median, arbitration), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute output/rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
+description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median, arbitration), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute output/decks/rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
 ---
 
 # score
@@ -26,7 +26,7 @@ the Card columns of the `## Adds` tables in `nonlands.md` and `lands.md`
    `run_in_background`), lettered A, B, C and on, each with its own
    `work-<group>-<letter>/` subfolder (every scorer in the run gets a
    folder of its own; two sharing one overwrite each other's helpers) and
-   a list of its decks with the deck's bracket from output/rankings.md. Group decks by shared colours (three or so per
+   a list of its decks with the deck's bracket from output/decks/rankings.md. Group decks by shared colours (three or so per
    agent). Scorers must not see each other's output or any existing
    `nonlands.md` or `lands.md` beyond their adds; the brief says so.
 3. When all of a group are back:
@@ -45,9 +45,8 @@ the Card columns of the `## Adds` tables in `nonlands.md` and `lands.md`
 5. Copy each deck's merged pair into `output/decks/<slug>/`. Check the shape line
    merge.py printed for each deck against rule 8 of `scoring.md`.
 6. If more than one deck was rescored, or the owner asks, recompute
-   `output/rankings.md` with one `planner` (`model`) using `RANKER-BRIEF.md`; copy the result
-   over `output/rankings.md`, regenerate the deck table in `output/decks/README.md` (rank,
-   commander, colours, bracket, Moxfield link).
+   `output/decks/rankings.md` with one `planner` (`model`) using `RANKER-BRIEF.md`; copy the
+   result over `output/decks/rankings.md`.
 
 Report: per deck the shape line and the 10s; any arbitration in one line
 each; anything that moved by 3 or more since the last scoring.

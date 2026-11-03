@@ -17,7 +17,7 @@ TCGplayer market price in dollars an add may carry (default none, no cap);
 an absent file or key takes the default.
 
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/sync`
-   fetch returns them) and its bracket from `output/rankings.md`.
+   fetch returns them) and its bracket from `output/decks/rankings.md`.
 2. Copy `BRIEF.md` to a fresh scratchpad folder with the dates table,
    `<today>`, `<budget>` (`budget` as `$<n>`, or `none`) and `<plugin>`
    (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one `planner` (`model`,

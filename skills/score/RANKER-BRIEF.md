@@ -5,8 +5,9 @@ Paths are relative to your working directory, the folder that holds output/.
 Recompute the strength ranking of the owner's Commander decks. Inputs:
 output/decks/*/list.txt, output/decks/*/plan.md (authoritative on what each deck is trying
 to do), output/decks/*/nonlands.md and lands.md (per-card fit scores and notes, evidence
-about card quality), output/data/oracle.json (rules text and the game_changer flag), and the
-current output/rankings.md (prior opinion, not binding).
+about card quality), output/data/oracle.json (rules text, colour identity and the game_changer
+flag), output/decks/moxfield.json (each deck's Moxfield id, keyed to its slug) and the current
+output/decks/rankings.md (prior opinion, not binding).
 
 Deck power does not correspond to the fit scores. Rank on strength in a
 four-player game: speed to the win, consistency (tutors, redundancy, card
@@ -24,21 +25,19 @@ level).
 Output to <run>/rankings.md, exactly this shape, nothing else:
 
 ```
-# Deck rankings
+# Rankings
 
-Strength at a four-player table, strongest first. Bracket is the official
-Commander bracket under [Wizards' guidelines](<link to the current update>);
-"top" and "low" mark where a deck sits within it.
-
-| # | Commander | Bracket | Why |
-|---|---|---|---|
-...one row per deck; Why is one line...
-
-## Game Changers
-
-| Deck | Cards |
-|---|---|
-...one row per deck that has any, then "All others | none"...
+| # | Commander | Colours | Bracket | Game Changers | Why | |
+|---|---|---|---|---|---|---|
+| 1 | [<commander>](<slug>/) | <colours> | <bracket> | <game changers> | <why> | [Moxfield](https://moxfield.com/decks/<id>) |
+...one row per deck, strongest first...
 ```
 
-No deck slugs. Final message: the table.
+- Commander: the commander's name, partners joined by " / ", linking to the deck's folder.
+- Colours: the commanders' colour identity in WUBRG order (`BRG`, `WR`).
+- Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
+  (`4`, `3, top`, `3`, `3, low`).
+- Game Changers: the deck's own, by name, comma-separated, or `none`.
+- Why: one line.
+
+Final message: the table.
