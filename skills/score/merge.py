@@ -5,9 +5,11 @@ reads every <run_dir>/<slug>-<LETTER>.md, one per scorer, the deck title from ou
 output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their
 shape lines with the count of scorers, and, with two or more scorers, <run_dir>/<slug>-flagged.md; prints the
 whole deck's shape line to stderr. One scorer's scores stand as they are: no spread, no flags.
-When the scorer files hold fewer cards than list.txt, the run scored only those cards: the deck's existing
-nonlands.md and lands.md are patched instead, each card's row replaced or inserted in score order, its Adds row
-dropped and the Shape line recomputed, every other line as it was."""
+When the scorer files hold fewer of list.txt's cards than it has, the run scored only those cards: the deck's
+existing nonlands.md and lands.md are patched instead, each listed card's row replaced or inserted in the Cards
+table in score order and its Adds row dropped, each card not in the list (a candidate) replaced or inserted in the
+Adds table of the file its type belongs to, keeping the New and ~Price of its old Adds row, else "-"; the Shape
+line recomputed, every other line as it was."""
 import re, sys, json, statistics, time, urllib.request
 from pathlib import Path
 CARDS = "| Card | Score | Note |"
@@ -84,14 +86,19 @@ def deck_file(title, kind, cards, rest, scorers):
     return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table(CARDS, ranked(cards, True)), ""]],
                  *rest, ["## Shape", [shape(cards, scorers), ""]]])
 
-def patch(text, rows, scored):
-    """a deck file's text with these [card, score, note] rows in its Cards table in score order, each in place of
-    its card's old row, the Adds rows of the scored names dropped and the Shape line recomputed, keeping the
-    scorer count it carried; every other line as it was"""
-    secs = split(text); sec = dict(secs); new = {key(r[0]): r for r in rows}
+def patch(text, cards, adds, scored):
+    """a deck file's text with these [card, score, note] rows in its Cards table and these [card, score, note, new,
+    price] rows in its Adds table (made after Cards if it has none), each table in score order and each row in
+    place of its card's old row, the other Adds rows of the scored names dropped and the Shape line recomputed,
+    keeping the scorer count it carried; every other line as it was"""
+    secs = split(text)
+    if adds and "## Adds" not in dict(secs): secs.insert([h for h, _ in secs].index("## Cards") + 1, tail([], [], [])[0])
+    sec = dict(secs); new = {key(r[0]): r for r in cards}
     cards = [new.pop(key(r[0]), r) for r in cells(sec["## Cards"])] + list(new.values())
     sec["## Cards"][:] = [table(CARDS, ranked(cards, True)), ""]
-    if "## Adds" in sec: sec["## Adds"][:] = [l for l in sec["## Adds"] if not any(key(c[0]) in scored for c in cells([l]))]
+    if "## Adds" in sec:
+        lines = sec["## Adds"]; at = [i for i, l in enumerate(lines) if l.startswith("|")]
+        lines[at[0]:at[-1] + 1] = [table(ADDS, ranked([r for r in cells(lines) if key(r[0]) not in scored] + adds, True))]
     n = re.search(r", (\d+) scorers?\.", "".join(sec["## Shape"]))
     sec["## Shape"][:] = [shape(cards, n and int(n.group(1))), ""]
     return join(secs)
@@ -140,11 +147,15 @@ def main():
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
         if max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
         secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
-    scored = {key(r[0]) for k in KINDS for r in rows[k]}
+    scored = {key(r[0]) for k in rows for r in rows[k]}
     listed = {key(l) for l in (deck / "list.txt").read_text().split("SIDEBOARD:")[0].splitlines() if l.strip()}
-    if len(scored) < len(listed):  # fewer cards than the list: a card-only score, patched into the deck's files
+    if len(scored & listed) < len(listed):  # fewer of the list's cards: a card-only score, patched into the deck's files
         if not all((deck / f"{k}.md").exists() for k in KINDS): sys.exit(f"no {deck}/nonlands.md and lands.md to patch")
-        text = {k: patch((deck / f"{k}.md").read_text(), rows[k], scored) for k in KINDS}
+        old = {k: (deck / f"{k}.md").read_text() for k in KINDS}
+        kept = {key(r[0]): r[3:5] for t in old.values() for r in cells(dict(split(t)).get("## Adds", []))}
+        adds = by_kind([[*r, *kept.get(key(r[0]), ["-", "-"])] for k in rows for r in rows[k] if key(r[0]) not in listed],
+                       lands("output/data/oracle.json"))
+        text = {k: patch(old[k], [r for r in rows[k] if key(r[0]) in listed], adds[k], scored) for k in KINDS}
     else: text = whole(deck, rows, len(files))
     out = Path(raw) / "merged" / slug; out.mkdir(parents=True, exist_ok=True)
     for k in KINDS: (out / f"{k}.md").write_text(text[k])

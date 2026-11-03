@@ -105,6 +105,38 @@ def test_card_only_score_patches_the_deck_files():
     assert "## Deep Current\nScores A/B/C: [8, 8, 5]\n" in read("run/zara-flagged.md")
 
 
+
+def test_card_only_score_puts_a_candidate_in_its_adds_table():
+    nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
+    scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Pearl Diver": (6, 6, 5), "Tundra": (8, 8, 7)},
+                    "Adds": {"Deep Current": (8, 8, 5)}})
+    out = run("score/merge.py", "run", "zara")
+    assert out.returncode == 0, out.stderr
+    assert out.stderr == "zara: 10: 1 / 8-9: 1 / 5-7: 9 / 4 or below: 2, mean 6.2 (by card copy), 3 scorers. 1 flagged\n"
+    assert read("run/merged/zara/nonlands.md") == (nonlands
+        .replace("| Kelp Weaver | 6 | Blocker that loots |\n", "| Kelp Weaver | 7 | fits |\n")
+        .replace("| Deep Current | 7 | A card on every spell, stacks with Zara | Yes | $1.50 |\n",
+                 "| Deep Current | 8 | fits | Yes | $1.50 |\n| Pearl Diver | 6 | fits | - | - |\n")
+        .replace("mean 6.1", "mean 6.3"))
+    assert read("run/merged/zara/lands.md") == lands.replace(
+        "| Tidepool Ruins |", "| Tundra | 8 | fits | - | - |\n| Tidepool Ruins |")
+
+
+def test_a_candidate_makes_the_adds_table_it_lacks():
+    lands = read("output/decks/zara/lands.md")
+    bare = lands[:lands.index("## Adds")] + lands[lands.index("## Shape"):]
+    Path("output/decks/zara/lands.md").write_text(bare)
+    scorers(scores={"Lands": {"Tundra": (8, 8, 7)}})
+    assert run("score/merge.py", "run", "zara").returncode == 0
+    assert read("run/merged/zara/lands.md") == bare.replace("## Shape", """## Adds
+
+| Card | Score | Note | New | ~Price |
+|---|---|---|---|---|
+| Tundra | 8 | fits | - | - |
+
+## Shape""")
+
+
 def test_settings_defaults():
     settings = load("score/settings.py")
     Path("settings.json").unlink()

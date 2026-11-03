@@ -1,14 +1,18 @@
 """Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt and in the
 Adds table of every output/decks/*/nonlands.md and lands.md, each card with its Scryfall rulings (the comment
-texts, oldest first) from Scryfall's bulk rulings file.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py"""
+texts, oldest first) from Scryfall's bulk rulings file. Given card names, instead fetch each one oracle.json
+lacks singly from Scryfall into it, with its rulings, every other entry as it was.
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py ["Card Name" ...]"""
 import gzip, json, re, sys
 from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "judge"))
 from merge import split, cells, get, SCRYFALL, KINDS
+from card import card
 API = f"{SCRYFALL}/cards/collection"
+ORACLE = Path("output/data/oracle.json")
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
 FACE = ["name", "mana_cost", "type_line", "oracle_text", "colors", "power", "toughness", "loyalty"]
@@ -41,7 +45,19 @@ def card_names():
             for r in cells(dict(split(f.read_text())).get("## Adds", []))}
     return sorted(listed | adds)
 
-if __name__ == "__main__":
+def save(oracle): json.dump(oracle, open(ORACLE, "w"), indent=1, sort_keys=True)
+
+def add(names):
+    """fetch each of names oracle.json lacks singly into it, with its rulings; the names Scryfall has no card for"""
+    oracle = json.loads(ORACLE.read_text()); missing = []
+    for n in names:
+        c = card(n, oracle["cards"])
+        if c is None: missing.append(n)
+        elif c not in oracle["cards"].values(): oracle["cards"][c["name"]] = {**entry(c), "rulings": c["rulings"]}
+    save(oracle)
+    return missing
+
+def rebuild():
     names = card_names()
     cards, missing = [], []
     for i in range(0, len(names), 75):
@@ -57,8 +73,11 @@ if __name__ == "__main__":
             out.update({c["name"]: entry(c) for c in got})
     said = rulings()
     for e in out.values(): e["rulings"] = said.get(e.get("oracle_id"), [])
-    json.dump({"fetched": date.today().isoformat(), "source": API, "cards": out},
-              open("output/data/oracle.json", "w"), indent=1, sort_keys=True)
+    save({"fetched": date.today().isoformat(), "source": API, "cards": out})
     fronts = {n.split(" // ")[0] for n in out}
     print(len(names), "requested,", len(out), "saved; missing:", [n for n in names if n.split(" // ")[0] not in fronts])
     print("game changers:", sorted(n for n, e in out.items() if e.get("game_changer")))
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1: rebuild()
+    elif missing := add(sys.argv[1:]): sys.exit(f"not on Scryfall: {', '.join(missing)}")

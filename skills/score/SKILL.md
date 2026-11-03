@@ -38,13 +38,20 @@ prompt carries only the per-run inputs named below.
    copy `<run>/rankings.md` over `rankings.md`.
 
 Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
-score only those cards of that deck, usually a card just added through
-`changes.md`. Each name must be in the deck's `list.txt`; report and skip
-any that is not. Run steps 2 to 4 for that deck alone, each scorer's prompt
-also naming the cards. merge.py sees tables holding fewer cards than the
-list and patches the deck's `nonlands.md` and `lands.md` instead of
-rewriting them: each card's row replaced or inserted in score order, its
-Adds row dropped, the Shape line recomputed. The ranker does not run.
+score only those cards for that deck, usually a card just added through
+`changes.md`. A card not in the deck's `list.txt` is a candidate, scored as
+if added; one missing from `oracle.json` is fetched into it first with
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py "<card name>" ...`,
+which reports any name Scryfall does not know. Run steps 2 to 4 for that
+deck alone, each scorer's prompt also naming the cards. merge.py sees tables
+holding fewer of the list's cards than it has and patches the deck's
+`nonlands.md` and `lands.md` instead of rewriting them: a listed card's row
+replaced or inserted in the Cards table in score order and its Adds row
+dropped, a candidate's row in the Adds table of the file its type belongs
+to, in score order, keeping the New and ~Price of an Adds row it had, else
+`-`; the Shape line recomputed. A later `/upgrades` rebuilds Adds from
+research, so a candidate stays only while the research lists it too. The
+ranker does not run.
 
 Report: per deck the shape line, the 10s and the split cards in one line
 ("split: X, Y"), a sign the plan is unclear on them; anything that moved by
