@@ -29,5 +29,6 @@ dispatching the agents in `agents/`. The repo is the `mtg-toolbox` plugin;
 - Agents write to the scratchpad; the orchestrator copies results in; a
   change to a core file is committed as it lands.
 - Every landing on `main` bumps the patch number of `version` in
-  `.claude-plugin/plugin.json`, so installed copies update; minor and
-  major numbers are the owner's.
+  `.claude-plugin/plugin.json` inside the landing commit itself, never
+  in a commit of its own, so installed copies update; minor and major
+  numbers are the owner's.
