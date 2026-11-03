@@ -10,8 +10,10 @@ relative to your working directory, the folder that holds output/. Read-only
 on the repo; write your output to `<run>`.
 
 Your prompt gives you: the run folder `<run>`, today's date `<today>`, the
-budget `<budget>`, and the decks, each slug with its commander, Moxfield
-created date (the build date), updated date (the last edit) and bracket.
+budget `<budget>`, the quota `<quota>` (`adds`, `lands`, and `cuts` as a
+fewest and a most), `<universes_beyond>` (true or false), and the decks, each
+slug with its commander, Moxfield created date (the build date), updated date
+(the last edit) and bracket.
 
 ## Inputs
 - output/decks/<slug>/plan.md: the owner's intended lines, authoritative.
@@ -32,8 +34,9 @@ Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
 2. PRIMARY: find cards released AFTER the deck's created date (and especially after
    its updated date) that improve it. Use web search to
    establish which Magic sets released between the deck's creation and `<today>`
-   (Standard sets, Commander precons, Universes Beyond sets, supplemental sets),
-   then search each for cards in the deck's colour identity that fit its plan.
+   (Standard sets, Commander precons, supplemental sets, and Universes Beyond
+   sets only when `<universes_beyond>` is true), then search each for cards
+   in the deck's colour identity that fit its plan.
    Scryfall search syntax is useful: e.g. `id<=br date>=2025-08-07 o:"..."`.
    Verify every card's rules text and release date on Scryfall before recommending it.
 3. SECONDARY: older cards that are clear upgrades the list is missing.
@@ -52,10 +55,10 @@ Two files per deck, judged independently and never paired, at
 table, nothing else. A Why cell is one clause of at most about 15 words naming
 the card's role and the interaction it joins (or, for a cut, why it falls short).
 
-<slug>-adds.md: exactly 20 nonland adds ranked best first, then up to 5
-land adds ranked best first, in one table. A land is listed only when it
-does something for the plan (a utility land, a landfall or sacrifice
-piece); fewer than 5, or none, is fine.
+<slug>-adds.md: exactly `<quota.adds>` nonland adds ranked best first, then up
+to `<quota.lands>` land adds ranked best first, in one table. A land is listed
+only when it does something for the plan (a utility land, a landfall or
+sacrifice piece); fewer than `<quota.lands>`, or none, is fine.
 
 ```
 # <deck>: top adds (<today>)
@@ -65,8 +68,8 @@ Built <created>, last edited <updated>, bracket <n>.
 |---|---|---|---|---|
 ```
 
-<slug>-cuts.md, the 10 to 15 cards that pull least weight, weakest first,
-each judged against the plan and the rest of the list:
+<slug>-cuts.md, the `<quota.cuts>` (fewest to most) cards that pull least
+weight, weakest first, each judged against the plan and the rest of the list:
 
 ```
 # <deck>: top cuts (<today>)

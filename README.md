@@ -74,7 +74,7 @@ Your project-wide files, beside `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `settings.json` | `scorers` per deck, `model` every dispatched agent runs on, `budget`: the highest TCGplayer price in dollars an add may carry; an absent file or key takes its default from [`settings.py`](skills/score/settings.py) |
+| `settings.json` | `scorers` per deck, `model` every dispatched agent runs on, `budget`: the highest TCGplayer price in dollars an add may carry, `quota`: the adds, land adds and cuts each deck's research lists (20, 5, 10 to 15), `universes_beyond` (true: research searches Universes Beyond sets), `cart`: condition (MP or better), language (English), finish and premium per package removed (asked each cart while null); an absent file or key takes its default from [`settings.py`](skills/score/settings.py), and a partial `quota` or `cart` keeps the rest of its default |
 | `moxfield.json` | Your Moxfield username and the decks synced, written by `/sync <username>`; a deck you delete from it stays out |
 | `changes.md` | Your intended swaps not yet made on Moxfield; `/sync` re-applies them to each `list.txt` and drops each once Moxfield shows it, except a card noted `unowned`, which stays until you clear the note |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |

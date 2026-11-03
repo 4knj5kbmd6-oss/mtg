@@ -91,6 +91,11 @@ def test_one_scorer_stands_alone():
 def test_settings_defaults():
     settings = load("score/settings.py")
     Path("settings.json").unlink()
-    assert settings.settings() == settings.DEFAULTS == {"scorers": 3, "model": "claude-opus-5-5", "budget": None}
-    Path("settings.json").write_text('{"scorers": 1}')
-    assert settings.settings() == {"scorers": 1, "model": "claude-opus-5-5", "budget": None}
+    defaults = {"scorers": 3, "model": "claude-opus-5-5", "budget": None,
+                "quota": {"adds": 20, "lands": 5, "cuts": [10, 15]}, "universes_beyond": True,
+                "cart": {"condition": "MP", "language": "English", "finish": None, "premium": None}}
+    assert settings.settings() == settings.DEFAULTS == defaults
+    Path("settings.json").write_text('{"scorers": 1, "quota": {"adds": 15}, "cart": {"finish": "nonfoil"}}')
+    assert settings.settings() == {**defaults, "scorers": 1, "quota": {"adds": 15, "lands": 5, "cuts": [10, 15]},
+                                   "cart": {"condition": "MP", "language": "English", "finish": "nonfoil", "premium": None}}
+    assert settings.DEFAULTS == defaults

@@ -10,9 +10,12 @@ relative to your working directory, the folder that holds output/. Never
 sign in, enter credentials or payment details, or check out: the owner does
 that.
 
-Your prompt gives you: the canonical list's path, the requirements (finish,
-condition, language, artwork constraints, the priority and the premium per
-package eliminated) and the report path under `output/carts/`.
+Your prompt gives you: the canonical list's path, the requirements and the
+report path under `output/carts/`. The requirements carry the artwork
+constraints and four values: `<condition>`, the worst allowed (NM, LP, MP or
+HP); `<language>`; `<finish>` (nonfoil, foil or either); and `<premium>`, the
+dollars the buyer pays to remove one package (0 means the lowest delivered
+price, a large number the fewest packages).
 
 The canonical list is the source of truth for every audit: never infer a
 card belongs because it is in the cart or Saved for later. Ignore display
@@ -23,10 +26,11 @@ original edition: a later reprint with the same art can be the better buy.
 
 ## 1. Mass Entry
 
-Open **Mass Entry**, select Magic: The Gathering, and set finish and
-condition first. For nonfoil, leave **Normal** on and **Foil** off, and
-recheck every time it opens: preferences reset. One line per card:
-`1 Card Name`, `2 Card Name [SET]`, `1 Card Name [SET] 123`. Use names alone
+Open **Mass Entry**, select Magic: The Gathering, and set `<finish>` and
+conditions down to `<condition>` first. For nonfoil, leave **Normal** on and
+**Foil** off, and recheck every time it opens: preferences reset. One line
+per card: `1 Card Name`, `2 Card Name [SET]`, `1 Card Name [SET] 123`. Use
+names alone
 when editions are flexible; add set and collector number only to pick
 artwork or exclude a treatment, since locking every card to an edition
 shrinks inventory and raises price and package count.
@@ -46,7 +50,7 @@ changes when editions are flexible, and preserve sets or set per-item rules
 where an edition change could break artwork or treatment. The optimizer
 matches by product name, so a set change can swap in a different card of the
 same name (a 4/2 Beast for a 3/3): when names collide, whitelist set changes
-per item. Keep conditions at the agreed minimum.
+per item. Keep conditions at `<condition>` or better.
 
 Try **Keep Current Sellers** first, then an unrestricted run if it is poor.
 Tabulate the current cart, Direct, Verified Sellers and Any Seller by
@@ -111,7 +115,7 @@ total is not enough, since a wrong extra can hide a missing card.
 
 - Every required card at its quantity, after exclusions.
 - No unintended extras, no duplicates from repeated imports.
-- Required finish, language and an acceptable condition on every card.
+- `<finish>`, `<language>` and `<condition>` or better on every card.
 - No prohibited full-art, extended-art, borderless or other treatment; any
   artwork deviation named.
 - No required card in Saved for later.
@@ -123,8 +127,8 @@ Write it to the report path: source deck, exclusions, required copies,
 missing / extras / wrong quantities, finish and treatment exceptions,
 packages, item total, shipping, subtotal before tax, preorders or delays,
 verification time. Stop when the cart is complete and compliant and further
-consolidation costs more than the agreed premium; fewer packages is not
-better if it materially raises the delivered price. State the final
+consolidation costs more than `<premium>` per package removed; fewer packages
+is not better if it materially raises the delivered price. State the final
 tradeoff plainly, not as a global optimum. Inventory may still change: if
 checkout reports changes, refresh and rerun the audit. Building the cart
 does not authorize the order. Your final message is the report's path and

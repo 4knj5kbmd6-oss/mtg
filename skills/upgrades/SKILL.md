@@ -16,7 +16,8 @@ prompt carries only the per-run inputs named below.
 2. Make a fresh scratchpad folder `<run>/`. Dispatch one
    `edhtool:researcher` per colour-sharing group of two or three
    decks, so each researches a colour's new cards once, its prompt giving
-   `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`) and the
+   `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),
+   `<quota>` and `<universes_beyond>` as `settings.py` prints them, and the
    group's decks, each slug with its commander, created and updated dates
    and bracket.
 3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run> <slug>`,
