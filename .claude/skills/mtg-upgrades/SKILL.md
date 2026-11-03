@@ -22,7 +22,9 @@ that would change the deck's bracket says so in its own row.
    `lands.md`, each card by its type in `output/data/oracle.json`: cuts carry
    their deck score, new adds score `-` until `/mtg-score` scores them as
    part of the deck. Then `python3 .claude/skills/mtg-sync/fetch-oracle.py`
-   caches the adds in `output/data/oracle.json` for the scorers.
+   caches the adds in `output/data/oracle.json` for the scorers, and
+   `apply.py` runs once more so an add the oracle had not seen is filed by
+   its type.
 
 Report: three lines per deck, top adds and top cuts, plus any add that
 would change a bracket.
