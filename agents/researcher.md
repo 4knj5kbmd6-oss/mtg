@@ -27,7 +27,7 @@ against pips).
   card names, one `- Name` line each. A card named on either is never an add.
 - output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
   colours, Game Changer flag). Read this instead of fetching card by card.
-- rankings.md: each deck's bracket and its strength relative to the others.
+- rankings.md (beside output/): each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
 Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.

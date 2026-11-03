@@ -62,8 +62,8 @@ earns nothing for its reputation.
 3. **The owner's plan comes first.** Read `output/decks/<slug>/plan.md` before scoring.
    It states the intended lines and the interactions the owner built the
    deck around, and it overrides any plan inferred from the list or from
-   rankings.md. A card the plan names as part of a line is scored on that
-   line, not on its face value. The combos file is evidence for a card's
+   rankings.md (beside output/). A card the plan names as part of a line is
+   scored on that line, not on its face value. The combos file is evidence for a card's
    part in a line the plan states; Spellbook knows only catalogued combos,
    so a plan's own kill may show nothing there.
 4. **Saturation.** The 12th ramp piece in a deck that wants 10 loses a point

@@ -15,7 +15,7 @@ what each deck is trying to do), output/decks/*/nonlands.md and lands.md
 (per-card fit scores and notes, evidence about card quality),
 output/data/oracle.json (rules text, colour identity and the game_changer
 flag), moxfield.json (each deck's Moxfield id, keyed to its
-slug), the current rankings.md (prior opinion, not binding) and each deck's
+slug), the current rankings.md (beside output/; prior opinion, not binding) and each deck's
 fact files, `<run>/<slug>-combos.md` (Commander Spellbook's combos and the
 cards it flags as mass land denial or extra turns) and `<run>/<slug>-mana.md`
 (land count, curve, sources against pips): evidence for the two-card-infinite,
