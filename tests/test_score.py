@@ -11,12 +11,12 @@ SCORES = {
 }
 
 
-def scorers(letters="ABC"):
+def scorers(letters="ABC", scores=SCORES):
     """one scorer file per letter in run/, as the scorer agent shapes them"""
     Path("run").mkdir()
     for i, letter in enumerate(letters):
         text = f"# Zara, Tide Caller: fit scores ({letter})\n"
-        for section, cards in SCORES.items():
+        for section, cards in scores.items():
             text += f"\n## {section}\n| Card | Score | Note |\n|---|---|---|\n"
             text += "".join(f"| {card} | {s[i]} | fits |\n" for card, s in cards.items())
         Path(f"run/zara-{letter}.md").write_text(text + "\n## Shape\nignored\n")
@@ -86,6 +86,23 @@ def test_one_scorer_stands_alone():
     assert out.stderr.endswith("1 scorer.\n")
     assert not Path("run/zara-flagged.md").exists()
     assert "| Brine Elemental | 2 | fits |" in read("run/merged/zara/nonlands.md")
+
+
+def test_card_only_score_patches_the_deck_files():
+    with open("output/decks/zara/list.txt", "a") as f: f.write("1 Deep Current\n")
+    nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
+    scorers(scores={"Nonlands": {"Kelp Weaver": (7, 7, 6), "Deep Current": (8, 8, 5)}})
+    out = run("score/merge.py", "run", "zara")
+    assert out.returncode == 0, out.stderr
+    assert out.stderr == "zara: 10: 1 / 8-9: 2 / 5-7: 9 / 4 or below: 2, mean 6.3 (by card copy), 3 scorers. 1 flagged\n"
+    assert read("run/merged/zara/nonlands.md") == (nonlands
+        .replace("| Kelp Weaver | 6 | Blocker that loots |\n", "")
+        .replace("| Tidal Insight | 7 | Instant draw two |\n",
+                 "| Deep Current | 8 | fits |\n| Tidal Insight | 7 | Instant draw two |\n| Kelp Weaver | 7 | fits |\n")
+        .replace("| Deep Current | 7 | A card on every spell, stacks with Zara | Yes | $1.50 |\n", "")
+        .replace("10: 1 / 8-9: 1 / 5-7: 3 / 4 or below: 2, mean 6.1", "10: 1 / 8-9: 2 / 5-7: 3 / 4 or below: 2, mean 6.5"))
+    assert read("run/merged/zara/lands.md") == lands
+    assert "## Deep Current\nScores A/B/C: [8, 8, 5]\n" in read("run/zara-flagged.md")
 
 
 def test_settings_defaults():

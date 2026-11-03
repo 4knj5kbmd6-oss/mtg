@@ -1,7 +1,7 @@
 ---
 name: score
 description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, optionally recompute rankings.md. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
-argument-hint: "[slug ...] [key=value ...]"
+argument-hint: "[slug ...] [key=value ...] | <slug> <card name> [<card name> ...]"
 ---
 
 # score
@@ -36,6 +36,15 @@ prompt carries only the per-run inputs named below.
 5. If more than one deck was rescored, or the owner asks, recompute the
    rankings with one `edhtool:ranker`, its prompt giving `<run>`;
    copy `<run>/rankings.md` over `rankings.md`.
+
+Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
+score only those cards of that deck, usually a card just added through
+`changes.md`. Each name must be in the deck's `list.txt`; report and skip
+any that is not. Run steps 2 to 4 for that deck alone, each scorer's prompt
+also naming the cards. merge.py sees tables holding fewer cards than the
+list and patches the deck's `nonlands.md` and `lands.md` instead of
+rewriting them: each card's row replaced or inserted in score order, its
+Adds row dropped, the Shape line recomputed. The ranker does not run.
 
 Report: per deck the shape line, the 10s and the split cards in one line
 ("split: X, Y"), a sign the plan is unclear on them; anything that moved by

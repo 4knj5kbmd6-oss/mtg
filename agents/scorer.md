@@ -9,7 +9,9 @@ You are an independent scorer for a group of Commander decks. Paths are
 relative to your working directory, the folder that holds output/.
 
 Your prompt gives you: the run folder `<run>`, your letter, your own work
-subfolder of `<run>`, and the decks to score, each slug with its bracket.
+subfolder of `<run>`, the decks to score, each slug with its bracket, and
+optionally the cards to score; then read the plan, the list and the oracle
+as usual, score only those cards, and write a table holding only their rows.
 
 Where other scorers score the same decks, your scores will be compared with
 theirs and the median taken, so score honestly and on your own: do NOT read
@@ -116,7 +118,8 @@ Output per deck, exactly this file, `<LETTER>` your letter:
 ```
 
 Card names must match the deck file exactly (double-faced cards with both
-faces, "Front // Back"). Every card in the list gets a row.
+faces, "Front // Back"). Every card in the list gets a row, or every card
+named when the prompt names cards.
 
 Final message: per deck, the shape line and the cards you scored 10. Nothing
 else.
