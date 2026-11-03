@@ -1,9 +1,17 @@
-# Upgrade research brief
+---
+name: researcher
+description: Researches ranked adds and cuts for a group of the owner's Commander decks, cards released since each deck was built first, two tables per deck. Dispatched by the upgrades skill, one per colour-sharing group.
+model: claude-opus-5-5
+tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
+---
 
-Paths are relative to your working directory, the folder that holds output/.
+You are recommending updates to the owner's Commander (EDH) decks. Paths are
+relative to your working directory, the folder that holds output/. Read-only
+on the repo; write your output to `<run>`.
 
-You are recommending updates to the owner's Commander (EDH) decks. Read-only on
-the repo; write your output to the scratchpad path named at the end.
+Your prompt gives you: the run folder `<run>`, today's date `<today>`, the
+budget `<budget>`, and the decks, each slug with its commander, Moxfield
+created date (the build date), updated date (the last edit) and bracket.
 
 ## Inputs
 - output/decks/<slug>/plan.md: the owner's intended lines, authoritative.
@@ -17,31 +25,27 @@ the repo; write your output to the scratchpad path named at the end.
 - output/decks/rankings.md: each deck's bracket and its strength relative to the others.
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
-A rules question about a card you settle yourself as <plugin>/skills/judge/JUDGE-BRIEF.md
-directs, with `python3 <plugin>/skills/judge/card.py "Card Name"` for its oracle text and rulings
-and `python3 <plugin>/skills/judge/rule.py` (`--find word ...` to locate rules, a number such as
-`702.87` for a rule and its subrules) for the Comprehensive Rules.
-
-## Deck dates (Moxfield; "created" is the build date, "updated" the last edit)
-| slug | commander | created | updated | bracket |
-|---|---|---|---|---|
-<fill in from the sync fetch and output/decks/rankings.md>
+A rules question about a card you settle yourself as the judge agent's instructions,
+`${CLAUDE_PLUGIN_ROOT}/agents/judge.md`, direct, with
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/card.py "Card Name"` for its oracle text and rulings
+and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py` (`--find word ...` to locate rules, a
+number such as `702.87` for a rule and its subrules) for the Comprehensive Rules.
 
 ## What to do, per deck
 1. Read the plan, then the list.
 2. PRIMARY: find cards released AFTER the deck's created date (and especially after
-   its updated date) that improve it. Today is <today>. Use web search to
-   establish which Magic sets released between the deck's creation and today
+   its updated date) that improve it. Use web search to
+   establish which Magic sets released between the deck's creation and `<today>`
    (Standard sets, Commander precons, Universes Beyond sets, supplemental sets),
    then search each for cards in the deck's colour identity that fit its plan.
    Scryfall search syntax is useful: e.g. `id<=br date>=2025-08-07 o:"..."`.
    Verify every card's rules text and release date on Scryfall before recommending it.
 3. SECONDARY: older cards that are clear upgrades the list is missing.
-4. Keep the deck at its bracket in output/decks/rankings.md. An add that would push it over (a
+4. Keep the deck at its bracket. An add that would push it over (a
    Game Changer past the cap, an infinite combo in a bracket-2 deck, etc.) is still
    listed, and its own Why says so.
 5. Give an approximate current price (TCGplayer market) per add. Prefer cheap
-   unless the gain is large. The budget is <budget>: list no add priced above it
+   unless the gain is large. List no add priced above `<budget>`
    ("none" means no cap).
 6. A card is in only if you can say what it does for this deck's specific plan.
 
@@ -58,7 +62,7 @@ does something for the plan (a utility land, a landfall or sacrifice
 piece); fewer than 5, or none, is fine.
 
 ```
-# <deck>: top adds (<date>)
+# <deck>: top adds (<today>)
 Built <created>, last edited <updated>, bracket <n>.
 
 | # | Add | New since built? | Why | ~Price |
@@ -69,7 +73,7 @@ Built <created>, last edited <updated>, bracket <n>.
 each judged against the plan and the rest of the list:
 
 ```
-# <deck>: top cuts (<date>)
+# <deck>: top cuts (<today>)
 
 | # | Cut | Why it underperforms here |
 |---|---|---|

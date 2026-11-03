@@ -28,12 +28,11 @@ For `/judge <question>`:
    zones, game terms such as "leaves the battlefield" or "state-based"),
    then `rule.py <numbers>` for the rules that bear on the question and
    `rule.py --glossary` for its defined terms.
-4. Make a fresh scratchpad folder and copy `JUDGE-BRIEF.md` into it with
-   `<question>`, `<cards>` (card.py's output), `<rules>` (rule.py's output)
-   and `<plugin>` (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one
-   `planner` (`model` from `settings.json`, default
-   `claude-opus-5-5`, `run_in_background`) with it, working in the folder
-   that holds `output/`.
+4. Dispatch one `commander-deckhand:judge`, `run_in_background` in the
+   folder that holds `output/`, its prompt giving the question, card.py's
+   output and rule.py's output; `model` from `settings.json`, beside
+   `output/`, is passed only when it differs from the default
+   `claude-opus-5-5`, the agent's own.
 5. Give its answer in chat: the ruling in a few lines, the CR numbers it
    rests on, a card ruling quoted only when it decides the case. Nothing is
    written to `output/`.

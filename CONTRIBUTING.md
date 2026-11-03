@@ -12,6 +12,6 @@
 4. **`output/` is the user's.** It is gitignored and never committed.
 5. **Green before a pull request:** `python3 -m pytest` and
    `claude plugin validate .` both pass.
-6. **Instruction files** (`CLAUDE.md`, `SKILL.md`, briefs, this file) state
+6. **Instruction files** (`CLAUDE.md`, `SKILL.md`, agents, this file) state
    each rule as it now stands, with no attribution, dates or history; those
    go in the commit message.

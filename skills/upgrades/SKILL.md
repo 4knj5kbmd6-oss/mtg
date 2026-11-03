@@ -12,18 +12,22 @@ that would change the deck's bracket says so in its own row. The adds are
 the top 20 nonlands plus up to 5 utility lands.
 
 `settings.json`, beside `output/`, sets `model`, the model every agent
-here is dispatched on (default `claude-opus-5-5`), and `budget`, the
-highest TCGplayer market price in dollars an add may carry (default none,
-no cap); an absent file or key takes the default.
+here is dispatched on (default `claude-opus-5-5`, the agents' own), and
+`budget`, the highest TCGplayer market price in dollars an add may carry
+(default none, no cap); an absent file or key takes the default. Every
+agent here runs `run_in_background` in the folder that holds `output/`, with
+`model` passed only when it differs from the default; its prompt carries
+only the per-run inputs named below, since the agent holds its standing
+instructions.
 
 1. Get each deck's `createdAtUtc` and `lastUpdatedAtUtc` (the `/sync`
    fetch returns them) and its bracket from `output/decks/rankings.md`.
-2. Copy `BRIEF.md` to a fresh scratchpad folder with the dates table,
-   `<today>`, `<budget>` (`budget` as `$<n>`, or `none`) and `<plugin>`
-   (`${CLAUDE_PLUGIN_ROOT}` expanded) filled in. Dispatch one `planner` (`model`,
-   `run_in_background`) per colour-sharing group of two or three decks, so
-   each researches a colour's new cards once. Planners have web search;
-   they must verify rules text and release date on Scryfall.
+2. Make a fresh scratchpad folder `<run>/`. Dispatch one
+   `commander-deckhand:researcher` per colour-sharing group of two or three
+   decks, so each researches a colour's new cards once, its prompt giving
+   `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`) and the
+   group's decks, each slug with its commander, created and updated dates
+   and bracket.
 3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run> <slug>`
    writes the results into `output/decks/<slug>/nonlands.md` and
    `lands.md`, each card by its type in `output/data/oracle.json`: cuts carry

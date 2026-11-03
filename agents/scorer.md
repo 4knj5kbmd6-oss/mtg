@@ -87,8 +87,8 @@ Apply the anchors, rules and expected shape above exactly. For each deck
 - output/decks/<slug>/nonlands.md and lands.md, the Card columns of their `## Adds` tables
   only: the recommended adds, to be scored as if already in the deck (rule 7).
 
-A rules question about a card you settle yourself as
-`${CLAUDE_PLUGIN_ROOT}/skills/judge/JUDGE-BRIEF.md` directs, with
+A rules question about a card you settle yourself as the judge agent's
+instructions, `${CLAUDE_PLUGIN_ROOT}/agents/judge.md`, direct, with
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/card.py "Card Name"` for its oracle text and
 rulings and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/rule.py` (`--find word ...` to
 locate rules, a number such as `702.87` for a rule and its subrules) for the

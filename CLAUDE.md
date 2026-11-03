@@ -57,8 +57,8 @@ The owner's output, under `output/` (gitignored):
 
 ## Skills
 
-Procedures are skills in `skills/`, each with its scripts and agent briefs
-beside it:
+Procedures are skills in `skills/`, each with its scripts beside it; the
+agents they dispatch are in `agents/`:
 
 - `sync`: refresh lists and tokens from Moxfield through the browser pane.
 - `score`: independent scorers per deck, median kept, split cards
