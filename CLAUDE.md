@@ -22,9 +22,10 @@ The owner's output, under `output/` (gitignored):
   - `plan.md`: the owner's statement of the deck's intended lines and
     interactions. Authoritative. Scorers and rankers read it first; it
     overrides anything inferred from the list.
-  - `scores.md`: one score per card, nonlands and lands in separate tables
-    sorted descending, then the Adds and Cuts tables: recommended adds and
-    cuts, judged independently, never paired.
+  - `nonlands.md` and `lands.md`, one shape: one score per card sorted
+    descending, then the Adds and Cuts tables (recommended adds and cuts,
+    judged independently, never paired), then the shape line. A card goes
+    to `lands.md` if its front face is a Land.
 - `output/rankings.md`: strength order and WotC-guideline brackets.
 - `output/changes.md`: the owner's intended swaps not yet made, one table
   (Deck, In, Out, Note) across all decks; mtg-sync drops a row once it lands.

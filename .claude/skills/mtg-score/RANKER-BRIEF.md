@@ -4,8 +4,8 @@ Paths are relative to the mtg repo root, your working directory.
 
 Recompute the strength ranking of the owner's Commander decks. Inputs:
 output/decks/*/list.txt, output/decks/*/plan.md (authoritative on what each deck is trying
-to do), output/decks/*/scores.md (per-card fit scores and notes, evidence about card
-quality), output/data/oracle.json (rules text and the game_changer flag), and the
+to do), output/decks/*/nonlands.md and lands.md (per-card fit scores and notes, evidence
+about card quality), output/data/oracle.json (rules text and the game_changer flag), and the
 current output/rankings.md (prior opinion, not binding).
 
 Deck power does not correspond to the fit scores. Rank on strength in a

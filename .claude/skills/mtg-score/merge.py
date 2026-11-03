@@ -1,13 +1,15 @@
-"""Merge three scorers' files to one scores.md: median, spread flags, optional arbitration.
-usage (repo root): python3 .claude/skills/mtg-score/merge.py <run_dir> <slug> [arb.json] > merged.md
+"""Merge three scorers' files to a deck's nonlands.md and lands.md: median, spread flags, optional arbitration.
+usage (repo root): python3 .claude/skills/mtg-score/merge.py <run_dir> <slug> [arb.json]
 reads <run_dir>/<slug>-A.md, -B.md, -C.md, the deck title from output/decks/<slug>/plan.md and the
-Adds and Cuts tables from output/decks/<slug>/scores.md; writes <run_dir>/<slug>-flagged.md;
-prints the shape line to stderr. The scores.md helpers here are shared with mtg-upgrades/apply.py."""
+Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
+writes <run_dir>/merged/<slug>/nonlands.md and lands.md and <run_dir>/<slug>-flagged.md; prints the
+whole deck's shape line to stderr. The deck-file helpers here are shared with mtg-upgrades/apply.py."""
 import re, sys, json, statistics
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
+KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 
 def split(text):
@@ -41,6 +43,27 @@ def tail(intro, adds, cuts):
     return [["## Adds", intro + ["", table(ADDS, ranked(adds, True)), ""]],
             ["## Cuts", [table(CUTS, ranked(cuts, False)), ""]]]
 
+def lands(oracle):
+    """name -> whether its front face is a Land in the oracle.json at that path; a card not in it is a nonland"""
+    front = {n.split(" // ")[0]: (e.get("card_faces") or [e])[0].get("type_line", "")
+             for n, e in json.load(open(oracle))["cards"].items()}
+    return lambda name: "Land" in front.get(key(name), "").split()
+
+def by_kind(rows, land):
+    """{"nonlands": rows, "lands": rows}, split on whether a row's first cell names a land"""
+    return {k: [r for r in rows if land(r[0]) == (k == "lands")] for k in KINDS}
+
+def shape(cards):
+    """the shape line of [card, score, ...] rows, by card copy"""
+    s = [int(r[1]) for r in cards for _ in range(copies(r[0]))]
+    return (f"10: {sum(x==10 for x in s)} / 8-9: {sum(8<=x<=9 for x in s)} / 5-7: {sum(5<=x<=7 for x in s)}"
+            f" / 4 or below: {sum(x<=4 for x in s)}, mean {sum(s)/max(len(s), 1):.1f} (by card copy).")
+
+def deck_file(title, kind, cards, rest):
+    """nonlands.md or lands.md: the Cards table, rest (its Adds and Cuts sections, if any), the Shape line"""
+    return join([[None, [f"# {title}: {kind}", ""]], ["## Cards", [table("| Card | Score | Note |", ranked(cards, True)), ""]],
+                 *rest, ["## Shape", [shape(cards), ""]]])
+
 def norm(n):
     n = re.sub(COUNT, "", n.strip()).strip(); return re.sub(r"^\d+\s+", "", n)
 def copies(n):
@@ -58,7 +81,8 @@ def main():
     if len(sys.argv) < 3: sys.exit(__doc__)
     raw, slug = sys.argv[1], sys.argv[2]
     arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
-    title = re.sub(r"^#\s*|:\s*plan\s*$", "", (ROOT / f"output/decks/{slug}/plan.md").read_text().splitlines()[0])
+    deck = ROOT / f"output/decks/{slug}"
+    title = re.sub(r"^#\s*|:\s*plan\s*$", "", (deck / "plan.md").read_text().splitlines()[0])
     A, B, C = (parse(f"{raw}/{slug}-{x}.md") for x in "ABC")
     rows = {"nonlands": [], "lands": [], "adds": []}; flagged = []
     for k in sorted(set(A) | set(B) | set(C)):
@@ -67,23 +91,22 @@ def main():
         note = max((g for g in got if g), key=lambda g: len(g[2]))[2]
         if k in arb: med, note = arb[k]["score"], arb[k]["note"]
         elif max(sc) - min(sc) >= 3: flagged.append((disp, sc, [g[2] if g else "" for g in got]))
-        secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append((med, disp, note))
-    def tab(s): return table("| Card | Score | Note |", [[d, str(m), n] for m, d, n in sorted(rows[s], key=lambda r: -r[0])])
-    alls = [m for s in ("nonlands", "lands") for m, d, n in rows[s] for _ in range(copies(d))]
-    shape = (f"10: {sum(x==10 for x in alls)} / 8-9: {sum(8<=x<=9 for x in alls)} / 5-7: {sum(5<=x<=7 for x in alls)}"
-             f" / 4 or below: {sum(x<=4 for x in alls)}, mean {sum(alls)/max(len(alls), 1):.1f} (by card copy).")
-    cur = ROOT / f"output/decks/{slug}/scores.md"
-    old = dict(split(cur.read_text())) if cur.exists() else {}
-    secs = [[None, [f"# {title}: fit scores", ""]], ["## Nonlands", [tab("nonlands"), ""]], ["## Lands", [tab("lands"), ""]]]
-    if "## Adds" in old:  # research metadata and order stay; scores, add notes and cut scores are this run's
-        got = {norm(d): [str(m), n] for m, d, n in rows["adds"]}
-        deck = {key(d): str(m) for s in ("nonlands", "lands") for m, d, n in rows[s]}
-        adds = [[r[0], *got.get(norm(r[0]), r[1:3]), *r[3:]] for r in cells(old["## Adds"])]
-        cuts = [[r[0], deck.get(key(r[0]), r[1]), *r[2:]] for r in cells(old.get("## Cuts", []))]
-        secs += tail([l for l in old["## Adds"] if l.strip() and not l.startswith("|")], adds, cuts)
-    sys.stdout.write(join(secs + [["## Shape", [shape, ""]]]))
+        secs = [g[3] for g in got if g]; rows[max(set(secs), key=secs.count)].append([disp, str(med), note])
+    cur = [p for p in (deck / f"{k}.md" for k in KINDS) if p.exists()] or [p for p in [deck / "scores.md"] if p.exists()]
+    old = [dict(split(p.read_text())) for p in cur]
+    rest = {k: [] for k in KINDS}
+    if any("## Adds" in o for o in old):  # research metadata and order stay; scores, add notes and cut scores are this run's
+        land = lands(ROOT / "output/data/oracle.json")
+        got = {norm(r[0]): r[1:3] for r in rows["adds"]}
+        score = {key(r[0]): r[1] for k in KINDS for r in rows[k]}
+        adds = by_kind([[r[0], *got.get(norm(r[0]), r[1:3]), *r[3:]] for o in old for r in cells(o.get("## Adds", []))], land)
+        cuts = by_kind([[r[0], score.get(key(r[0]), r[1]), *r[2:]] for o in old for r in cells(o.get("## Cuts", []))], land)
+        intro = [l for o in old for l in o.get("## Adds", []) if l.strip() and not l.startswith("|")]
+        rest = {k: tail(intro if k == "nonlands" else [], adds[k], cuts[k]) for k in KINDS}
+    out = Path(raw) / "merged" / slug; out.mkdir(parents=True, exist_ok=True)
+    for k in KINDS: (out / f"{k}.md").write_text(deck_file(title, k, rows[k], rest[k]))
     with open(f"{raw}/{slug}-flagged.md", "w") as f:
         f.write(f"# {slug}: cards with spread >= 3\n\n" + "".join(f"## {d}\nScores A/B/C: {sc}\n- A: {n[0]}\n- B: {n[1]}\n- C: {n[2]}\n\n" for d, sc, n in flagged))
-    print(f"{slug}: {shape} {len(flagged)} flagged", file=sys.stderr)
+    print(f"{slug}: {shape(rows['nonlands'] + rows['lands'])} {len(flagged)} flagged", file=sys.stderr)
 
 if __name__ == "__main__": main()

@@ -31,7 +31,7 @@ Your output, all under `output/` (gitignored):
 |---|---|
 | `decks/moxfield.json` | Your Moxfield username and owned decks |
 | `decks/README.md` | Deck table: rank, commander, colours, bracket, Moxfield link |
-| `decks/<slug>/` | `list.txt`, `plan.md`, `scores.md` (fit scores, adds, cuts) |
+| `decks/<slug>/` | `list.txt`, `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts) |
 | `rankings.md` | Strength order and brackets |
 | `changes.md` | Your intended swaps not yet made; `/mtg-sync` drops each once it lands |
 | `data/` | `oracle.json` (Scryfall) and `tokens.md` |

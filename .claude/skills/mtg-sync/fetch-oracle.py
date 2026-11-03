@@ -1,5 +1,5 @@
 """Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt and in the
-Adds table of every output/decks/*/scores.md.
+Adds table of every output/decks/*/nonlands.md and lands.md.
 usage: python3 .claude/skills/mtg-sync/fetch-oracle.py"""
 import json, re, sys, time, urllib.request
 from datetime import date
@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / ".claude/skills/mtg-score"))
-from merge import split, cells
+from merge import split, cells, KINDS
 API = "https://api.scryfall.com/cards/collection"
 KEEP = ["name", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
@@ -33,7 +33,8 @@ def card_names():
     """every card in a deck list or a deck's Adds table"""
     listed = {m.group(1) for f in ROOT.glob("output/decks/*/list.txt") for line in f.read_text().splitlines()
               if (m := re.match(r"\d+ (.+)", line.strip()))}
-    adds = {r[0] for f in ROOT.glob("output/decks/*/scores.md") for r in cells(dict(split(f.read_text())).get("## Adds", []))}
+    adds = {r[0] for k in KINDS for f in ROOT.glob(f"output/decks/*/{k}.md")
+            for r in cells(dict(split(f.read_text())).get("## Adds", []))}
     return sorted(listed | adds)
 
 if __name__ == "__main__":
