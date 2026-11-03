@@ -39,7 +39,8 @@ too), `output/data/oracle.json`.
 6. If more than one deck was rescored, or the owner asks, recompute
    `output/rankings.md` with one `planner` using `RANKER-BRIEF.md`; copy the result
    over `output/rankings.md`, regenerate the deck table in `output/decks/README.md` (rank,
-   commander, colours, bracket, Moxfield link).
+   commander, colours, bracket, Owned, Moxfield link), carrying each
+   deck's Owned value over.
 
 Report: per deck the shape line and the 10s; any arbitration in one line
 each; anything that moved by 3 or more since the last scores.md.
