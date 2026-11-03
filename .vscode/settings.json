@@ -1,8 +1,5 @@
 {
   "explorer.excludeGitIgnore": false,
   "files.exclude": { ".claude/worktrees": true },
-  "files.watcherExclude": { "**/.git/**": true },
-  "search.useIgnoreFiles": false,
-  "workbench.editorAssociations": { "*.md": "default" },
-  "markdown.preview.openMarkdownLinks": "inEditor"
+  "search.useIgnoreFiles": false
 }
