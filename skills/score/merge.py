@@ -61,6 +61,14 @@ def match(name):
     """test for a list line or table cell naming this card, by front face"""
     k = key(name).lower(); return lambda s: key(s).lower() == k
 
+def decklist(slug):
+    """([(copies, name)] of the commanders, [(copies, name)] of the rest) from output/decks/<slug>/list.txt, the
+    commanders being the lines before its first blank line and its SIDEBOARD: block left out"""
+    text = Path(f"output/decks/{slug}/list.txt").read_text().split("SIDEBOARD:")[0].strip()
+    rows = lambda t: [(int(m[1]), m[2]) for l in t.splitlines() if (m := re.match(r"(\d+)\s+(.+)", l.strip()))]
+    head, _, rest = text.partition("\n\n")
+    return rows(head), rows(rest)
+
 def table(head, rows):
     return "\n".join([head, "|" + "---|" * (head.count("|") - 1)] + ["| " + " | ".join(r) + " |" for r in rows])
 

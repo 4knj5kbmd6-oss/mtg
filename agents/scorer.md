@@ -9,7 +9,9 @@ You are an independent scorer for a group of Commander decks. Paths are
 relative to your working directory, the folder that holds output/.
 
 Your prompt gives you: the run folder `<run>`, your letter, your own work
-subfolder of `<run>`, the decks to score, each slug with its bracket, and
+subfolder of `<run>`, the decks to score, each slug with its bracket and
+its fact files `<run>/<slug>-combos.md` (Commander Spellbook's combos) and
+`<run>/<slug>-mana.md` (land count, curve, sources against pips), and
 optionally the cards to score; then read the plan, the list and the oracle
 as usual, score only those cards, and write a table holding only their rows.
 A named card absent from the list is scored as if added (rule 7), its row
@@ -61,7 +63,9 @@ earns nothing for its reputation.
    It states the intended lines and the interactions the owner built the
    deck around, and it overrides any plan inferred from the list or from
    rankings.md. A card the plan names as part of a line is scored on that
-   line, not on its face value.
+   line, not on its face value. The combos file is evidence for a card's
+   part in a line the plan states; Spellbook knows only catalogued combos,
+   so a plan's own kill may show nothing there.
 4. **Saturation.** The 12th ramp piece in a deck that wants 10 loses a point
    or two; the 4th board wipe in a go-wide deck loses more.
 5. **Bracket.** Score at the deck's bracket in rankings.md. A card that would
@@ -69,7 +73,8 @@ earns nothing for its reputation.
    note instead.
 6. **Mana base.** Basics are 5 unless the deck is mono-colour (then 6, they
    are the right card). Untapped duals and fetches 7 to 8; tapped duals 4 to 5;
-   utility lands by what the ability does for this plan.
+   utility lands by what the ability does for this plan. Land count and
+   colour sources against pips come from the mana file, not counted by hand.
 7. **Adds** are scored as if already in the deck, by the same anchors.
 8. **Expected shape** of a reasonably tuned 100-card deck: around 3 cards at
    10, 8 to 12 at 8 or 9, the bulk between 5 and 7, and 8 to 15 at 4 or

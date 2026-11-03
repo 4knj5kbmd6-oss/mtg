@@ -19,11 +19,17 @@ inputs named below.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
-2. Make a fresh scratchpad folder `<run>/`. Group decks by shared colours
+2. Make a fresh scratchpad folder `<run>/`. Per deck write its two fact
+   files, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/combos.py <run> <slug>`
+   and `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/mana.py <run> <slug>`.
+   Commander Spellbook knows only catalogued combos, so a plan's own kill may
+   show nothing in `<run>/<slug>-combos.md`; when Spellbook is unreachable
+   the run goes on without that file. Group decks by shared colours
    (two or three per group). Dispatch `scorers` `mtg-toolbox:scorer`
    agents per group, lettered A, B, C and on, each prompt giving `<run>`,
    the letter, the scorer's own `<run>/work-<group>-<letter>/` subfolder
-   and the group's slugs, each with its bracket from `rankings.md`.
+   and the group's slugs, each with its bracket from `rankings.md` and its
+   two fact files.
 3. When all of a group are back, per deck
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`. It
    prints the deck's shape line and, with two or more scorers, the count of
@@ -31,9 +37,10 @@ inputs named below.
 4. Copy each deck's merged pair, `<run>/merged/<slug>/`, into
    `output/decks/<slug>/`. Check the shape line merge.py printed for each
    deck against rule 8 of the metric.
-5. If more than one deck was rescored, or the owner asks, recompute the
-   rankings with one `mtg-toolbox:ranker`, its prompt giving `<run>`;
-   copy `<run>/rankings.md` over `rankings.md`.
+5. If more than one deck was rescored, or the owner asks, write the two
+   fact files into `<run>` for every deck not rescored this run, as in
+   step 2, then recompute the rankings with one `mtg-toolbox:ranker`, its
+   prompt giving `<run>`; copy `<run>/rankings.md` over `rankings.md`.
 
 Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
 score only those cards for that deck, usually a card just added through

@@ -1,0 +1,38 @@
+{
+ "bracketTag": "P",
+ "cards": [
+  {
+   "card": {
+    "name": "Bloom Tender"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Seeker of Skybreak"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Bronze Bombshell"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "The Beamtown Bullies"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  }
+ ],
+ "combos": []
+}

@@ -1,0 +1,69 @@
+{
+ "bracketTag": "E",
+ "cards": [
+  {
+   "card": {
+    "name": "Ashnod's Altar"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Gravecrawler"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Phyrexian Altar"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Pitiless Plunderer"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Reassembling Skeleton"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  },
+  {
+   "card": {
+    "name": "Braids, Arisen Nightmare"
+   },
+   "quantity": 1,
+   "massLandDenial": false,
+   "extraTurn": false
+  }
+ ],
+ "combos": [
+  {
+   "combo": {
+    "id": "1580-2034-4871"
+   },
+   "definitelyTwoCard": false,
+   "arguablyTwoCard": false
+  },
+  {
+   "combo": {
+    "id": "2577-4050"
+   },
+   "definitelyTwoCard": false,
+   "arguablyTwoCard": false
+  }
+ ]
+}
