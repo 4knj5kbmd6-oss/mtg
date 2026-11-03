@@ -2,12 +2,24 @@
 usage (repo root): python3 .claude/skills/mtg-upgrades/apply.py <run_dir> <slug>
 reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if output/data/oracle.json
 says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
-get "-" and the research reason; a cut gets its deck score."""
+get "-" and the research reason; a cut gets its deck score. An add named on output/restricted.md or the deck's
+own restricted.md (either face of a double-faced card) is dropped, and the drops are printed."""
 import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / ".claude/skills/mtg-score"))
 from merge import split, join, cells, key, tail, lands, by_kind, KINDS
+
+def restricted(paths):
+    """the card names (each face apart) on the bullet lines of those restricted.md files that exist"""
+    return {f.strip() for p in paths if p.exists() for l in p.read_text().splitlines()
+            if l.startswith(("- ", "* ")) for f in l[2:].split(" // ")}
+
+def restrict(adds, names):
+    """(an adds file's text without the rows whose card has a face in names, the dropped cards)"""
+    hit = lambda line: [r[1] for r in cells([line]) if len(r) > 1 and set(map(str.strip, r[1].split(" // "))) & names]
+    dropped = [n for l in adds.splitlines() for n in hit(l)]
+    return "\n".join(l for l in adds.splitlines() if not hit(l)), dropped
 
 def apply(files, adds, cuts, land):
     """{kind: text} of a deck's nonlands.md and lands.md with their Adds and Cuts sections rebuilt from the
@@ -31,7 +43,10 @@ if __name__ == "__main__":
     run, slug = sys.argv[1], sys.argv[2]
     deck = ROOT / f"output/decks/{slug}"
     paths = {k: deck / f"{k}.md" for k in KINDS}
-    research = (Path(f"{run}/{slug}-{x}.md").read_text() for x in ("adds", "cuts"))
-    for k, text in apply({k: p.read_text() for k, p in paths.items()}, *research, lands(ROOT / "output/data/oracle.json")).items():
+    adds, dropped = restrict(Path(f"{run}/{slug}-adds.md").read_text(),
+                             restricted([ROOT / "output/restricted.md", deck / "restricted.md"]))
+    if dropped: print(f"{slug}: restricted, not added: {', '.join(dropped)}")
+    cuts = Path(f"{run}/{slug}-cuts.md").read_text()
+    for k, text in apply({k: p.read_text() for k, p in paths.items()}, adds, cuts, lands(ROOT / "output/data/oracle.json")).items():
         paths[k].write_text(text)
     print(f"{slug}: Adds and Cuts written to {deck.relative_to(ROOT)}/nonlands.md and lands.md")

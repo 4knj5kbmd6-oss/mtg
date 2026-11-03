@@ -29,6 +29,8 @@ The owner's output, under `output/` (gitignored):
     judged independently, never paired), then the shape line. A card goes
     to `lands.md` if its front face is a Land.
 - `output/rankings.md`: strength order and WotC-guideline brackets.
+- `output/restricted.md` (every deck) and `output/decks/<slug>/restricted.md` (one
+  deck): bullets of cards, by name or kind, never considered as adds.
 - `output/changes.md`: the owner's intended swaps not yet made, one table
   (Deck, In, Out, Note) across all decks; mtg-sync drops a row once Moxfield
   shows it and re-applies the rest to the lists.

@@ -33,6 +33,7 @@ Your output, all under `output/` (gitignored):
 | `decks/README.md` | Deck table: rank, commander, colours, bracket, Moxfield link |
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts) |
 | `rankings.md` | Strength order and brackets |
+| `restricted.md`, `decks/<slug>/restricted.md` | Cards, by name or kind, never considered as adds: for every deck, and for one deck |
 | `changes.md` | Your intended swaps not yet made on Moxfield; `/mtg-sync` re-applies them to each `list.txt` and drops each once Moxfield shows it, except a card noted `unowned`, which stays until you clear the note |
 | `data/` | `oracle.json` (Scryfall) and `tokens.md` |
 | `carts/` | One report per cart |

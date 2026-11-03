@@ -10,6 +10,8 @@ the repo; write your output to the scratchpad path named at the end.
 - output/decks/<slug>/list.txt: the deck as the owner intends it, pending swaps applied; commander
   first, then the 99, optional SIDEBOARD block. A card in it is never an add; a card not in it is
   never a cut.
+- output/restricted.md (every deck) and output/decks/<slug>/restricted.md (this deck; may not exist):
+  bullets naming cards or describing kinds of card. A card named or described on either is never an add.
 - output/data/oracle.json: Scryfall data for every card in every deck (rules text, cost, type,
   colours, Game Changer flag). Read this instead of fetching card by card.
 - output/rankings.md: each deck's bracket and its strength relative to the others.
@@ -47,9 +49,7 @@ the card's role and the interaction it joins (or, for a cut, why it falls short)
 <slug>-adds.md: exactly 20 nonland adds ranked best first, then up to 5
 land adds ranked best first, in one table. A land is listed only when it
 does something for the plan (a utility land, a landfall or sacrifice
-piece); fewer than 5, or none, is fine. Never list a dual land: a land
-whose job is producing two or more colours (typed duals, shocks, fetches,
-bounce lands, pain and check lands and the like).
+piece); fewer than 5, or none, is fine.
 
 ```
 # <deck>: top adds (<date>)
