@@ -35,6 +35,32 @@
    "rulings": [],
    "type_line": "Enchantment"
   },
+  "Drowned Scholar // Tidal Insight": {
+   "card_faces": [
+    {
+     "mana_cost": "{1}{U}",
+     "name": "Drowned Scholar",
+     "oracle_text": "When this creature enters, scry 1.",
+     "power": "1",
+     "toughness": "2",
+     "type_line": "Creature — Zombie Wizard"
+    },
+    {
+     "mana_cost": "{U}",
+     "name": "Tidal Insight",
+     "oracle_text": "Draw a card.",
+     "type_line": "Sorcery — Adventure"
+    }
+   ],
+   "legalities": {
+    "commander": "legal"
+   },
+   "mana_cost": "{1}{U} // {U}",
+   "name": "Drowned Scholar // Tidal Insight",
+   "related_tokens": [],
+   "rulings": [],
+   "type_line": "Creature — Zombie Wizard // Sorcery — Adventure"
+  },
   "Island": {
    "legalities": {
     "commander": "legal"

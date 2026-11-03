@@ -39,3 +39,12 @@ def test_a_miss_exits_1():
     assert (rule("999.9").returncode, rule("--glossary", "Nothing").returncode) == (1, 1)
     assert rule("100.1", "999.9").stdout.endswith("no rule 999.9\n\n")
 
+
+def card(name):
+    return run("judge/card.py", name).stdout
+
+
+def test_a_card_name_beats_another_cards_face():
+    assert card("Tidal Insight") == "Tidal Insight {2}{U}\nInstant\nDraw two cards.\nRulings: none\n"
+    assert card("Drowned Scholar").startswith("Drowned Scholar {1}{U}\n")
+    assert card("Tidal Flats").startswith("Rising Tide {1}{U}\n")
