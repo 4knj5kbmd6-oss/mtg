@@ -1,13 +1,12 @@
 """Write a planner's adds and cuts into a deck's nonlands.md and lands.md as their Adds and Cuts tables.
-usage (repo root): python3 .claude/skills/mtg-upgrades/apply.py <run_dir> <slug>
+usage (from the folder that holds output/): python3 skills/mtg-upgrades/apply.py <run_dir> <slug>
 reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if output/data/oracle.json
 says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
 get "-" and the research reason; a cut gets its deck score. An add named on output/restricted.md or the deck's
 own restricted.md (either face of a double-faced card) is dropped, and the drops are printed."""
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / ".claude/skills/mtg-score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mtg-score"))
 from merge import split, join, cells, key, tail, lands, by_kind, KINDS
 
 def restricted(paths):
@@ -41,12 +40,12 @@ def apply(files, adds, cuts, land):
 if __name__ == "__main__":
     if len(sys.argv) < 3: sys.exit(__doc__)
     run, slug = sys.argv[1], sys.argv[2]
-    deck = ROOT / f"output/decks/{slug}"
+    deck = Path(f"output/decks/{slug}")
     paths = {k: deck / f"{k}.md" for k in KINDS}
     adds, dropped = restrict(Path(f"{run}/{slug}-adds.md").read_text(),
-                             restricted([ROOT / "output/restricted.md", deck / "restricted.md"]))
+                             restricted([Path("output/restricted.md"), deck / "restricted.md"]))
     if dropped: print(f"{slug}: restricted, not added: {', '.join(dropped)}")
     cuts = Path(f"{run}/{slug}-cuts.md").read_text()
-    for k, text in apply({k: p.read_text() for k, p in paths.items()}, adds, cuts, lands(ROOT / "output/data/oracle.json")).items():
+    for k, text in apply({k: p.read_text() for k, p in paths.items()}, adds, cuts, lands("output/data/oracle.json")).items():
         paths[k].write_text(text)
-    print(f"{slug}: Adds and Cuts written to {deck.relative_to(ROOT)}/nonlands.md and lands.md")
+    print(f"{slug}: Adds and Cuts written to {deck}/nonlands.md and lands.md")

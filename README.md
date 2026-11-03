@@ -4,9 +4,20 @@ Tooling for your Commander decks, run by Claude Code skills: a 0 to 10 fit
 score for every card in a deck, ranked adds and cuts, a strength ranking of
 your decks with their brackets, and a TCGplayer cart builder.
 
+## Install
+
+In Claude Code:
+
+```
+/plugin marketplace add 4knj5kbmd6-oss/mtg
+/plugin install mtg
+```
+
+The skills read and write `output/` in the folder you open Claude Code in.
+
 ## Quick start
 
-1. Clone this repo and open it in Claude Code.
+1. Clone this repo and open it in Claude Code with `claude --plugin-dir .`.
 2. Create `output/decks/moxfield.json` with your Moxfield username and the decks
    you own: `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}}`
    (or let the first `/mtg-sync` create it).
@@ -23,7 +34,8 @@ Core (tracked):
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
 | [`scoring.md`](scoring.md) | The fit-score metric, yours to tune |
-| [`.claude/skills/`](.claude/skills/) | `mtg-sync`, `mtg-score`, `mtg-upgrades`, `tcg-cart` |
+| [`skills/`](skills/) | `mtg-sync`, `mtg-score`, `mtg-upgrades`, `tcg-cart` |
+| [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 
 Your output, all under `output/` (gitignored):
 

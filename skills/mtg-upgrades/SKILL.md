@@ -18,14 +18,14 @@ the top 20 nonlands plus up to 5 utility lands.
    `run_in_background`) per colour-sharing group of two or three decks, so
    each researches a colour's new cards once. Planners have web search;
    they must verify rules text and release date on Scryfall.
-3. Per deck, `python3 .claude/skills/mtg-upgrades/apply.py <run> <slug>`
+3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-upgrades/apply.py <run> <slug>`
    writes the results into `output/decks/<slug>/nonlands.md` and
    `lands.md`, each card by its type in `output/data/oracle.json`: cuts carry
    their deck score, new adds score `-` until `/mtg-score` scores them as
-   part of the deck. Then `python3 .claude/skills/mtg-sync/fetch-oracle.py`
+   part of the deck. Then `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-sync/fetch-oracle.py`
    caches the adds in `output/data/oracle.json` for the scorers, and
    `apply.py` runs once more so an add the oracle had not seen is filed by
-   its type. Last, `python3 .claude/skills/mtg-upgrades/sheet.py <slug>`
+   its type. Last, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-upgrades/sheet.py <slug>`
    writes `output/decks/<slug>/changes.png`, the earliest-printing image of
    every add and cut in four bands: nonland adds, nonland cuts, land adds,
    land cuts.

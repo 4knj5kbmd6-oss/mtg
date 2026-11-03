@@ -8,7 +8,8 @@ Changer, fit score, decklist.
 ## Layout
 
 Core (tracked): `CLAUDE.md`, `README.md`, `scoring.md` (the 0 to 10 metric
-the owner tunes) and the skills in `.claude/skills/`.
+the owner tunes), the skills in `skills/` and the plugin and marketplace
+manifests in `.claude-plugin/`.
 
 The owner's output, under `output/` (gitignored):
 
@@ -44,14 +45,17 @@ The owner's output, under `output/` (gitignored):
 
 ## Skills
 
-Procedures are skills in `.claude/skills/`, each with its scripts and agent
-briefs beside it:
+Procedures are skills in `skills/`, each with its scripts and agent briefs
+beside it:
 
 - `mtg-sync`: refresh lists and tokens from Moxfield through the browser pane.
 - `mtg-score`: three independent Opus scorers per deck, median, arbitration,
   one score kept; optional rankings recompute.
 - `mtg-upgrades`: ranked adds and cuts per deck, new-since-built weighted.
 - `tcg-cart`: build and optimize a TCGplayer guest cart from a list.
+
+The repo is a plugin: the skills load from an installed plugin or with
+`claude --plugin-dir .`, and run from the folder that holds `output/`.
 
 ## Rules
 

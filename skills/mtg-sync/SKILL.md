@@ -20,8 +20,8 @@ follow the new-deck steps below for every deck they name as owned.
    `createdAtUtc`, `lastUpdatedAtUtc`, commanders, mainboard, sideboard and
    the Tokens-tab list. The result is large; it lands in a tool-results
    file. Save its text to the scratchpad as `mox.json`.
-2. `python3 .claude/skills/mtg-sync/sync.py <mox.json>` from the repo root
-   rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`
+2. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-sync/sync.py <mox.json>`, run
+   from the folder that holds `output/`, rewrites every `output/decks/<slug>/list.txt` and `output/data/tokens.md`
    from the dump, removes every row of `output/changes.md` the dump shows
    landed (In card in the deck or In blank, Out card gone or Out blank) and
    not noted `unowned`, prints it as `landed: <deck> <In> for <Out>`, then
@@ -31,7 +31,7 @@ follow the new-deck steps below for every deck they name as owned.
    deck: cards in, cards out. An Out row takes one copy unless its Note
    says `n copies`, so a basic cut by count is applied once per sync, not
    on a manual rerun. Last it prints a diff summary.
-3. `python3 .claude/skills/mtg-sync/fetch-oracle.py` rebuilds
+3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/mtg-sync/fetch-oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall.
 
 Only when the owner names a new deck as owned, run `collect.js` on the

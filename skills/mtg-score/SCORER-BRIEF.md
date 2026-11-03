@@ -1,6 +1,6 @@
 # Scorer brief
 
-Paths are relative to the mtg repo root, your working directory.
+Paths are relative to your working directory, the folder that holds output/.
 
 You are one of three independent scorers for a group of Commander decks. Your
 scores will be compared with two other scorers' and the median taken, so
@@ -9,7 +9,7 @@ lands.md beyond the Card columns of their Adds tables, or any other scorer's out
 the scratchpad. Work only in your own subfolder of the scratchpad (named in your
 prompt) so you never collide with the other scorers.
 
-Read scoring.md in full and apply the anchors, rules and expected shape
+Read <scoring> in full and apply the anchors, rules and expected shape
 exactly.
 
 FIRST, for each deck, read output/decks/<slug>/plan.md. It is the owner's statement

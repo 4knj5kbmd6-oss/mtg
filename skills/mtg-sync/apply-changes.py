@@ -1,13 +1,12 @@
 """Apply every row of output/changes.md to its deck, so output/decks/<slug>/list.txt is the deck as the owner intends it.
-usage (repo root): python3 .claude/skills/mtg-sync/apply-changes.py
+usage (from the folder that holds output/): python3 skills/mtg-sync/apply-changes.py
 An In card not in the list is appended before any SIDEBOARD block (n copies from an "n copies" note, else 1) and its
 Adds row in nonlands.md or lands.md moves to that file's Cards table. An Out card in the list loses one copy (all with
 a copies note); once gone, its Cards and Cuts rows go too. Both Shape lines are recomputed. Running it twice changes
 nothing. Prints one line per changed deck: cards in, cards out."""
 import re, sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / ".claude/skills/mtg-score"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mtg-score"))
 from merge import split, join, cells, key, norm, table, ranked, shape, CARDS, KINDS
 
 def match(name):
@@ -59,13 +58,13 @@ def apply_scores(files, ins, outs):
     return {k: join(s) for k, s in secs.items()}
 
 def main():
-    changes = ROOT / "output/changes.md"
+    changes = Path("output/changes.md")
     if not changes.exists(): return
     decks = {}
     for c in cells(changes.read_text().splitlines()):
         if len(c) >= 3 and c[0] and c[0] != "Deck": decks.setdefault(c[0], []).append((c + [""])[:4])
     for slug, rows in decks.items():
-        deck = ROOT / "output/decks" / slug
+        deck = Path("output/decks", slug)
         if not (deck / "list.txt").exists(): print(f"skip {slug}: no output/decks/{slug}/list.txt"); continue
         lines = (deck / "list.txt").read_text().split("\n")
         ins, outs = apply_list(lines, rows)

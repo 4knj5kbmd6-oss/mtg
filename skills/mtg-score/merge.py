@@ -1,5 +1,5 @@
 """Merge three scorers' files to a deck's nonlands.md and lands.md: median, spread flags, optional arbitration.
-usage (repo root): python3 .claude/skills/mtg-score/merge.py <run_dir> <slug> [arb.json]
+usage (from the folder that holds output/): python3 skills/mtg-score/merge.py <run_dir> <slug> [arb.json]
 reads <run_dir>/<slug>-A.md, -B.md, -C.md, the deck title from output/decks/<slug>/plan.md and the
 Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md (or a legacy scores.md);
 writes <run_dir>/merged/<slug>/nonlands.md and lands.md and <run_dir>/<slug>-flagged.md; prints the
@@ -7,7 +7,6 @@ whole deck's shape line to stderr. The deck-file helpers here are shared with mt
 mtg-sync/apply-changes.py."""
 import re, sys, json, statistics
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[3]
 CARDS = "| Card | Score | Note |"
 ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
@@ -83,7 +82,7 @@ def main():
     if len(sys.argv) < 3: sys.exit(__doc__)
     raw, slug = sys.argv[1], sys.argv[2]
     arb = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else {}
-    deck = ROOT / f"output/decks/{slug}"
+    deck = Path(f"output/decks/{slug}")
     title = re.sub(r"^#\s*|:\s*plan\s*$", "", (deck / "plan.md").read_text().splitlines()[0])
     A, B, C = (parse(f"{raw}/{slug}-{x}.md") for x in "ABC")
     rows = {"nonlands": [], "lands": [], "adds": []}; flagged = []
@@ -98,7 +97,7 @@ def main():
     old = [dict(split(p.read_text())) for p in cur]
     rest = {k: [] for k in KINDS}
     if any("## Adds" in o for o in old):  # research metadata and order stay; scores, add notes and cut scores are this run's
-        land = lands(ROOT / "output/data/oracle.json")
+        land = lands("output/data/oracle.json")
         got = {norm(r[0]): r[1:3] for r in rows["adds"]}
         score = {key(r[0]): r[1] for k in KINDS for r in rows[k]}
         adds = by_kind([[r[0], *got.get(norm(r[0]), r[1:3]), *r[3:]] for o in old for r in cells(o.get("## Adds", []))], land)

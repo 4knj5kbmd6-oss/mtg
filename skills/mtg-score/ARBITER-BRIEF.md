@@ -1,8 +1,8 @@
 # Arbiter brief
 
-Paths are relative to the mtg repo root, your working directory.
+Paths are relative to your working directory, the folder that holds output/.
 
-Read scoring.md (anchors and rules). Read <run>/<slug>-flagged.md: cards
+Read <scoring> (anchors and rules). Read <run>/<slug>-flagged.md: cards
 where three independent scorers differed by 3 or more, with their scores and
 notes. For each card read the owner's output/decks/<slug>/plan.md (authoritative on
 the deck's lines), the card's text in output/data/oracle.json and the list

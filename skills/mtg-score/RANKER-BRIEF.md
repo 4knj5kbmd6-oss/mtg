@@ -1,6 +1,6 @@
 # Ranker brief
 
-Paths are relative to the mtg repo root, your working directory.
+Paths are relative to your working directory, the folder that holds output/.
 
 Recompute the strength ranking of the owner's Commander decks. Inputs:
 output/decks/*/list.txt, output/decks/*/plan.md (authoritative on what each deck is trying

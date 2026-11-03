@@ -1,6 +1,6 @@
 # Upgrade research brief
 
-Paths are relative to the mtg repo root, your working directory.
+Paths are relative to your working directory, the folder that holds output/.
 
 You are recommending updates to the owner's Commander (EDH) decks. Read-only on
 the repo; write your output to the scratchpad path named at the end.
