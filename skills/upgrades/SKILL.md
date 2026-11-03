@@ -6,16 +6,15 @@ argument-hint: "[slug ...] [key=value ...]"
 
 # upgrades
 
-Read `settings.json` through `settings.py`
-(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
-every `key=value` word of the arguments, which overrides that setting for
-this run (a dotted key, `quota.adds=15`, reaches a nested one); dispatch each
-agent with `model` only when it differs from the agent's own. Every agent
-here runs `run_in_background` in the folder that holds `output/`; its
-prompt carries only the per-run inputs named below.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+arguments' `key=value` words for this run's settings. Dispatch every agent
+`run_in_background` in the folder that holds `output/`, with `model` only
+when it differs from the agent's own; its prompt carries only the per-run
+inputs named below.
 
-1. Get each deck's `created` and `updated` (the `/sync` fetch returns
-   them) and its bracket from `rankings.md`.
+1. Get each deck's `created` and `updated` (run `fetch.js` as in `/sync`
+   step 1 when this session has no fetch result) and its bracket from
+   `rankings.md`.
 2. Make a fresh scratchpad folder `<run>/`. Dispatch one
    `mtg-deckhand:researcher` per colour-sharing group of two or three
    decks, so each researches a colour's new cards once, its prompt giving

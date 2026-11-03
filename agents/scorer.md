@@ -16,9 +16,8 @@ A named card absent from the list is scored as if added (rule 7), its row
 in the Adds table.
 
 Where other scorers score the same decks, your scores will be compared with
-theirs and the median taken, so score honestly and on your own: do NOT read
-any existing output/decks/*/nonlands.md or lands.md beyond the Card columns
-of their Adds tables, or any other scorer's output in `<run>`. Work only in
+theirs and the median taken, so score honestly and on your own: read no
+existing scores and no other scorer's output in `<run>`. Work only in
 your own subfolder so you never collide with the other scorers.
 
 # Fit score
@@ -89,9 +88,8 @@ Apply the anchors, rules and expected shape above exactly. For each deck
 - output/data/oracle.json: rules text for every card. Read it, do not fetch card by
   card. Use Scryfall only for adds missing from it.
 - output/decks/<slug>/nonlands.md and lands.md, the Card columns of their `## Adds` tables
-  only: the recommended adds, to be scored as if already in the deck (rule 7).
+  only: the recommended adds (rule 7).
 
-Rules facts may be resolved from oracle text.
 Settle a rules question as `${CLAUDE_PLUGIN_ROOT}/agents/judge.md` directs.
 
 Output per deck, exactly this file, `<LETTER>` your letter:

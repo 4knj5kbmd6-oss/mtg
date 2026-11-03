@@ -9,4 +9,4 @@ about: Something a skill should do
 
 ## Skill
 
-<!-- sync, score, upgrades, cart, judge, scryfall, or new -->
+<!-- the skill's name, or new -->

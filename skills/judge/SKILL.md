@@ -6,20 +6,24 @@ argument-hint: "<question>"
 
 # judge
 
-The skill serves the owner's rules questions and any agent's; nothing runs
-it on its own. The Comprehensive Rules are `output/data/rules.txt`, their
-headings `output/data/rules-index.md`, each card's Scryfall rulings the
-`rulings` key in `output/data/oracle.json`. The scripts run from the folder
-that holds `output/`, as `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`:
+The Comprehensive Rules are `output/data/rules.txt`, their headings
+`output/data/rules-index.md`, each card's Scryfall rulings the `rulings` key
+in `output/data/oracle.json`. The scripts run from the folder that holds
+`output/`, as `python3 ${CLAUDE_PLUGIN_ROOT}/skills/judge/<script>`:
 
 - `fetch-rules.py` downloads the rules linked from Wizards' rules page and
-  writes the index; it downloads only when the page links a newer file, so
-  it is safe to rerun after a set release.
+  writes the index; it downloads only when the page links a newer file.
 - `rule.py 800.4a [704.5 ...]` prints rules with their subrules;
   `rule.py --find word ...` the number and opening of every rule holding all
   the words; `rule.py --glossary term` a glossary entry.
 - `card.py "Card Name" ...` prints each card's oracle text and rulings, from
   `oracle.json` or, for a card not there, singly from Scryfall.
+
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+arguments' `key=value` words for this run's settings. Dispatch every agent
+`run_in_background` in the folder that holds `output/`, with `model` only
+when it differs from the agent's own; its prompt carries only the per-run
+inputs named below.
 
 For `/judge <question>`:
 
@@ -29,12 +33,6 @@ For `/judge <question>`:
    zones, game terms such as "leaves the battlefield" or "state-based"),
    then `rule.py <numbers>` for the rules that bear on the question and
    `rule.py --glossary` for its defined terms.
-4. Read `settings.json` through `settings.py`
-   (`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
-   every `key=value` word of the arguments, which overrides that setting
-   for this run (a dotted key, `quota.adds=15`, reaches a nested one);
-   dispatch each agent with `model` only when it differs from the agent's own. Dispatch
-   one `mtg-deckhand:judge`, `run_in_background` in the folder that
-   holds `output/`, its prompt giving the question, card.py's output and
-   rule.py's output.
+4. Dispatch one `mtg-deckhand:judge`, its prompt giving the question,
+   card.py's output and rule.py's output.
 5. Give its answer in chat. Nothing is written to `output/`.

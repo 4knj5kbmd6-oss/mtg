@@ -9,11 +9,11 @@ argument-hint: "<list> [key=value ...]"
 The cart is built in the built-in browser pane as a guest cart. Never sign
 in, enter credentials or payment details, or check out: the owner does that.
 
-Read `settings.json` through `settings.py`
-(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
-every `key=value` word of the arguments, which overrides that setting for
-this run (a dotted key, `quota.adds=15`, reaches a nested one); dispatch each
-agent with `model` only when it differs from the agent's own.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+arguments' `key=value` words for this run's settings. Dispatch every agent
+`run_in_background` in the folder that holds `output/`, with `model` only
+when it differs from the agent's own; its prompt carries only the per-run
+inputs named below.
 
 1. **Requirements.** Record before adding cards: source deck URL and
    included sections (main, commander, sideboard, other); cards owned, with
@@ -21,7 +21,6 @@ agent with `model` only when it differs from the agent's own.
    excluded; artwork and treatment (original art, regular frame, no
    borderless or extended art); and each of `cart`'s `condition`,
    `language`, `finish` and `premium` that `settings.py` prints as null.
-   A value it sets is not asked.
 2. **Canonical list.** Read the actual source deck and take names and
    quantities from the requested sections, with tokens and considering
    cards kept separate. Per card, buy `max(0, deck quantity - owned)`, then
@@ -33,9 +32,8 @@ agent with `model` only when it differs from the agent's own.
    review. If the buyer changes the deck or exclusions, update the list.
 3. Ask the app to keep the Mac awake (`request_keep_awake`, `session_idle`);
    a sleep mid-run kills a build.
-4. Dispatch one `mtg-deckhand:shopper`, `run_in_background` in the folder that
-   holds `output/`, its prompt giving the canonical list's path, the
-   requirements with the four `cart` values among them, and the report path
-   `output/carts/<date>-<name>.md`.
+4. Dispatch one `mtg-deckhand:shopper`, its prompt giving the canonical
+   list's path, the requirements with the four `cart` values among them, and
+   the report path `output/carts/<date>-<name>.md`.
 5. Verify the live cart totals yourself before reporting. Once the owner
    says the cart was bought, clear `unowned` from the rows it bought.

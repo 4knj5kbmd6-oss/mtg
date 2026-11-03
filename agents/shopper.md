@@ -101,17 +101,16 @@ correct or reverse an unexpected regroup before going on.
 ## 5. Dropped cards
 
 Inventory moves mid-session. If items disappear, refresh the cart, compare
-it with the canonical list (never the previous cart, which may hold
-unrelated cards, earlier errors or unintended substitutions), use
-availability alerts and Saved for later as clues, name the missing cards
-exactly, restore only those with compliant listings, and rerun the audit.
+it with the canonical list, use availability alerts and Saved for later as
+clues, name the missing cards exactly, restore only those with compliant
+listings, and rerun the audit.
 Never "Add All" from Saved for later: it can hold unrelated purchases.
 
 ## Audit checklist
 
 After the import, after any recovery, and on a refreshed cart just before
-handing over. Against the canonical list, never an earlier cart; a matching
-total is not enough, since a wrong extra can hide a missing card.
+handing over. A matching total is not enough, since a wrong extra can hide
+a missing card.
 
 - Every required card at its quantity, after exclusions.
 - No unintended extras, no duplicates from repeated imports.
@@ -127,9 +126,7 @@ Write it to the report path: source deck, exclusions, required copies,
 missing / extras / wrong quantities, finish and treatment exceptions,
 packages, item total, shipping, subtotal before tax, preorders or delays,
 verification time. Stop when the cart is complete and compliant and further
-consolidation costs more than `<premium>` per package removed; fewer packages
-is not better if it materially raises the delivered price. State the final
-tradeoff plainly, not as a global optimum. Inventory may still change: if
-checkout reports changes, refresh and rerun the audit. Building the cart
-does not authorize the order. Your final message is the report's path and
-its packages, items, shipping and subtotal.
+consolidation costs more than `<premium>` per package removed. State the
+final tradeoff plainly, not as a global optimum. Inventory may still change:
+if checkout reports changes, refresh and rerun the audit. Your final message
+is the report's path and its packages, items, shipping and subtotal.

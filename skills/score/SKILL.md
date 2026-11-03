@@ -11,13 +11,11 @@ The metric lives in the `mtg-deckhand:scorer` agent,
 skill only applies it. Scores are never hand-edited: when one looks wrong,
 fix the metric or the deck's `plan.md` and rescore.
 
-Read `settings.json` through `settings.py`
-(`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py`), passing it
-every `key=value` word of the arguments, which overrides that setting for
-this run (a dotted key, `quota.adds=15`, reaches a nested one); dispatch each
-agent with `model` only when it differs from the agent's own. Every agent
-here runs `run_in_background` in the folder that holds `output/`; its
-prompt carries only the per-run inputs named below.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/settings.py` with the
+arguments' `key=value` words for this run's settings. Dispatch every agent
+`run_in_background` in the folder that holds `output/`, with `model` only
+when it differs from the agent's own; its prompt carries only the per-run
+inputs named below.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-deckhand:sync` first.
@@ -43,15 +41,10 @@ score only those cards for that deck, usually a card just added through
 if added; one missing from `oracle.json` is fetched into it first with
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch-oracle.py "<card name>" ...`,
 which reports any name Scryfall does not know. Run steps 2 to 4 for that
-deck alone, each scorer's prompt also naming the cards. merge.py sees tables
-holding fewer of the list's cards than it has and patches the deck's
-`nonlands.md` and `lands.md` instead of rewriting them: a listed card's row
-replaced or inserted in the Cards table in score order and its Adds row
-dropped, a candidate's row in the Adds table of the file its type belongs
-to, in score order, keeping the New and ~Price of an Adds row it had, else
-`-`; the Shape line recomputed. A later `/upgrades` rebuilds Adds from
-research, so a candidate stays only while the research lists it too. The
-ranker does not run.
+deck alone, each scorer's prompt also naming the cards. merge.py patches
+those rows into the deck's `nonlands.md` and `lands.md` (a candidate's into
+Adds) instead of rewriting them; a later `/upgrades` drops a candidate its
+research does not list. The ranker does not run.
 
 Report: per deck the shape line, the 10s and the split cards in one line
 ("split: X, Y"), a sign the plan is unclear on them; anything that moved by

@@ -9,7 +9,7 @@ about: A skill did something wrong
 
 ## Skill
 
-<!-- sync, score, upgrades, cart, judge or scryfall -->
+<!-- the skill's name -->
 
 ## Command and output
 
