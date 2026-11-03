@@ -11,7 +11,7 @@ const get = async url => {
 };
 let listing = [];
 for (let page = 1; ; page++) {
-  const p = await get(`https://api2.moxfield.com/v2/users/${encodeURIComponent(user)}/decks?pageNumber=${page}&pageSize=100`);
+  const p = await get(`https://api2.moxfield.com/v2/decks/search?authorUserNames=${encodeURIComponent(user)}&pageNumber=${page}&pageSize=100&sortType=updated&sortDirection=descending`);
   if (!Array.isArray(p.data)) { listing = p; break; }
   listing.push(...p.data.map(({ publicId, name, format, visibility }) => ({ publicId, name, format, visibility })));
   if (page >= (p.totalPages || 1)) break;
