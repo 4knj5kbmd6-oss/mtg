@@ -10,3 +10,7 @@ output
 /rankings.md
 __pycache__/
 .pytest_cache/
+
+# Orchestrator session state: working memory, never committed
+STATUS.md
+STATUS_*
