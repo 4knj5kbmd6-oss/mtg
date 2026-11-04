@@ -15,10 +15,11 @@ def test_changes_in_and_out():
     assert read(LIST).splitlines()[-3:] == ["1 Tidal Insight", "1 Deep Current", "1 Pearl Diver"]
     assert "Wave Breaker" not in read(LIST)
     nonlands = read("output/decks/zara/nonlands.md")
-    assert "| Deep Current | 7 | A card on every spell, stacks with Zara |\n| Kelp Weaver |" in nonlands
-    assert "Deep Current | 7 | A card on every spell, stacks with Zara | Yes" not in nonlands   # left the Adds table
+    assert "| Deep Current | 7 | engine | A card on every spell, stacks with Zara |\n| Kelp Weaver |" in nonlands
+    assert "Deep Current | 7 | engine | A card on every spell, stacks with Zara | Yes" not in nonlands   # left the Adds table
     assert "Wave Breaker" not in nonlands
-    assert nonlands.endswith("10: 1 / 8-9: 1 / 5-7: 4 / 4 or below: 1, mean 6.7 (by card copy), 3 scorers.\n")
+    assert nonlands.endswith("10: 1 / 8-9: 1 / 5-7: 4 / 4 or below: 1, mean 6.7 (by card copy), 3 scorers.\n\n"
+                             "## Roles\ndraw 2 · ramp 2 · commander 1 · engine 1 · threat 1 · lands 6\n")
 
 
 def test_changes_twice_change_nothing():

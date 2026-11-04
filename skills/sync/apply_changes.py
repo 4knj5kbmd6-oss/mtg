@@ -3,12 +3,13 @@ usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills
 An In card not in the list is appended before any SIDEBOARD block (n copies from an "n copies" note, else 1) and its
 Adds row in nonlands.md or lands.md moves to that file's Cards table. An Out card in the list loses one copy (all with
 a copies note); once gone, its Cards and Cuts rows go too. Both Shape lines are recomputed, each keeping its scorer
-count. Running it twice changes nothing. Prints one line per changed deck: cards in, cards out."""
+count, and so is nonlands.md's Roles line where it has one. Running it twice changes nothing. Prints one line per
+changed deck: cards in, cards out."""
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from project import match, norm, KINDS, DECKS, CHANGES
-from tables import split, join, cells, recount
+from tables import split, join, cells, scores, recount, tally
 
 def counted(name, n): return f"{name} ({n})" if n > 1 else name
 
@@ -32,24 +33,26 @@ def apply_list(lines, rows):
     return ins, outs
 
 def apply_scores(files, ins, outs):
-    """{kind: text} of nonlands.md and lands.md with the applied rows moved, removed and recounted"""
+    """{kind: text} of nonlands.md and lands.md with the applied rows moved, removed and recounted, nonlands.md's
+    Roles line too where it has one"""
     secs = {k: split(t) for k, t in files.items()}
     sec = {k: dict((h, ls) for h, ls in s) for k, s in secs.items()}
-    cards = {k: cells(s.get("## Cards", [])) for k, s in sec.items()}
+    cards = {k: scores(s.get("## Cards", [])) for k, s in sec.items()}
     def drop(k, h, hit):
         if h in sec[k]: sec[k][h][:] = [l for l in sec[k][h] if not any(hit(c[0]) for c in cells([l]))]
     for name, n in ins:
         hit = match(name)
         if any(hit(r[0]) for rows in cards.values() for r in rows): continue
         for k in sec:
-            row = next((r for r in cells(sec[k].get("## Adds", [])) if hit(r[0])), None)
-            if row: cards[k].append([counted(row[0], n), row[1], row[2]]); drop(k, "## Adds", hit); break
+            row = next((r for r in scores(sec[k].get("## Adds", [])) if hit(r[0])), None)
+            if row: cards[k].append([counted(row[0], n), *row[1:4]]); drop(k, "## Adds", hit); break
     for name, left in outs:
         hit = match(name)
         for k in sec:
             if left: cards[k] = [[counted(norm(r[0]), left), *r[1:]] if hit(r[0]) else r for r in cards[k]]
             else: cards[k] = [r for r in cards[k] if not hit(r[0])]; drop(k, "## Cuts", hit)
     for k in sec: recount(sec[k], cards[k])
+    if "## Roles" in sec.get("nonlands", {}): tally(secs["nonlands"], [r for rows in cards.values() for r in rows])
     return {k: join(s) for k, s in secs.items()}
 
 def main():

@@ -1,17 +1,17 @@
 # Zara, Tide Caller: lands
 
 ## Cards
-| Card | Score | Note |
-|---|---|---|
-| Sunken Grotto | 7 | Untapped blue, scry |
-| Island (4) | 6 | Basic |
-| Misty Cove | 5 | Enters tapped |
+| Card | Score | Role | Note |
+|---|---|---|---|
+| Sunken Grotto | 7 | land | Untapped blue, scry |
+| Island (4) | 6 | land | Basic |
+| Misty Cove | 5 | land | Enters tapped |
 
 ## Adds
 
-| Card | Score | Note | New | ~Price |
-|---|---|---|---|---|
-| Tidepool Ruins | - | Untapped utility land | No | $0.40 |
+| Card | Score | Role | Note | New | ~Price |
+|---|---|---|---|---|---|
+| Tidepool Ruins | - | - | Untapped utility land | No | $0.40 |
 
 ## Cuts
 | Card | Score | Why it underperforms here |

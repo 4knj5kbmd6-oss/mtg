@@ -102,7 +102,7 @@ Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores, adds, cuts), `changes.png` (an image of every add and cut, redrawn by `/score` and `/upgrades`) |
+| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, redrawn by `/score` and `/upgrades`) |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings) and `tokens.md` |
 | `data/rules.txt` | The Comprehensive Rules, for `/judge` |
 | `data/scryfall-syntax.md` | Scryfall's search reference, one section per docs page, for `/scryfall` |

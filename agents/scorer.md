@@ -50,10 +50,12 @@ earns nothing for its reputation.
 
 ## Rules of consistency
 
-1. **Role first.** Name the card's job in this deck (ramp, draw, removal,
-   engine, finisher, protection, fixing, tutor, utility). Judge rate and fit
-   within that job: a 2-mana answer and a 5-mana answer to the same thing
-   are not the same score.
+1. **Role first.** Name the card's one job in this deck, its Role, from
+   commander, ramp, draw, tutor, removal, wipe, protection, fodder, outlet,
+   combo, payoff, recursion, engine, threat, land. A land that does a job
+   for the plan takes that job's role; a basic or plain dual is `land`.
+   Judge rate and fit within that job: a 2-mana answer and a 5-mana answer
+   to the same thing are not the same score.
 2. **Power here, not in general.** How much does the card actually do in
    this deck's games: how often it matters, how much it swings when it does,
    how cheaply. A strong card that ignores the plan still does something; a
@@ -95,18 +97,18 @@ Output per deck, exactly this file, `<LETTER>` your letter:
 # <Deck>: fit scores (<LETTER>)
 
 ## Nonlands
-| Card | Score | Note |
-|---|---|---|
+| Card | Score | Role | Note |
+|---|---|---|---|
 ...every nonland card, score descending...
 
 ## Lands
-| Card | Score | Note |
-|---|---|---|
+| Card | Score | Role | Note |
+|---|---|---|---|
 ...every land, score descending; basics as one row "Swamp (29)" with the count...
 
 ## Adds
-| Card | Score | Note |
-|---|---|---|
+| Card | Score | Role | Note |
+|---|---|---|---|
 ...every card in both Adds tables, score descending...
 
 ## Shape

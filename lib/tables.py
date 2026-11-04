@@ -1,10 +1,11 @@
-"""The Markdown of a deck's nonlands.md and lands.md: sections, tables and the Shape line.
+"""The Markdown of a deck's nonlands.md and lands.md: sections, tables and the Shape and Roles lines.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>
 prints the card names of the deck's Adds tables, one per line, and nothing else of its files."""
 import re, sys
+from collections import Counter
 from project import copies, KINDS, DECKS
-CARDS = "| Card | Score | Note |"
-ADDS = "| Card | Score | Note | New | ~Price |"
+CARDS = "| Card | Score | Role | Note |"
+ADDS = "| Card | Score | Role | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
 
 def split(text):
@@ -22,9 +23,15 @@ def cells(lines):
     return [[c.strip() for c in l.strip().strip("|").split("|")] for l in lines
             if l.startswith("|") and not re.match(r"^\|\s*(-+|Card|#)\s*\|", l)]
 
+def scores(lines):
+    """data rows of the Cards or Adds table in lines, as lists of cells, "-" for the Role of a table written without
+    that column"""
+    old = "| Role |" not in next((l for l in lines if l.startswith("| Card |")), "| Role |")
+    return [r[:2] + ["-"] + r[2:] if old else r for r in cells(lines)]
+
 def adds(deck):
     """the Adds rows, as lists of cells, of the deck folder's nonlands.md and lands.md that exist"""
-    return [r for k in KINDS if (p := deck / f"{k}.md").exists() for r in cells(dict(split(p.read_text())).get("## Adds", []))]
+    return [r for k in KINDS if (p := deck / f"{k}.md").exists() for r in scores(dict(split(p.read_text())).get("## Adds", []))]
 
 def table(head, rows):
     return "\n".join([head, "|" + "---|" * (head.count("|") - 1)] + ["| " + " | ".join(r) + " |" for r in rows])
@@ -45,6 +52,22 @@ def shape(cards, scorers=None):
     by = f", {scorers} scorer{'s' * (scorers != 1)}" if scorers else ""
     return (f"10: {sum(x==10 for x in s)} / 8-9: {sum(8<=x<=9 for x in s)} / 5-7: {sum(5<=x<=7 for x in s)}"
             f" / 4 or below: {sum(x<=4 for x in s)}, mean {sum(s)/max(len(s), 1):.1f} (by card copy){by}.")
+
+def roles(cards):
+    """the Roles line of [card, score, role, ...] rows, by card copy, count descending, ties by name, the land role
+    last as lands; unscored ("-") roles left out"""
+    n = Counter()
+    for r in cards:
+        if r[2] != "-": n[r[2]] += copies(r[0])
+    land = n.pop("land", 0)
+    return " · ".join([f"{k} {v}" for k, v in sorted(n.items(), key=lambda kv: (-kv[1], kv[0]))] + [f"lands {land}"] * bool(land))
+
+def tally(secs, cards):
+    """secs, nonlands.md's [heading, lines] pairs, with its Roles section (made after Shape if it has none) set to the
+    Roles line of cards, both files' Cards rows"""
+    heads = [h for h, _ in secs]
+    if "## Roles" not in heads: secs.insert(heads.index("## Shape") + 1 if "## Shape" in heads else len(secs), ["## Roles", []])
+    dict(secs)["## Roles"][:] = [roles(cards), ""]
 
 def deck_file(title, kind, cards, rest, scorers):
     """nonlands.md or lands.md: the Cards table, rest (its Adds and Cuts sections, if any), the Shape line"""

@@ -1,15 +1,15 @@
 """Write the researcher's adds and cuts into a deck's nonlands.md and lands.md as their Adds and Cuts tables.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run_dir> <slug>
 reads <run_dir>/<slug>-adds.md and <slug>-cuts.md. Each row goes to lands.md if output/data/oracle.json
-says the card is a land, else to nonlands.md. An add already scored keeps its score and note, the rest
-get "-" and the research reason; a cut gets its deck score. An add named on restricted.md or the deck's
-own restricted.md (either face of a double-faced card) is dropped, and so is an add whose ~Price is above
-the budget in settings.json (a price that does not parse is kept); the drops are printed."""
+says the card is a land, else to nonlands.md. An add already scored keeps its score, role and note, the
+rest get "-" for both and the research reason; a cut gets its deck score. An add named on restricted.md or
+the deck's own restricted.md (either face of a double-faced card) is dropped, and so is an add whose ~Price
+is above the budget in settings.json (a price that does not parse is kept); the drops are printed."""
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from project import key, lands, by_kind, KINDS, DECKS
-from tables import split, join, cells, tail
+from tables import split, join, cells, scores, tail
 from settings import settings
 
 def restricted(paths):
@@ -33,10 +33,10 @@ def apply(files, adds, cuts, land):
     research files' texts, each row in the file land(card) picks"""
     secs = {k: split(t) for k, t in files.items()}
     old = [dict(s) for s in secs.values()]
-    done = {key(r[0]): r[1:3] for o in old for r in cells(o.get("## Adds", [])) if r[1] != "-"}
+    done = {key(r[0]): r[1:4] for o in old for r in scores(o.get("## Adds", [])) if r[1] != "-"}
     deck = {key(r[0]): r[1] for o in old for r in cells(o.get("## Cards", []))}
     known = lambda since: next((a for a in ("Yes", "No") if since.startswith(a)), "-")
-    new = by_kind([[n, *done.get(key(n), ["-", why]), known(since), price]
+    new = by_kind([[n, *done.get(key(n), ["-", "-", why]), known(since), price]
                    for _, n, since, why, price in cells(adds.splitlines())], land)
     cut = by_kind([[n, deck.get(key(n), "-"), why] for _, n, why in cells(cuts.splitlines())], land)
     intro = [l for l in adds.splitlines()[1:] if l.strip() and not l.startswith("|")]

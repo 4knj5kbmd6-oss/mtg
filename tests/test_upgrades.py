@@ -41,12 +41,12 @@ def test_apply_routes_keeps_and_drops():
                                        "zara: Adds and Cuts written to output/decks/zara/nonlands.md and lands.md"]
     nonlands, lands = read("output/decks/zara/nonlands.md"), read("output/decks/zara/lands.md")
     assert """
-| Card | Score | Note | New | ~Price |
-|---|---|---|---|---|
-| Deep Current | 7 | A card on every spell, stacks with Zara | Yes | $1.50 |
-| Pearl Diver | - | Cheap scry body | Yes | $0.25 |
-| Rising Tide // Tidal Flats | - | Draw now or a land later | No | $0.80 |
-| Odd Relic | - | Price unknown | No | n/a |
+| Card | Score | Role | Note | New | ~Price |
+|---|---|---|---|---|---|
+| Deep Current | 7 | engine | A card on every spell, stacks with Zara | Yes | $1.50 |
+| Pearl Diver | - | - | Cheap scry body | Yes | $0.25 |
+| Rising Tide // Tidal Flats | - | - | Draw now or a land later | No | $0.80 |
+| Odd Relic | - | - | Price unknown | No | n/a |
 
 ## Cuts
 | Card | Score | Why it underperforms here |
@@ -54,7 +54,7 @@ def test_apply_routes_keeps_and_drops():
 | Wave Breaker | 3 | Off-colour aggro |
 """ in nonlands
     assert """
-| Tidepool Ruins | - | Utility land | No | $0.40 |
+| Tidepool Ruins | - | - | Utility land | No | $0.40 |
 
 ## Cuts
 | Card | Score | Why it underperforms here |
@@ -67,9 +67,9 @@ def test_apply_routes_keeps_and_drops():
 def test_apply_keeps_an_unknown_new_since_built():
     assert research(ADDS.replace("| Yes |", "| - |")).returncode == 0
     nonlands = read("output/decks/zara/nonlands.md")
-    assert "| Deep Current | 7 | A card on every spell, stacks with Zara | - | $1.50 |" in nonlands
-    assert "| Pearl Diver | - | Cheap scry body | Yes | $0.25 |" in nonlands
-    assert "| Odd Relic | - | Price unknown | No | n/a |" in nonlands
+    assert "| Deep Current | 7 | engine | A card on every spell, stacks with Zara | - | $1.50 |" in nonlands
+    assert "| Pearl Diver | - | - | Cheap scry body | Yes | $0.25 |" in nonlands
+    assert "| Odd Relic | - | - | Price unknown | No | n/a |" in nonlands
 
 
 def test_apply_leaves_cards_and_shape():
