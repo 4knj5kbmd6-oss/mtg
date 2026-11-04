@@ -31,6 +31,9 @@ strength in a four-player game on six criteria, each 0 to 10:
 | Ceiling: best turn versus typical game | Its best turn wins outright and its typical game comes close | Its best turn only gets it ahead and its typical game falls short |
 | Independence | No single card carries it | Loses most games once one key card is answered |
 
+Beside Speed, judge each deck's kill turn: the turn it wins or locks the
+table in a typical unopposed game, as two adjacent turns (`6-7`) or one turn.
+
 The deck's score is the six's mean, to one decimal. Rank by score, strongest
 first; equal scores are ordered by judgment.
 
@@ -47,9 +50,9 @@ Output to `<run>/rankings.md`, exactly this shape, nothing else:
 ```
 # Rankings
 
-| # | Commander | Colours | Bracket | Score | Game Changers | Why | |
-|---|---|---|---|---|---|---|---|
-| 1 | [<commander>](output/decks/<slug>/) | <colours> | <bracket> | <score> | <game changers> | <why> | [Moxfield](https://moxfield.com/decks/<id>) |
+| # | Commander | Colours | Bracket | Score | Kill turn | Game Changers | Why | |
+|---|---|---|---|---|---|---|---|---|
+| 1 | [<commander>](output/decks/<slug>/) | <colours> | <bracket> | <score> | <kill turn> | <game changers> | <why> | [Moxfield](https://moxfield.com/decks/<id>) |
 ...one row per deck, strongest first...
 
 ## Criteria
@@ -65,6 +68,7 @@ Output to `<run>/rankings.md`, exactly this shape, nothing else:
 - Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
   (`4`, `3, top`, `3`, `3, low`).
 - Score: the deck's score (`7.3`).
+- Kill turn: the deck's kill turn (`6-7`, `5`).
 - Game Changers: the deck's own, by name, comma-separated, or `none`.
 - Why: one line.
 
