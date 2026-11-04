@@ -153,6 +153,11 @@ def test_a_card_the_scorers_lack_stops_the_run_naming_it():
     assert not Path("run/merged").exists()
 
 
+def test_tables_prints_the_adds_names_alone():
+    out = run("lib/tables.py", "zara")
+    assert (out.returncode, out.stdout) == (0, "Deep Current\nTidepool Ruins\n")
+    assert run("lib/tables.py").returncode == 1
+
 def test_settings_defaults():
     Path("settings.json").unlink()
     defaults = copy.deepcopy(settings.DEFAULTS)

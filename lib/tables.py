@@ -1,6 +1,8 @@
-"""The Markdown of a deck's nonlands.md and lands.md: sections, tables and the Shape line."""
-import re
-from project import copies, KINDS
+"""The Markdown of a deck's nonlands.md and lands.md: sections, tables and the Shape line.
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>
+prints the card names of the deck's Adds tables, one per line, and nothing else of its files."""
+import re, sys
+from project import copies, KINDS, DECKS
 CARDS = "| Card | Score | Note |"
 ADDS = "| Card | Score | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
@@ -56,3 +58,7 @@ def recount(sec, cards):
     if "## Shape" in sec:
         n = re.search(r", (\d+) scorers?\.", "".join(sec["## Shape"]))
         sec["## Shape"][:] = [shape(cards, n and int(n.group(1))), ""]
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2: sys.exit(__doc__)
+    for r in adds(DECKS / sys.argv[1]): print(r[0])

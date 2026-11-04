@@ -84,9 +84,9 @@ earns nothing for its reputation.
 
 Apply the anchors, rules and expected shape above exactly. For each deck
 (`<slug>`), FIRST read its plan.md (rule 3), then its list.txt (its SIDEBOARD
-block you do not score), oracle.json, and the Card columns of the `## Adds`
-tables of output/decks/<slug>/nonlands.md and lands.md only: the recommended
-adds (rule 7).
+block you do not score), oracle.json, and the recommended adds (rule 7), the
+card names `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>` prints, one
+per line; read nothing else of nonlands.md and lands.md.
 
 Output per deck, exactly this file, `<LETTER>` your letter:
 `<run>/<slug>-<LETTER>.md`
