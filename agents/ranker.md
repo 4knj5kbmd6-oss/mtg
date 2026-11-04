@@ -13,7 +13,7 @@ Your prompt gives you: the run folder `<run>`.
 
 Inputs: every deck's list.txt and plan.md, output/decks/*/nonlands.md and
 lands.md (per-card fit scores and notes, evidence about card quality),
-oracle.json, moxfield.json (each deck's Moxfield id, keyed to its slug), the
+oracle.json, moxfield.json beside output/ (each deck's Moxfield id, keyed to its slug), the
 current rankings.md (prior opinion, not binding) and each deck's fact files:
 evidence for the two-card-infinite, extra-turn and mass-land-denial criteria
 and for speed. A deck with no nonlands.md or lands.md yet is ranked from its
