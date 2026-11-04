@@ -7,8 +7,8 @@ argument-hint: "[moxfield username]"
 # sync
 
 Moxfield blocks curl (Cloudflare 403), so every call goes through the
-built-in browser pane from page context. Only public, owned decks are
-exported; theorycraft stays out. Never sign in to Moxfield. Decks are
+built-in browser pane from page context. Only your public Commander decks
+are exported. Never sign in to Moxfield. Decks are
 exported as card names only; maybeboards never. `moxfield.json`, beside
 `output/`, is the single list of Moxfield decks synced:
 `{"user": "<moxfield username>", "decks": {"<id>": "<slug>"}, "seen": ["<id>", ...],
