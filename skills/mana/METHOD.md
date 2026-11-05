@@ -130,7 +130,7 @@ twentieths, so the shares are multiples of 5 summing to 100.
 
 | Column | What |
 |---|---|
-| Lands | The recommended L; `unknown` when N < 7 + H |
+| Lands | The recommended L, then in brackets the band, every L from 0 to N - R - X with V(L) at least 99.5% of V at the recommended L, as `35 (33-37)`, the L alone when the band is that one count; `unknown` when N < 7 + H |
 | Lands now | The N's land drops, X left out, modal lands included, so it compares with Lands, not with the Curve's Lands |
 | One per colour | `share% (s_c)`; `-` when L is 0, `unknown` with Lands |
 | Split now | Each colour's Land sources as shares of their sum over the identity, a land making two colours counted in both, rounded as the shares are: `colour share% (sources)`, joined by `, `; `-` with no land sources |

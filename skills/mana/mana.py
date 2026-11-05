@@ -95,8 +95,8 @@ def not_cast(slug, listed):
     return got
 
 def advice(identity, commanders, rest, weight, skipped):
-    """the Recommendation table's row: the lands, the land drops now and each colour's share and sources, the skipped
-    cards held in the deck as draws that count for nothing"""
+    """the Recommendation table's row: the lands and their band, the land drops now and each colour's share and
+    sources, the skipped cards held in the deck as draws that count for nothing"""
     each = lambda cards: [e for n, e in cards for _ in range(n) if e["name"] not in skipped]
     card = lambda e: (weight(e["name"]), int(mv(e)), due(e), {c: pips(e, c) for c in identity if pips(e, c)})
     deck = each(rest)
@@ -104,14 +104,16 @@ def advice(identity, commanders, rest, weight, skipped):
     led = [card(e) for e in each(commanders)]
     size, now = sum(n for n, _ in rest), sum(map(land_drop, deck))
     kept = size - len(deck)
-    lands = recommend.lands(size, [(w, mv, d, r) for w, mv, d, _, r in played], [(w, mv, d) for w, mv, d, _ in led],
+    found = recommend.lands(size, [(w, mv, d, r) for w, mv, d, _, r in played], [(w, mv, d) for w, mv, d, _ in led],
                             kept)
-    if lands is None: return ["unknown", str(now), *["unknown"] * len(identity)]
-    if not lands: return ["0", str(now), *["-"] * len(identity)]
+    if found is None: return ["unknown", str(now), *["unknown"] * len(identity)]
+    lands, band = found
+    cell = f"{lands} ({band[0]}-{band[-1]})" if len(band) > 1 else str(lands)
+    if not lands: return [cell, str(now), *["-"] * len(identity)]
     sources = recommend.split(lands, size, identity, [(w, r, d, need) for w, _, d, need, r in played],
                               [(w, d, need) for w, _, d, need in led], kept)
     share = recommend.shares(sources)
-    return [str(lands), str(now), *(f"{share[c]}% ({sources[c]})" for c in identity)]
+    return [cell, str(now), *(f"{share[c]}% ({sources[c]})" for c in identity)]
 
 def page(slug, commanders, rest, weight, skipped):
     """the mana file's text from [(copies, oracle entry)] of the commanders and of the rest of the deck, name -> the

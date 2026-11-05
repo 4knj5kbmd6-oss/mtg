@@ -184,7 +184,7 @@ CARDS = {  # name: (type, cost, mana value, produced_mana, oracle text)
 def recommendation(text):
     """the Recommendation row's Lands and each colour's sources"""
     row = [c.strip() for c in text.split("## Recommendation\n")[1].splitlines()[2].strip("|").split("|")]
-    return int(row[0]), [int(c.split("(")[1].rstrip(")")) for c in row[2:-1]]
+    return int(row[0].split()[0]), [int(c.split("(")[1].rstrip(")")) for c in row[2:-1]]
 
 
 def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
@@ -221,7 +221,7 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 ## Recommendation
 | Lands | Lands now | U | B | Split now |
 |---|---|---|---|---|
-| 8 | 13 | 40% (3) | 60% (5) | U 60% (10), B 40% (7) |
+| 8 (7-8) | 13 | 40% (3) | 60% (5) | U 60% (10), B 40% (7) |
 """
     # ramp: Mox Opal, Sol Ring, Arcane Signet (Dark Ritual is an instant); 3/8 and 5/8 tie on remainder, U first
     lands, sources = recommendation(read("run/lazav-mana.md"))
@@ -365,6 +365,8 @@ def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time()
     q = lambda L, n: 1 - C(19 - L, n) / C(19, n)
     V = lambda L: 1 - C(20 - L, 8) / C(20, 8) + (20 - L) * (8 * q(L, 7) + sum(q(L, 6 + d) for d in range(2, H + 1))) / 20
     assert [round(V(L), 3) for L in (3, 4, 5)] == [13.279, 13.517, 13.231] and max(range(21), key=V) == 4
+    # the band: 3 and 5 make 98.2% and 97.9% of V(4), under 99.5%, so the Lands cell is 4 alone
+    assert [L for L in range(21) if V(L) >= 0.995 * V(4)] == [4]
     # at 4 lands, k of them among the 7 others a spell sees by turn 1 (the commander: 8 of 20), given 1 or more: a {U}
     # card is met unless the k all miss the u Islands; the 13 spells count 16/13 each
     def met(u, pool, seen):
@@ -386,6 +388,7 @@ def test_mana_holds_the_cards_not_cast_as_draws_that_count_for_nothing():
     q = lambda L, n: 1 - C(19 - L, n) / C(19, n)
     V = lambda L: 1 - C(20 - L, 8) / C(20, 8) + (11 - L) * (8 * q(L, 7) + sum(q(L, 6 + d) for d in range(2, H + 1))) / 20
     assert [round(V(L), 3) for L in (2, 3, 4)] == [6.337, 6.676, 6.419] and max(range(12), key=V) == 3
+    assert [L for L in range(12) if V(L) >= 0.995 * V(3)] == [3]
     # at 3 lands the commander's {U} against 4 {B} Imps counting 8/4 each: G as above, of 3 lands
     def met(u, pool, seen):
         ways = {k: C(3, k) * C(pool - 3, seen - k) for k in range(1, 4)}
@@ -444,6 +447,14 @@ def test_split_matches_the_exhaustive_optimum():
         value = {s: recommend.worth(dict(zip(identity, s)), lands, 60, identity, spells, commanders) for s in every}
         best = max(s for s in every if value[s] >= max(value.values()) - 1e-9)
         assert recommend.split(lands, 60, identity, spells, commanders) == dict(zip(identity, best))
+
+
+def test_the_band_holds_the_best_count_and_is_contiguous():
+    rng = random.Random(5)
+    for _ in range(5):
+        spells = [(rng.randint(1, 10), rng.randint(0, 7), rng.randint(1, 8), rng.random() < 0.1) for _ in range(60)]
+        best, band = recommend.lands(99, [(w, mv, max(mv, due), r) for w, mv, due, r in spells], [(8, 4, 4)])
+        assert best in band and band == list(range(band[0], band[-1] + 1)) and len(band) > 1
 
 
 def test_shares_are_fives_summing_to_100():

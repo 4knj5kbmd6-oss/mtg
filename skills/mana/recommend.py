@@ -4,12 +4,14 @@ from collections import Counter
 import odds
 
 HORIZON = 10
+BAND = 0.995
 EPS = 1e-9
 
 def lands(size, spells, commanders, kept=0):
-    """the fewest land drops, from 0 to size less the ramp and the kept, with the most weighted spells on time; None
-    when size is below the cards seen by the horizon. spells: (weight, mana value, due turn, is ramp); commanders:
-    (weight, mana value, due turn); kept: the cards held fixed beside the ramp that count for nothing"""
+    """the fewest land drops, from 0 to size less the ramp and the kept, with the most weighted spells on time, and the
+    band: every count of them with at least BAND of that most; None when size is below the cards seen by the horizon.
+    spells: (weight, mana value, due turn, is ramp); commanders: (weight, mana value, due turn); kept: the cards held
+    fixed beside the ramp that count for nothing"""
     if size < odds.seen(HORIZON): return None
     ramp = [mv for _, mv, _, is_ramp in spells if is_ramp]
     others = len(spells) - len(ramp)
@@ -40,7 +42,8 @@ def lands(size, spells, commanders, kept=0):
         return total
 
     values = [value(land) for land in range(size - len(ramp) - kept + 1)]
-    return next(land for land, v in enumerate(values) if v >= max(values) - 1e-12)
+    best = next(land for land, v in enumerate(values) if v >= max(values) - 1e-12)
+    return best, [land for land, v in enumerate(values) if v >= BAND * values[best]]
 
 def terms(lands, size, identity, spells, commanders, kept):
     """{pip vector, ((colour index, pips), ...): its cards' lands_seen tables, weighted and summed}"""
