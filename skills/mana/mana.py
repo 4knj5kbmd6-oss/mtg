@@ -4,10 +4,11 @@ write() counts card copies of output/decks/<slug>/list.txt, commanders included:
 mana value and curve; the chance of at least 2 lands by turn 2, 3 by turn 3 and 4 by turn 4 (odds.py) drawn from the
 deck without its commanders; and per colour of the commanders' identity, the land sources, the sources needed and the
 card that sets them, the nonland sources, the pips, the cards with two or more pips of it and the lowest mana value
-among those. A nonland card with pips of a colour needs the fewest sources of it that give it at least that many among
-the cards seen by the turn of its mana value, 7 at most, 90% of the time; the colour needs the most any of its cards
-needs (ties: the lowest mana value, then by name). A chance or need is unknown when fewer of the deck's cards are known
-than are seen by its turn. A card's colours are its produced_mana within the identity; a fetch land's are also those of
+among those. A nonland card with pips of a colour needs the fewest of the deck's lands to be sources of it that give it
+at least that many among the cards seen by the turn of its mana value, 7 at most, 90% of the times at least its mana
+value of lands are seen, or its pips when more; - when the deck has too few lands to see that many. The colour needs
+the most any of its cards needs (ties: the lowest mana value, then by name). A chance or need is unknown when fewer of
+the deck's cards are known than are seen by its turn. A card's colours are its produced_mana within the identity; a fetch land's are also those of
 the basic land types it searches for, or every colour of the identity when it searches for a basic land card of no
 type. Pips are the {W} {U} {B} {R} {G} symbols of the front face's cost. Prints any card oracle.json lacks, left out of
 the counts."""
@@ -37,10 +38,13 @@ def pips(e, colour): return front(e).get("mana_cost", "").count(f"{{{colour}}}")
 
 def turn(e): return min(int(e.get("cmc", 0)), 7)
 
-def needed(e, colour, size):
-    """the fewest sources of the colour in a deck of size cards that give e its pips of it by its turn CHANCE of the time"""
-    seen = odds.seen(turn(e))
-    return next(k for k in range(size + 1) if odds.at_least(pips(e, colour), k, size, seen) >= CHANCE)
+def needed(e, colour, lands, size):
+    """the fewest of the lands in a deck of size cards to be sources of the colour that give e its pips of it by its turn
+    CHANCE of the times its lands are seen, None when none do"""
+    want, seen = pips(e, colour), odds.seen(turn(e))
+    least = max(int(e.get("cmc", 0)), want)
+    return next((s for s in range(want, lands + 1)
+                 if odds.given_lands(want, s, lands, size, seen, least) >= CHANCE), None)
 
 def page(slug, commanders, rest):
     """the mana file's text from [(copies, oracle entry)] of the commanders and of the rest of the deck"""
@@ -61,8 +65,10 @@ def page(slug, commanders, rest):
         lowest = f"{min(e.get('cmc', 0) for _, e in heavy):g}" if heavy else "-"
         wanting = [e for _, e in spells if pips(e, c)]
         told = wanting and all(known(turn(e)) for e in wanting)
-        top = min(wanting, key=lambda e: (-needed(e, c, size), e.get("cmc", 0), e["name"])) if told else None
-        need = [str(needed(top, c, size)), top["name"]] if top else ["unknown" if wanting else "-", "-"]
+        needs = {e["name"]: needed(e, c, landed, size) for e in wanting} if told else {}
+        most = lambda e: needs[e["name"]] or landed + 1
+        top = min(wanting, key=lambda e: (-most(e), e.get("cmc", 0), e["name"])) if told else None
+        need = [str(needs[top["name"]] or "-"), top["name"]] if top else ["unknown" if wanting else "-", "-"]
         rows.append([c, str(sources(lands)), *need,
                      *map(str, (sources(spells), sum(n * pips(e, c) for n, e in spells), count(heavy))), lowest])
     return "\n".join([f"# {slug}: mana", "",

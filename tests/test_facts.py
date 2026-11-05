@@ -215,7 +215,7 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 
 def test_mana_needs_the_sources_that_cast_a_card_on_curve_nine_times_in_ten():
     cost = lambda name, value, cost: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": cost}
-    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{1}{U}"), "color_identity": ["U"]},
+    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{2}"), "color_identity": ["U"]},
               "Counterspell": cost("Counterspell", 2, "{U}{U}"), "Kraken": cost("Kraken", 9, "{7}{U}{U}"),
               "Filler": cost("Filler", 2, "{2}"),
               "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]}}
@@ -225,21 +225,44 @@ def test_mana_needs_the_sources_that_cast_a_card_on_curve_nine_times_in_ten():
     Path("run").mkdir()
     mana.write("run", "counter")
     mana.write("run", "kraken")
-    # Counterspell sees 9 of the 99 by turn 2; the chance of 2 or more of S sources among them is
-    # 1 - (C(99-S, 9) + S C(99-S, 8)) / C(99, 9): 0.9058 at 36, 0.8946 at 35
-    hit = lambda s, seen: 1 - (comb(99 - s, seen) + s * comb(99 - s, seen - 1)) / comb(99, seen)
-    assert hit(36, 9) >= 0.9 > hit(35, 9)
-    assert "| U | 37 | 36 | Counterspell |" in read("run/counter-mana.md")
+    # Counterspell sees 9 of the 99 by turn 2, given 2 or more of the 37 lands among them: k lands come
+    # C(37, k) C(62, 9-k) ways, and 2 or more of S sources among k lands is 1 - (C(37-S, k) + S C(37-S, k-1)) / C(37, k);
+    # summed over k from 2 to 9 and divided by the ways of 2 or more lands: 0.9161 at 31, 0.8978 at 30
+    lands = lambda k, seen: comb(37, k) * comb(62, seen - k)
+    two = lambda s, k: 1 - (comb(37 - s, k) + s * comb(37 - s, k - 1)) / comb(37, k)
+    hit = lambda s, seen, least: (sum(lands(k, seen) * two(s, k) for k in range(least, seen + 1))
+                                  / sum(lands(k, seen) for k in range(least, seen + 1)))
+    assert hit(31, 9, 2) >= 0.9 > hit(30, 9, 2)
+    assert "| U | 37 | 31 | Counterspell |" in read("run/counter-mana.md")
     # 37 lands of 99: 2 or more of 9 cards 0.9160, 3 or more of 10 0.8004, 4 or more of 11 0.6488
     assert "|---|---|---|\n| 92% | 80% | 65% |\n" in read("run/counter-mana.md")
-    # Kraken's mana value 9 reads as 7: 14 cards seen, 0.9053 at 24 sources, 0.8895 at 23
-    assert hit(24, 14) >= 0.9 > hit(23, 14)
-    assert "| U | 37 | 24 | Kraken |" in read("run/kraken-mana.md")
+    # Kraken's mana value 9 reads as turn 7: 14 cards seen, given 9 or more lands; 0.9208 at 13 sources, 0.8894 at 12
+    assert hit(13, 14, 9) >= 0.9 > hit(12, 14, 9)
+    assert "| U | 37 | 13 | Kraken |" in read("run/kraken-mana.md")
+
+
+def test_mana_never_needs_more_sources_than_lands():
+    cost = lambda name, value, cost: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": cost}
+    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{2}"), "color_identity": ["U"]},
+              "Cryptic": cost("Cryptic", 3, "{U}{U}{U}"), "Filler": cost("Filler", 2, "{2}"),
+              "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]}}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("mono", "Zara, Tide Caller", {"Island": 10, "Filler": 88, "Cryptic": 1})
+    Path("run").mkdir()
+    mana.write("run", "mono")
+    # every land an Island: given 3 or more lands among 10 cards, all 10 always cast Cryptic; 9 do 0.7416 of the time
+    assert "| U | 10 | 10 | Cryptic |" in read("run/mono-mana.md")
 
 
 def test_odds_count_the_hits_among_the_cards_seen():
     # 2 hits in a deck of 4, 2 drawn: both 1 in C(4, 2) = 6, at least one 5 in 6; turn one already sees a draw
     assert (odds.at_least(1, 2, 4, 2), odds.at_least(2, 2, 4, 2), odds.seen(1)) == (5 / 6, 1 / 6, 8)
+
+
+def test_odds_given_lands_count_only_the_draws_that_hit_them():
+    # 2 lands in a deck of 4, 1 a source, 2 drawn: one land 4 ways, a source half of them; both lands 1 way, a source
+    # always; at least one land 5 ways, so (4 x 1/2 + 1) / 5
+    assert odds.given_lands(1, 1, 2, 4, 2, 1) == 3 / 5
 
 
 def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
