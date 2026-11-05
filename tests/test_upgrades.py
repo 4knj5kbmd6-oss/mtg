@@ -98,14 +98,14 @@ def sheet(monkeypatch):
 
 
 def test_grid_choice(sheet):
-    band = lambda n: [("Band", ["card"] * n)]
-    assert [sheet.columns(band(n)) for n in (1, 3, 4, 20)] == [1, 2, 2, 5]
-    assert sheet.size(band(4), 2) == (2 * sheet.W + sheet.GAP, sheet.HEAD + 2 * sheet.H + sheet.GAP)
+    band = lambda n: [("Band", [("card", "5")] * n)]
+    assert [sheet.columns(band(n)) for n in (1, 3, 4, 20)] == [1, 3, 2, 5]
+    assert sheet.size(band(4), 2) == (2 * sheet.W + sheet.GAP, sheet.HEAD + 2 * (sheet.H + sheet.HEAD) + sheet.GAP)
 
 
 def test_bands_in_order(sheet):
-    assert sheet.bands("zara") == [("Nonland adds", ["Deep Current"]), ("Nonland cuts", ["Wave Breaker"]),
-                                   ("Land adds", ["Tidepool Ruins"]), ("Land cuts", ["Misty Cove"])]
+    assert sheet.bands("zara") == [("Nonland adds", [("Deep Current", "7")]), ("Nonland cuts", [("Wave Breaker", "3")]),
+                                   ("Land adds", [("Tidepool Ruins", "-")]), ("Land cuts", [("Misty Cove", "5")])]
 
 
 def test_empty_band_left_out(sheet):
@@ -132,14 +132,20 @@ def test_an_image_comes_from_the_cache_or_is_fetched_into_it(sheet, monkeypatch)
 def test_band_layout_with_stub_images(sheet, monkeypatch, capsys):
     colour = {"A": "red", "B": "green", "C": "blue", "D": "yellow"}
     monkeypatch.setattr(sheet, "image", lambda n: Image.new("RGB", (sheet.W, sheet.H), colour[n]) if n in colour else None)
-    bands = [("First", ["A", "B", "C", "D", "Missing", "A"]), ("Second", ["B"])]
+    bands = [("First", [("A", "7"), ("B", "-"), ("C", "10"), ("D", "4"), ("Missing", "6"), ("A", "7")]),
+             ("Second", [("B", "3")])]
     out = sheet.sheet(bands)
     W, H, GAP, HEAD = sheet.W, sheet.H, sheet.GAP, sheet.HEAD
     assert sheet.columns(bands) == 3
-    assert out.size == (3 * W + 2 * GAP, 2 * HEAD + 3 * H + 2 * GAP)
+    assert out.size == (3 * W + 2 * GAP, 2 * HEAD + 3 * (H + HEAD) + 2 * GAP)
     at = lambda col, y: out.getpixel((col * (W + GAP) + W // 2, y + H // 2))
-    row2, second = HEAD + H + GAP, HEAD + 2 * (H + GAP) + HEAD
+    row2, second = HEAD + H + HEAD + GAP, HEAD + 2 * (H + HEAD + GAP) + HEAD
     assert [at(c, HEAD) for c in range(3)] == [(255, 0, 0), (0, 128, 0), (0, 0, 255)]
     assert [at(c, row2) for c in range(3)] == [(255, 255, 0), (255, 255, 255), (255, 0, 0)]
     assert [at(c, second) for c in range(3)] == [(0, 128, 0), (255, 255, 255), (255, 255, 255)]
+    label = lambda col, y: out.crop((col * (W + GAP), y + H, col * (W + GAP) + W, y + H + HEAD))
+    inked = lambda col, y: label(col, y).convert("L").getextrema()[0] < 100
+    assert [inked(c, HEAD) for c in range(3)] == [True] * 3 and [inked(c, row2) for c in range(3)] == [True] * 3
+    assert [inked(c, second) for c in range(3)] == [True, False, False]
+    assert label(2, row2).tobytes() == label(0, HEAD).tobytes() != label(1, HEAD).tobytes()  # 7, 7, then B's -
     assert "not on Scryfall, left blank: Missing" in capsys.readouterr().out

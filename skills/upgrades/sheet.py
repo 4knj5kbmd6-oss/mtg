@@ -1,10 +1,11 @@
 """Write each deck's changes sheet: an image of every suggested add and cut, as output/decks/<slug>/changes.png.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py [slug ...]   (no slug: every deck)
 Four bands top to bottom, each a plain heading over its cards in table order: nonland adds, nonland cuts
-(nonlands.md), land adds, land cuts (lands.md); a band with no rows is left out. The bands share one column
-count, the one that makes the sheet's longer side shortest. A card's image is Scryfall's normal image of its
-earliest paper printing (front face of a double-faced card), cached as output/data/images/<name>.jpg so a
-later run fetches only new cards. A card Scryfall does not find is printed and left a blank slot."""
+(nonlands.md), land adds, land cuts (lands.md); a band with no rows is left out. Under each card, its Score from
+that table's row, `-` when it has none. The bands share one column count, the one that makes the sheet's longer side
+shortest. A card's image is Scryfall's normal image of its earliest paper printing (front face of a double-faced
+card), cached as output/data/images/<name>.jpg so a later run fetches only new cards. A card Scryfall does not
+find is printed and left a blank slot."""
 import sys, urllib.parse
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
@@ -29,15 +30,18 @@ def image(name):
     return Image.open(path).convert("RGB").resize((W, H))
 
 def bands(slug):
-    """[(heading, cards)] of the deck's bands that have rows, each card by its front face, in table order"""
+    """[(heading, cards)] of the deck's bands that have rows, each card a (name by its front face, Score) pair, in
+    table order"""
     secs = {k: dict(split(p.read_text())) if (p := DECKS / slug / f"{k}.md").exists() else {} for k in KINDS}
-    return [(head, names) for head, k, sec in BANDS if (names := [key(r[0]) for r in cells(secs[k].get(sec, []))])]
+    return [(head, cards) for head, k, sec in BANDS
+            if (cards := [(key(r[0]), r[1] or "-") for r in cells(secs[k].get(sec, []))])]
 
-def rows(names, c): return -(-len(names) // c)
+def rows(cards, c): return -(-len(cards) // c)
 
 def size(bands, c):
-    """(width, height) of the sheet with c columns: each band a heading, then its rows, GAP apart"""
-    return c * (W + GAP) - GAP, sum(HEAD + rows(n, c) * (H + GAP) for _, n in bands) - GAP
+    """(width, height) of the sheet with c columns: each band a heading, then its rows, each card over a HEAD-high
+    score line, GAP apart"""
+    return c * (W + GAP) - GAP, sum(HEAD + rows(n, c) * (H + HEAD + GAP) for _, n in bands) - GAP
 
 def columns(bands):
     """the column count that makes the sheet's longer side shortest, so it stays roughly square; ties to less area"""
@@ -45,14 +49,17 @@ def columns(bands):
                key=lambda c: (max(size(bands, c)), size(bands, c)[0] * size(bands, c)[1]))
 
 def sheet(bands):
-    """the bands drawn top to bottom, cards left to right; a band's last row may be short"""
-    c = columns(bands); out = Image.new("RGB", size(bands, c), "white"); y = 0
-    for head, names in bands:
-        ImageDraw.Draw(out).text((0, y + HEAD // 2), head, fill="black", font=FONT, anchor="lm"); y += HEAD
-        for i, n in enumerate(names):
+    """the bands drawn top to bottom, cards left to right, each card's score centred under it; a band's last row
+    may be short"""
+    c = columns(bands); out = Image.new("RGB", size(bands, c), "white"); draw = ImageDraw.Draw(out); y = 0
+    for head, cards in bands:
+        draw.text((0, y + HEAD // 2), head, fill="black", font=FONT, anchor="lm"); y += HEAD
+        for i, (n, score) in enumerate(cards):
+            x, top = i % c * (W + GAP), y + i // c * (H + HEAD + GAP)
             if (img := image(n)) is None: print(f"  not on Scryfall, left blank: {n}")
-            else: out.paste(img, (i % c * (W + GAP), y + i // c * (H + GAP)))
-        y += rows(names, c) * (H + GAP)
+            else: out.paste(img, (x, top))
+            draw.text((x + W // 2, top + H + HEAD // 2), score, fill="black", font=FONT, anchor="mm")
+        y += rows(cards, c) * (H + HEAD + GAP)
     return out
 
 if __name__ == "__main__":

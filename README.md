@@ -104,7 +104,7 @@ Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, redrawn by `/score` and `/upgrades`) |
+| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score` and `/upgrades`) |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags` and EDHREC `salt`) and `tokens.md` |
 | `data/variants.json.gz` | Commander Spellbook's combos, fetched again by `/score` once a day old |
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |
