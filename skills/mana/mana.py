@@ -1,6 +1,7 @@
 """A deck's mana facts from its list and oracle.json, its <run_dir>/<slug>-mana.md, for facts.py and the mana skill.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/mana/mana.py <run_dir> <slug> [slug ...]
-write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands, their mean
+write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands; the cards the
+plan's "- **Not cast:** Card, Card" line names, by name or either face, any other name printed; the nonlands' mean
 mana value and curve; the chance of at least 2 lands by turn 2, 3 by turn 3 and 4 by turn 4 (odds.py) drawn from the
 deck without its commanders; and per colour of the commanders' identity, the land sources, the sources needed and the
 card that sets them, the nonland sources, the pips, the cards with two or more pips of it and the lowest mana value
@@ -15,7 +16,8 @@ lands that cast the most spells on time in a ten-turn game, each spell weighted 
 the mean score when it has none, 1 when the deck has no scores: on time is on its due turn, its mana value or its pips
 when more, or the turn it is drawn if later, with lands played one a turn and each ramp piece, a permanent that taps for
 mana or a card that puts lands from the library onto the battlefield, a mana from the turn after both its mana value and
-the turn it is drawn; modal double-faced lands count as lands, in Lands now too. The split gives each colour of the
+the turn it is drawn; modal double-faced lands count as lands, in Lands now too. A card not cast stays in the deck as a draw that
+counts for nothing, neither land nor ramp, held fixed beside the ramp as the other spells scale with the lands. The split gives each colour of the
 identity the number of those lands, each making one colour, that casts the most cards' pips on their due turn given that
 turn's lands, and its share of them rounded to 5%. A real base meets the split when its lands match one to one the
 split's sources, each making its source's colour, which holds when every set of colours has at least its sources' total
@@ -39,6 +41,7 @@ EXTRA = re.compile(r"\badds? an additional\b", re.I)
 SEARCH = re.compile(r"search your library for [^.]*?\b(?:land|Plains|Island|Swamp|Mountain|Forest) cards?\b[^.]*"
                     r"\bonto the battlefield", re.I)
 SPENDS = re.compile(r"\bsacrifice (?:a|any number of) lands?\b", re.I)
+NOT_CAST = re.compile(r"^- \*\*Not cast:\*\*(.*)$", re.M)
 
 def colours(e, identity):
     """the colours of the identity e makes mana of, a fetch land's by the land types it searches for"""
@@ -90,25 +93,43 @@ def weights(slug):
     mean = sum(got.values()) / len(got) if got else 1.0
     return lambda name: got.get(key(name).casefold(), mean)
 
-def advice(identity, commanders, rest, weight):
-    """the Recommendation table's row: the lands, the land drops now and each colour's share and sources"""
-    each = lambda cards: [e for n, e in cards for _ in range(n)]
+def not_cast(slug, listed):
+    """the oracle names of the cards the plan's Not cast line names, by name or either face, among listed (casefolded
+    name or face -> oracle entry); prints any other name. A name may hold commas, so the longest run of comma-separated
+    parts that names a card is taken"""
+    path = DECKS / slug / "plan.md"
+    line = NOT_CAST.search(path.read_text()) if path.exists() else None
+    parts, got, unknown = [p.strip() for p in line[1].split(",")] if line else [], set(), []
+    while parts:
+        j = next((j for j in range(len(parts), 0, -1) if ", ".join(parts[:j]).casefold() in listed), 1)
+        name, parts = ", ".join(parts[:j]), parts[j:]
+        if name.casefold() in listed: got.add(listed[name.casefold()]["name"])
+        elif name: unknown.append(name)
+    if unknown: print(f"{slug}: Not cast, not in list.txt:", ", ".join(unknown))
+    return got
+
+def advice(identity, commanders, rest, weight, skipped):
+    """the Recommendation table's row: the lands, the land drops now and each colour's share and sources, the skipped
+    cards held in the deck as draws that count for nothing"""
+    each = lambda cards: [e for n, e in cards for _ in range(n) if e["name"] not in skipped]
     card = lambda e: (weight(e["name"]), int(e.get("cmc", 0)), due(e), {c: pips(e, c) for c in identity if pips(e, c)})
     deck = each(rest)
     played = [(*card(e), ramp(e)) for e in deck if not land_drop(e)]
     led = [card(e) for e in each(commanders)]
-    size, now = len(deck), sum(map(land_drop, deck))
-    lands = recommend.lands(size, [(w, mv, d, r) for w, mv, d, _, r in played], [(w, mv, d) for w, mv, d, _ in led])
+    size, now = sum(n for n, _ in rest), sum(map(land_drop, deck))
+    kept = size - len(deck)
+    lands = recommend.lands(size, [(w, mv, d, r) for w, mv, d, _, r in played], [(w, mv, d) for w, mv, d, _ in led],
+                            kept)
     if lands is None: return ["unknown", str(now), *["unknown"] * len(identity)]
     if not lands: return ["0", str(now), *["-"] * len(identity)]
     sources = recommend.split(lands, size, identity, [(w, r, d, need) for w, _, d, need, r in played],
-                              [(w, d, need) for w, _, d, need in led])
+                              [(w, d, need) for w, _, d, need in led], kept)
     share = recommend.shares(sources)
     return [str(lands), str(now), *(f"{share[c]}% ({sources[c]})" for c in identity)]
 
-def page(slug, commanders, rest, weight):
-    """the mana file's text from [(copies, oracle entry)] of the commanders and of the rest of the deck, and name ->
-    the card's weight"""
+def page(slug, commanders, rest, weight, skipped):
+    """the mana file's text from [(copies, oracle entry)] of the commanders and of the rest of the deck, name -> the
+    card's weight, and the oracle names of the cards not cast"""
     deck = commanders + rest
     identity = [c for c in COLOURS if any(c in e.get("color_identity", []) for _, e in commanders)]
     lands = [(n, e) for n, e in deck if is_land(e)]
@@ -133,13 +154,15 @@ def page(slug, commanders, rest, weight):
         rows.append([c, str(sources(lands)), *need,
                      *map(str, (sources(spells), sum(n * pips(e, c) for n, e in spells), count(heavy))), lowest])
     return "\n".join([f"# {slug}: mana", "",
-                      "## Curve", table("| Lands | Nonlands | Mean mana value | " + " | ".join(CURVE) + " |",
-                                        [[str(count(lands)), str(count(spells)), f"{mean:.1f}", *map(str, curve)]]), "",
+                      "## Curve", table("| Lands | Nonlands | Not cast | Mean mana value | " + " | ".join(CURVE) + " |",
+                                        [[str(count(lands)), str(count(spells)),
+                                          str(count((n, e) for n, e in deck if e["name"] in skipped)), f"{mean:.1f}",
+                                          *map(str, curve)]]), "",
                       "## Lands", table("| 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |", [on_curve]), "",
                       "## Colours", table("| Colour | Land sources | Sources needed | For | Nonland sources | Pips |"
                                           " Cards with 2+ pips | Lowest mana value of those |", rows), "",
                       "## Recommendation", table("| " + " | ".join(["Lands", "Lands now", *identity]) + " |",
-                                                 [advice(identity, commanders, rest, weight)]), ""])
+                                                 [advice(identity, commanders, rest, weight, skipped)]), ""])
 
 def write(run, slug):
     cards = json.loads(ORACLE.read_text())["cards"]
@@ -148,7 +171,9 @@ def write(run, slug):
     if missing := [n for _, n in commanders + rest if n.casefold() not in named]:
         print(f"{slug}: not in oracle.json:", ", ".join(missing))
     entries = lambda part: [(c, named[n.casefold()]) for c, n in part if n.casefold() in named]
-    Path(run, f"{slug}-mana.md").write_text(page(slug, entries(commanders), entries(rest), weights(slug)))
+    listed = {f.casefold(): e for _, e in entries(commanders + rest) for f in [e["name"], *e["name"].split(" // ")]}
+    Path(run, f"{slug}-mana.md").write_text(page(slug, entries(commanders), entries(rest), weights(slug),
+                                                 not_cast(slug, listed)))
 
 def main():
     if len(sys.argv) < 3: sys.exit(__doc__)

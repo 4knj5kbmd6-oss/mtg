@@ -203,9 +203,9 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
     assert read("run/lazav-mana.md") == """# lazav: mana
 
 ## Curve
-| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 13 | 9 | 2.9 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 1 |
+| Lands | Nonlands | Not cast | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 13 | 9 | 0 | 2.9 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 1 |
 
 ## Lands
 | 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |
@@ -293,9 +293,9 @@ def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
     assert read("run/tiny-mana.md") == """# tiny: mana
 
 ## Curve
-| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 5 | 2 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+| Lands | Nonlands | Not cast | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 5 | 2 | 0 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 
 ## Lands
 | 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |
@@ -314,7 +314,8 @@ def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
 """
 
 
-def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time():
+def ixi(plan=""):
+    """the ixi deck's mana file, its plan.md this text: 20 cards, every one due on turn 1, none ramp"""
     card = lambda name, cost: {"name": name, "type_line": "Artifact", "cmc": 1, "mana_cost": cost, "oracle_text": ""}
     land = lambda name, colour: {"name": name, "type_line": f"Basic Land — {name}", "cmc": 0, "produced_mana": [colour]}
     oracle = {"Ixi, Tide Caller": {**card("Ixi, Tide Caller", "{U}"), "type_line": "Legendary Creature",
@@ -323,8 +324,14 @@ def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time()
               "Imp": card("Imp", "{B}")}
     Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
     deck("ixi", "Ixi, Tide Caller", {"Island": 4, "Swamp": 3, "Sprite": 9, "Imp": 4})
+    Path("output/decks/ixi/plan.md").write_text(plan)
     Path("run").mkdir()
     mana.write("run", "ixi")
+    return read("run/ixi-mana.md")
+
+
+def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time():
+    text = ixi()
     C = lambda n, k: comb(n, k) if 0 <= k <= n else 0
     H = recommend.HORIZON
     # 20 cards, no ramp, every card due on turn 1, so on time is a land among the other cards seen by the turn it is
@@ -341,10 +348,35 @@ def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time()
         return sum(w * (1 - C(4 - u, k) / C(4, k)) for k, w in ways.items()) / sum(ways.values())
     G = lambda u: met(u, 20, 8) + 16 / 13 * (9 * met(u, 19, 7) + 4 * met(4 - u, 19, 7))
     assert [round(G(u), 3) for u in (2, 3, 4)] == [11.99, 12.794, 12.077] and max(range(5), key=G) == 3
-    text = read("run/ixi-mana.md")
     assert "## Recommendation\n| Lands | Lands now | U | B |\n|---|---|---|---|\n| 4 | 7 | 75% (3) | 25% (1) |\n" in text
     lands, sources = recommendation(text)
     assert 0 <= lands <= 20 and sum(sources) == lands
+
+
+def test_mana_holds_the_cards_not_cast_as_draws_that_count_for_nothing():
+    text = ixi("# Ixi: plan\n\n- **Win:** Imps.\n- **Not cast:** Sprite\n")
+    C = lambda n, k: comb(n, k) if 0 <= k <= n else 0
+    H = recommend.HORIZON
+    # the 9 Sprites stay among the 20 cards but count for nothing, so the 4 Imps fill 20 - 9 - L places: V as in the
+    # test above with 11 - L for 20 - L in the spells' term
+    q = lambda L, n: 1 - C(19 - L, n) / C(19, n)
+    V = lambda L: 1 - C(20 - L, 8) / C(20, 8) + (11 - L) * (8 * q(L, 7) + sum(q(L, 6 + d) for d in range(2, H + 1))) / 20
+    assert [round(V(L), 3) for L in (2, 3, 4)] == [6.337, 6.676, 6.419] and max(range(12), key=V) == 3
+    # at 3 lands the commander's {U} against 4 {B} Imps counting 8/4 each: G as above, of 3 lands
+    def met(u, pool, seen):
+        ways = {k: C(3, k) * C(pool - 3, seen - k) for k in range(1, 4)}
+        return sum(w * (1 - C(3 - u, k) / C(3, k)) for k, w in ways.items()) / sum(ways.values())
+    G = lambda u: met(u, 20, 8) + 2 * 4 * met(3 - u, 19, 7)
+    assert [round(G(u), 3) for u in (0, 1)] == [8.0, 6.851] and max(range(4), key=G) == 0
+    assert "| Lands | Nonlands | Not cast |" in text and "\n| 7 | 14 | 9 | 1.0 |" in text
+    assert "## Recommendation\n| Lands | Lands now | U | B |\n|---|---|---|---|\n| 3 | 7 | 0% (0) | 100% (3) |\n" in text
+
+
+def test_a_not_cast_name_off_the_list_is_printed_and_ignored(capsys):
+    # a name may hold a comma; Mystery Card is not in the list
+    text = ixi("- **Not cast:** Sprite, Mystery Card, Ixi, Tide Caller\n")
+    assert capsys.readouterr().out == "ixi: Not cast, not in list.txt: Mystery Card\n"
+    assert "\n| 7 | 14 | 10 | 1.0 |" in text
 
 
 def test_odds_mana_counts_ramp_from_the_turn_after_it_is_drawn():

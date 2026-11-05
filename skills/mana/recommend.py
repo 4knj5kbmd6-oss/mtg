@@ -7,10 +7,10 @@ import odds
 HORIZON = 10
 EPS = 1e-9
 
-def lands(size, spells, commanders):
-    """the fewest land drops, from 0 to size less the ramp, with the most weighted spells on time; None when size is
-    below the cards seen by the horizon. spells: (weight, mana value, due turn, is ramp); commanders: (weight, mana
-    value, due turn)"""
+def lands(size, spells, commanders, kept=0):
+    """the fewest land drops, from 0 to size less the ramp and the kept, with the most weighted spells on time; None
+    when size is below the cards seen by the horizon. spells: (weight, mana value, due turn, is ramp); commanders:
+    (weight, mana value, due turn); kept: the cards held fixed beside the ramp that count for nothing"""
     if size < odds.seen(HORIZON): return None
     ramp = [mv for _, mv, _, is_ramp in spells if is_ramp]
     others = len(spells) - len(ramp)
@@ -28,7 +28,7 @@ def lands(size, spells, commanders):
             key = (turn, pool, drawn, ready_ramp, late)
             if key not in tables: tables[key] = odds.supply(turn, pool, drawn, land, ready_ramp, late)
             return tables[key][want] if want < len(tables[key]) else 0.0
-        scale = (size - land - len(ramp)) / others if others else 0.0
+        scale = (size - land - len(ramp) - kept) / others if others else 0.0
         total = 0.0
         for (mv, due, is_ramp), w in cards.items():
             if not (weight := w if is_ramp else w * scale): continue
@@ -40,14 +40,14 @@ def lands(size, spells, commanders):
             total += w * chance(mv, due, size, 7 + due, ready[due], True)
         return total
 
-    values = [value(land) for land in range(size - len(ramp) + 1)]
+    values = [value(land) for land in range(size - len(ramp) - kept + 1)]
     return next(land for land, v in enumerate(values) if v >= max(values) - 1e-12)
 
-def terms(lands, size, identity, spells, commanders):
+def terms(lands, size, identity, spells, commanders, kept):
     """{pip vector, ((colour index, pips), ...): its cards' lands_seen tables, weighted and summed}"""
     ramp = sum(is_ramp for _, is_ramp, _, _ in spells)
     others = len(spells) - ramp
-    scale = (size - lands - ramp) / others if others else 0.0
+    scale = (size - lands - ramp - kept) / others if others else 0.0
     cards = [(w if is_ramp else w * scale, due, need, size - 1, 6 + due) for w, is_ramp, due, need in spells]
     cards += [(w, due, need, size, 7 + due) for w, due, need in commanders]
     deepest = max([sum(need.values()) for _, _, need, _, _ in cards] + [1])
@@ -62,19 +62,19 @@ def terms(lands, size, identity, spells, commanders):
             for j, x in enumerate(add): row[j] += w * x
     return merged
 
-def worth(allocation, lands, size, identity, spells, commanders):
+def worth(allocation, lands, size, identity, spells, commanders, kept=0):
     """the weighted cards whose pips are met on their due turn, given its lands, with allocation's sources of each
     colour among the lands. spells: (weight, is ramp, due turn, {colour: pips}); commanders: (weight, due turn,
-    {colour: pips})"""
+    {colour: pips}); kept as in lands()"""
     return sum(odds.met([allocation[identity[i]] for i, _ in vector], [p for _, p in vector], table)
-               for vector, table in terms(lands, size, identity, spells, commanders).items())
+               for vector, table in terms(lands, size, identity, spells, commanders, kept).items())
 
-def split(lands, size, identity, spells, commanders):
+def split(lands, size, identity, spells, commanders, kept=0):
     """{colour: sources}, summing to lands, with the most worth(), ties to the greatest in identity order"""
     m = len(identity)
     if m < 2: return dict.fromkeys(identity, lands)
     single, gold = [[0.0] * (lands + 1) for _ in identity], []
-    for vector, table in terms(lands, size, identity, spells, commanders).items():
+    for vector, table in terms(lands, size, identity, spells, commanders, kept).items():
         if len(vector) > 1: gold.append((vector, table)); continue
         (i, p), = vector
         for a in range(lands + 1): single[i][a] += odds.met([a], [p], table)
