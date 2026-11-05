@@ -10,20 +10,35 @@ value of lands are seen, or its pips when more; - when the deck has too few land
 the most any of its cards needs (ties: the lowest mana value, then by name). A chance or need is unknown when fewer of
 the deck's cards are known than are seen by its turn. A card's colours are its produced_mana within the identity; a fetch land's are also those of
 the basic land types it searches for, or every colour of the identity when it searches for a basic land card of no
-type. Pips are the {W} {U} {B} {R} {G} symbols of the front face's cost. Prints any card oracle.json lacks, left out of
-the counts."""
+type. Pips are the {W} {U} {B} {R} {G} symbols of the front face's cost. The recommendation (recommend.py) is the fewest
+lands that cast the most spells on time in a ten-turn game, each spell weighted by its Score in the deck's nonlands.md,
+the mean score when it has none, 1 when the deck has no scores: on time is on its due turn, its mana value or its pips
+when more, or the turn it is drawn if later, with lands played one a turn and each ramp piece, a permanent that taps for
+mana or a card that puts lands from the library onto the battlefield, a mana from the turn after both its mana value and
+the turn it is drawn; modal double-faced lands count as lands, in Lands now too. The split gives each colour of the
+identity the number of those lands, each making one colour, that casts the most cards' pips on their due turn given that
+turn's lands, and its share of them rounded to 5%. A real base meets the split when its lands match one to one the
+split's sources, each making its source's colour, which holds when every set of colours has at least its sources' total
+among the lands making one of them; every card's chance is then at least the split's. Prints any card oracle.json lacks,
+left out of the counts."""
 import json, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from project import ORACLE, decklist, front, is_land
-from tables import table
-import odds
+from project import DECKS, ORACLE, decklist, front, is_land, key
+from tables import table, split as sections, scores
+import odds, recommend
 
 COLOURS = "WUBRG"
 TYPES = {"Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G"}
 FETCH = re.compile(r"search your library for ([^.]*)", re.I)
 CURVE = [str(n) for n in range(7)] + ["7+"]
 CHANCE = 0.9
+REMINDER = re.compile(r"\([^)]*\)")
+TAPS = re.compile(r"^[^:]*\{T\}[^:]*: Add ", re.M)
+EXTRA = re.compile(r"\badds? an additional\b", re.I)
+SEARCH = re.compile(r"search your library for [^.]*?\b(?:land|Plains|Island|Swamp|Mountain|Forest) cards?\b[^.]*"
+                    r"\bonto the battlefield", re.I)
+SPENDS = re.compile(r"\bsacrifice (?:a|any number of) lands?\b", re.I)
 
 def colours(e, identity):
     """the colours of the identity e makes mana of, a fetch land's by the land types it searches for"""
@@ -36,6 +51,25 @@ def colours(e, identity):
 
 def pips(e, colour): return front(e).get("mana_cost", "").count(f"{{{colour}}}")
 
+def land_drop(e):
+    """whether e is played as a land: its front face is one, or its back face is and its front does not transform"""
+    faces = e.get("card_faces") or []
+    return is_land(e) or (len(faces) > 1 and "Land" in faces[1].get("type_line", "").split()
+                          and "transform" not in faces[0].get("oracle_text", "").lower())
+
+def ramp(e):
+    """whether e, not a land drop, is ramp: a permanent that taps for mana without sacrificing or adds mana to a land's,
+    or a card that puts lands from your library onto the battlefield without sacrificing lands"""
+    if land_drop(e): return False
+    text = REMINDER.sub("", front(e).get("oracle_text", ""))
+    permanent = not {"Instant", "Sorcery"} & set(front(e).get("type_line", "").split())
+    taps = any("Sacrifice" not in m[0] for m in TAPS.finditer(text)) or EXTRA.search(text)
+    return bool(permanent and taps or SEARCH.search(text) and not SPENDS.search(text))
+
+def due(e):
+    """the turn e is due on curve: its mana value, or its pips when more, 1 at least"""
+    return max(1, int(e.get("cmc", 0)), sum(pips(e, c) for c in COLOURS))
+
 def turn(e): return min(int(e.get("cmc", 0)), 7)
 
 def needed(e, colour, lands, size):
@@ -46,8 +80,35 @@ def needed(e, colour, lands, size):
     return next((s for s in range(want, lands + 1)
                  if odds.given_lands(want, s, lands, size, seen, least) >= CHANCE), None)
 
-def page(slug, commanders, rest):
-    """the mana file's text from [(copies, oracle entry)] of the commanders and of the rest of the deck"""
+def weights(slug):
+    """name -> its card's Score in the deck's nonlands.md Cards table, the mean of the deck's scores for a card with
+    none, 1 when the deck has none"""
+    path, got = DECKS / slug / "nonlands.md", {}
+    for row in scores(dict(sections(path.read_text())).get("## Cards", [])) if path.exists() else []:
+        try: got[key(row[0]).casefold()] = float(row[1])
+        except ValueError: pass
+    mean = sum(got.values()) / len(got) if got else 1.0
+    return lambda name: got.get(key(name).casefold(), mean)
+
+def advice(identity, commanders, rest, weight):
+    """the Recommendation table's row: the lands, the land drops now and each colour's share and sources"""
+    each = lambda cards: [e for n, e in cards for _ in range(n)]
+    card = lambda e: (weight(e["name"]), int(e.get("cmc", 0)), due(e), {c: pips(e, c) for c in identity if pips(e, c)})
+    deck = each(rest)
+    played = [(*card(e), ramp(e)) for e in deck if not land_drop(e)]
+    led = [card(e) for e in each(commanders)]
+    size, now = len(deck), sum(map(land_drop, deck))
+    lands = recommend.lands(size, [(w, mv, d, r) for w, mv, d, _, r in played], [(w, mv, d) for w, mv, d, _ in led])
+    if lands is None: return ["unknown", str(now), *["unknown"] * len(identity)]
+    if not lands: return ["0", str(now), *["-"] * len(identity)]
+    sources = recommend.split(lands, size, identity, [(w, r, d, need) for w, _, d, need, r in played],
+                              [(w, d, need) for w, _, d, need in led])
+    share = recommend.shares(sources)
+    return [str(lands), str(now), *(f"{share[c]}% ({sources[c]})" for c in identity)]
+
+def page(slug, commanders, rest, weight):
+    """the mana file's text from [(copies, oracle entry)] of the commanders and of the rest of the deck, and name ->
+    the card's weight"""
     deck = commanders + rest
     identity = [c for c in COLOURS if any(c in e.get("color_identity", []) for _, e in commanders)]
     lands = [(n, e) for n, e in deck if is_land(e)]
@@ -76,7 +137,9 @@ def page(slug, commanders, rest):
                                         [[str(count(lands)), str(count(spells)), f"{mean:.1f}", *map(str, curve)]]), "",
                       "## Lands", table("| 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |", [on_curve]), "",
                       "## Colours", table("| Colour | Land sources | Sources needed | For | Nonland sources | Pips |"
-                                          " Cards with 2+ pips | Lowest mana value of those |", rows), ""])
+                                          " Cards with 2+ pips | Lowest mana value of those |", rows), "",
+                      "## Recommendation", table("| " + " | ".join(["Lands", "Lands now", *identity]) + " |",
+                                                 [advice(identity, commanders, rest, weight)]), ""])
 
 def write(run, slug):
     cards = json.loads(ORACLE.read_text())["cards"]
@@ -85,7 +148,7 @@ def write(run, slug):
     if missing := [n for _, n in commanders + rest if n.casefold() not in named]:
         print(f"{slug}: not in oracle.json:", ", ".join(missing))
     entries = lambda part: [(c, named[n.casefold()]) for c, n in part if n.casefold() in named]
-    Path(run, f"{slug}-mana.md").write_text(page(slug, entries(commanders), entries(rest)))
+    Path(run, f"{slug}-mana.md").write_text(page(slug, entries(commanders), entries(rest), weights(slug)))
 
 def main():
     if len(sys.argv) < 3: sys.exit(__doc__)

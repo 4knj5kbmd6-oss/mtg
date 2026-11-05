@@ -16,7 +16,7 @@ Paths are relative to the working directory, the folder that holds `output/`.
 | `output/data/oracle.json` | Scryfall data for every card in every deck: rules text, cost, type, colour identity, the `game_changer` flag, rulings, `tags` (Scryfall's functional tags), `salt` (EDHREC saltiness, absent when unknown). Read it instead of fetching card by card; Scryfall only for a card missing from it |
 | `rankings.md` | Beside `output/`: the decks in strength order, each with its bracket, strength score (0 to 10) and kill turn, then their six criteria scores in a `Criteria` table |
 | `<run>/<slug>-combos.md` | Commander Spellbook's combos, its Included and Almost included tables with each combo's bracket tag and salt, and the cards it flags as mass land denial or extra turns. Spellbook knows only catalogued combos, so a plan's own kill may show nothing there |
-| `<run>/<slug>-mana.md` | Land count, curve, the chance of 2, 3 and 4 lands by turns 2, 3 and 4, colour sources against pips and each colour's land sources beside the sources needed to cast its most demanding card on curve 90% of the times the deck has drawn its lands |
+| `<run>/<slug>-mana.md` | Land count, curve, the chance of 2, 3 and 4 lands by turns 2, 3 and 4, colour sources against pips and each colour's land sources beside the sources needed to cast its most demanding card on curve 90% of the times the deck has drawn its lands, and the recommended land count with each colour's share of those lands |
 
 ## Rules questions
 

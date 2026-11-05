@@ -1,10 +1,11 @@
-import gzip, json, os, sys, time
+import gzip, json, os, random, sys, time
+from itertools import product
 from math import comb
 from pathlib import Path
 from urllib.error import URLError
 import pytest
 from conftest import ROOT, run, read
-import combos as script, facts, mana, odds
+import combos as script, facts, mana, odds, recommend
 from net import Failed
 
 SAVED = ROOT / "tests" / "spellbook"  # Spellbook's estimate-bracket answers for two real decks and its variants file, trimmed
@@ -180,6 +181,12 @@ CARDS = {  # name: (type, cost, mana value, produced_mana, oracle text)
 }
 
 
+def recommendation(text):
+    """the Recommendation row's Lands and each colour's sources"""
+    row = [c.strip() for c in text.split("## Recommendation\n")[1].splitlines()[2].strip("|").split("|")]
+    return int(row[0]), [int(c.split("(")[1].rstrip(")")) for c in row[2:]]
+
+
 def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
     oracle = {n: {"name": n, "type_line": t, "cmc": v, "oracle_text": o, "color_identity": ["B", "U"] if n.startswith("Lazav") else [],
                   **({"mana_cost": c} if c else {}), **({"produced_mana": p} if p else {})} for n, (t, c, v, p, o) in CARDS.items()}
@@ -210,7 +217,15 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 |---|---|---|---|---|---|---|---|
 | U | 10 | 7 | Counterspell | 2 | 6 | 3 | 2 |
 | B | 7 | 7 | Massacre Wurm | 3 | 8 | 3 | 3 |
+
+## Recommendation
+| Lands | Lands now | U | B |
+|---|---|---|---|
+| 8 | 13 | 40% (3) | 60% (5) |
 """
+    # ramp: Mox Opal, Sol Ring, Arcane Signet (Dark Ritual is an instant); 3/8 and 5/8 tie on remainder, U first
+    lands, sources = recommendation(read("run/lazav-mana.md"))
+    assert 0 <= lands <= 21 - 3 and sum(sources) == lands
 
 
 def test_mana_needs_the_sources_that_cast_a_card_on_curve_nine_times_in_ten():
@@ -291,7 +306,123 @@ def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
 | Colour | Land sources | Sources needed | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
 |---|---|---|---|---|---|---|---|
 | U | 5 | unknown | - | 0 | 1 | 0 | - |
+
+## Recommendation
+| Lands | Lands now | U |
+|---|---|---|
+| unknown | 5 | unknown |
 """
+
+
+def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time():
+    card = lambda name, cost: {"name": name, "type_line": "Artifact", "cmc": 1, "mana_cost": cost, "oracle_text": ""}
+    land = lambda name, colour: {"name": name, "type_line": f"Basic Land — {name}", "cmc": 0, "produced_mana": [colour]}
+    oracle = {"Ixi, Tide Caller": {**card("Ixi, Tide Caller", "{U}"), "type_line": "Legendary Creature",
+                                   "color_identity": ["B", "U"]},
+              "Island": land("Island", "U"), "Swamp": land("Swamp", "B"), "Sprite": card("Sprite", "{U}"),
+              "Imp": card("Imp", "{B}")}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("ixi", "Ixi, Tide Caller", {"Island": 4, "Swamp": 3, "Sprite": 9, "Imp": 4})
+    Path("run").mkdir()
+    mana.write("run", "ixi")
+    C = lambda n, k: comb(n, k) if 0 <= k <= n else 0
+    H = recommend.HORIZON
+    # 20 cards, no ramp, every card due on turn 1, so on time is a land among the other cards seen by the turn it is
+    # cast: turn 1 from the opening 7 or the first draw (8 places of 20, 7 others seen), else the turn d it is drawn
+    # (6 + d others seen); q(L, n) is a land among n of the 19 others. The commander needs a land among 8 of the 20,
+    # and the 13 spells fill 20 - L places
+    q = lambda L, n: 1 - C(19 - L, n) / C(19, n)
+    V = lambda L: 1 - C(20 - L, 8) / C(20, 8) + (20 - L) * (8 * q(L, 7) + sum(q(L, 6 + d) for d in range(2, H + 1))) / 20
+    assert [round(V(L), 3) for L in (3, 4, 5)] == [13.279, 13.517, 13.231] and max(range(21), key=V) == 4
+    # at 4 lands, k of them among the 7 others a spell sees by turn 1 (the commander: 8 of 20), given 1 or more: a {U}
+    # card is met unless the k all miss the u Islands; the 13 spells count 16/13 each
+    def met(u, pool, seen):
+        ways = {k: C(4, k) * C(pool - 4, seen - k) for k in range(1, 5)}
+        return sum(w * (1 - C(4 - u, k) / C(4, k)) for k, w in ways.items()) / sum(ways.values())
+    G = lambda u: met(u, 20, 8) + 16 / 13 * (9 * met(u, 19, 7) + 4 * met(4 - u, 19, 7))
+    assert [round(G(u), 3) for u in (2, 3, 4)] == [11.99, 12.794, 12.077] and max(range(5), key=G) == 3
+    text = read("run/ixi-mana.md")
+    assert "## Recommendation\n| Lands | Lands now | U | B |\n|---|---|---|---|\n| 4 | 7 | 75% (3) | 25% (1) |\n" in text
+    lands, sources = recommendation(text)
+    assert 0 <= lands <= 20 and sum(sources) == lands
+
+
+def test_odds_mana_counts_ramp_from_the_turn_after_it_is_drawn():
+    # 1 land drop, 1 ramp and 2 others, 2 drawn on turn 1: only {land, ramp} of the 6 pairs makes 2 mana, and when one
+    # of the drawn is the turn's draw it is the ramp half the time
+    assert odds.mana(2, 1, 4, 2, 1, 1, False) == 1 / 6
+    assert odds.mana(2, 1, 4, 2, 1, 1, True) == pytest.approx(1 / 12)
+
+
+def test_odds_met_needs_every_colours_pips():
+    # 2 U and 2 B lands, both of 2 drawn lands: one of each in 4 of the 6 pairs
+    table = odds.lands_seen(4, 4, 2, 2, 1)
+    assert odds.met([2, 2], [1, 1], table) == pytest.approx(2 / 3)
+
+
+def test_split_matches_the_exhaustive_optimum():
+    rng = random.Random(3)
+    for identity, lands in ((["W", "U", "B"], 20), (["W", "U", "B", "G"], 12)):
+        spells = []
+        for _ in range(30):
+            colours = rng.sample(identity, rng.choice([1, 1, 1, 2, 3]))
+            need = {c: rng.choice([1, 1, 2]) if len(colours) == 1 else 1 for c in identity if c in colours}
+            spells.append((rng.randint(1, 10), rng.random() < 0.2, max(sum(need.values()), rng.randint(1, 5)), need))
+        commanders = [(8, 3, {identity[0]: 1, identity[-1]: 1})]
+        every = [s for s in product(range(lands + 1), repeat=len(identity)) if sum(s) == lands]
+        value = {s: recommend.worth(dict(zip(identity, s)), lands, 60, identity, spells, commanders) for s in every}
+        best = max(s for s in every if value[s] >= max(value.values()) - 1e-9)
+        assert recommend.split(lands, 60, identity, spells, commanders) == dict(zip(identity, best))
+
+
+def test_shares_are_fives_summing_to_100():
+    # 3/8 and 5/8 of 20 are 7.5 and 12.5: the remainders tie, so the first colour takes the twentieth left over
+    assert recommend.shares({"U": 3, "B": 5}) == {"U": 40, "B": 60}
+    assert recommend.shares({"W": 1, "U": 1, "B": 1}) == {"W": 35, "U": 35, "B": 30}
+    for lands in range(1, 46):
+        two = [(a, lands - a) for a in range(lands + 1)]
+        for s in two + [(a, b, rest - b) for a, rest in two for b in range(rest + 1)]:
+            got = list(recommend.shares(dict(zip("WUB", s))).values())
+            assert sum(got) == 100 and all(p % 5 == 0 and abs(p - 100 * c / lands) <= 5 for p, c in zip(got, s))
+
+
+RAMP = {  # name: (type, cost, mana value, oracle text)
+    "Llanowar Elves": ("Creature — Elf Druid", "{G}", 1, "{T}: Add {G}."),
+    "Sol Ring": ("Artifact", "{1}", 1, "{T}: Add {C}{C}."),
+    "Arcane Signet": ("Artifact", "{2}", 2, "{T}: Add one mana of any color in your commander's color identity."),
+    "Rakdos Signet": ("Artifact", "{2}", 2, "{1}, {T}: Add {B}{R}."),
+    "Wild Growth": ("Enchantment — Aura", "{G}", 1, "Enchant land\nWhenever enchanted land is tapped for mana, its controller adds an additional {G}."),
+    "Rampant Growth": ("Sorcery", "{1}{G}", 2, "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle."),
+    "Sakura-Tribe Elder": ("Creature — Snake Shaman", "{1}{G}", 2, "Sacrifice this creature: Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle."),
+}
+NOT_RAMP = {
+    "Lotus Petal": ("Artifact", "{0}", 0, "{T}, Sacrifice this artifact: Add one mana of any color."),
+    "Dark Ritual": ("Instant", "{B}", 1, "Add {B}{B}{B}."),
+    "Path to Exile": ("Instant", "{W}", 1, "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle."),
+    "Harrow": ("Instant", "{2}{G}", 3, "As an additional cost to cast this spell, sacrifice a land.\nSearch your library for up to two basic land cards, put them onto the battlefield, then shuffle."),
+    "Bubbling Muck": ("Sorcery", "{B}", 1, "Until end of turn, whenever a player taps a Swamp for mana, that player adds an additional {B}."),
+    "Greedy Freebooter": ("Creature — Human Pirate", "{B}", 1, 'When this creature dies, scry 1 and create a Treasure token. (To scry 1, look at the top card of your library. You may put that card on the bottom. A Treasure token is an artifact with "{T}, Sacrifice this token: Add one mana of any color.")'),
+    "Ashnod's Altar": ("Artifact", "{3}", 3, "Sacrifice a creature: Add {C}{C}."),
+}
+FACES = {  # name: (front, back), each (type, cost, mana value, oracle text)
+    "Malakir Rebirth // Malakir Mire": (
+        ("Instant", "{B}", 1, 'Choose target creature. You lose 2 life. Until end of turn, that creature gains "When this creature dies, return it to the battlefield tapped under its owner\'s control."'),
+        ("Land", "", 0, "This land enters tapped.\n{T}: Add {B}.")),
+    "Search for Azcanta // Azcanta, the Sunken Ruin": (
+        ("Legendary Enchantment", "{1}{U}", 2, "At the beginning of your upkeep, look at the top card of your library. You may put it into your graveyard. Then if you have seven or more cards in your graveyard, you may transform Search for Azcanta."),
+        ("Legendary Land", "", 0, "(Transforms from Search for Azcanta.)\n{T}: Add {U}.\n{2}{U}, {T}: Look at the top four cards of your library. You may reveal a noncreature, nonland card from among them and put it into your hand. Put the rest on the bottom of your library in any order.")),
+}
+
+
+def test_ramp_and_land_drops_read_from_oracle_text():
+    entry = lambda name, kind, cost, value, text: {"name": name, "type_line": kind, "mana_cost": cost, "cmc": value,
+                                                   "oracle_text": text}
+    assert [n for n, card in RAMP.items() if mana.ramp(entry(n, *card))] == list(RAMP)
+    assert [n for n, card in NOT_RAMP.items() if mana.ramp(entry(n, *card))] == []
+    # a modal land is a land drop and not ramp; a card that transforms into a land is neither
+    faced = {n: {"name": n, "cmc": front[2], "card_faces": [entry(n, *front), entry(n, *back)]}
+             for n, (front, back) in FACES.items()}
+    assert [(mana.land_drop(e), mana.ramp(e)) for e in faced.values()] == [(True, False), (False, False)]
 
 
 def test_facts_writes_both_files_per_deck(combos, monkeypatch):
