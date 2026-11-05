@@ -2,7 +2,7 @@
 
 Implement the mtg change named in your prompt, following this brief and
 agents/builder.md. The repo is `/Users/tdienes/git/mtg`, public at
-github.com/4knj5kbmd6-oss/mtg, with no tester. Requests are GitHub
+github.com/4knj5kbmd6-oss/mtg-toolbox, with no tester. Requests are GitHub
 issues there; the orchestrator fast-forwards `main` to your branch,
 amends the patch bump of `version` in `.claude-plugin/plugin.json`
 into that landing commit, pushes, and refreshes the owner's installed copy

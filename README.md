@@ -10,12 +10,12 @@ builder.
 In Claude Code:
 
 ```
-/plugin marketplace add 4knj5kbmd6-oss/mtg
+/plugin marketplace add 4knj5kbmd6-oss/mtg-toolbox
 /plugin install mtg-toolbox
 ```
 
 Or in one step from a shell:
-`claude plugin install mtg-toolbox --marketplace 4knj5kbmd6-oss/mtg`.
+`claude plugin install mtg-toolbox --marketplace 4knj5kbmd6-oss/mtg-toolbox`.
 
 The skills read and write `output/` in the folder you open Claude Code in.
 They need Python 3.9 or later with Pillow (`pip install pillow`), and
