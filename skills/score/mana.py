@@ -1,8 +1,10 @@
 """A deck's mana facts from its list and oracle.json, its <run_dir>/<slug>-mana.md, for facts.py.
-write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands, their mean mana
-value and curve; the odds of exactly 2, 3 and 4 lands in an opening seven drawn from the deck without its
-commanders, unknown when fewer than seven of its cards are known; and per colour of the commanders' identity, the land sources, the nonland sources, the pips, the cards
-with two or more pips of it and the lowest mana value among those. A card's colours are its produced_mana within the
+write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands and karsten.py's land count;
+the nonlands, their mean mana value and curve; the odds of exactly 2, 3 and 4 lands in an opening seven drawn from the
+deck without its commanders, unknown when fewer than seven of its cards are known; and per colour of the commanders'
+identity, the land sources, the most karsten.py's table asks of them for a nonland card with a pip of it and that card
+(ties: the lowest mana value, then by name), the nonland sources, the pips, the cards with two or more pips of it and
+the lowest mana value among those. A card's colours are its produced_mana within the
 identity; a fetch land's are also those of the basic land types it searches for, or every colour of the identity
 when it searches for a basic land card of no type. Pips are the {W} {U} {B} {R} {G} symbols of the front face's
 cost. Prints any card oracle.json lacks, left out of the counts."""
@@ -12,6 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from project import ORACLE, decklist, front, is_land
 from tables import table
+import karsten
 
 COLOURS = "WUBRG"
 TYPES = {"Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G"}
@@ -39,6 +42,8 @@ def page(slug, commanders, rest):
     mean = sum(n * e.get("cmc", 0) for n, e in spells) / max(count(spells), 1)
     curve = [count((n, e) for n, e in spells if min(int(e.get("cmc", 0)), 7) == i) for i in range(8)]
     size, drawn = count(rest), count((n, e) for n, e in rest if is_land(e))
+    cheap = count((n, e) for n, e in spells if karsten.cheap(e.get("cmc", 0), front(e).get("oracle_text", ""),
+                                                             "Creature" in front(e).get("type_line", "")))
     odds = [f"{comb(drawn, k) * comb(size - drawn, 7 - k) / comb(size, 7):.0%}" if size >= 7 else "unknown"
             for k in (2, 3, 4)]
     rows = []
@@ -46,14 +51,17 @@ def page(slug, commanders, rest):
         sources = lambda cards: count((n, e) for n, e in cards if c in colours(e, identity))
         heavy = [(n, e) for n, e in spells if pips(e, c) >= 2]
         lowest = f"{min(e.get('cmc', 0) for _, e in heavy):g}" if heavy else "-"
-        rows.append([c, *map(str, (sources(lands), sources(spells), sum(n * pips(e, c) for n, e in spells),
-                                   count(heavy))), lowest])
+        need = lambda e: karsten.sources(int(e.get("cmc", 0)), pips(e, c))
+        top = min((e for _, e in spells if pips(e, c)), key=lambda e: (-need(e), e.get("cmc", 0), e["name"]), default=None)
+        rows.append([c, str(sources(lands)), *([str(need(top)), top["name"]] if top else ["-", "-"]),
+                     *map(str, (sources(spells), sum(n * pips(e, c) for n, e in spells), count(heavy))), lowest])
     return "\n".join([f"# {slug}: mana", "",
-                      "## Curve", table("| Lands | Nonlands | Mean mana value | " + " | ".join(CURVE) + " |",
-                                        [[str(count(lands)), str(count(spells)), f"{mean:.1f}", *map(str, curve)]]), "",
+                      "## Curve", table("| Lands | Karsten lands | Nonlands | Mean mana value | " + " | ".join(CURVE) + " |",
+                                        [[str(count(lands)), f"{karsten.lands(mean, cheap):.1f}", str(count(spells)),
+                                          f"{mean:.1f}", *map(str, curve)]]), "",
                       "## Opening seven", table("| 2 lands | 3 lands | 4 lands |", [odds]), "",
-                      "## Colours", table("| Colour | Land sources | Nonland sources | Pips | Cards with 2+ pips |"
-                                          " Lowest mana value of those |", rows), ""])
+                      "## Colours", table("| Colour | Land sources | Karsten sources | For | Nonland sources | Pips |"
+                                          " Cards with 2+ pips | Lowest mana value of those |", rows), ""])
 
 def write(run, slug):
     cards = json.loads(ORACLE.read_text())["cards"]

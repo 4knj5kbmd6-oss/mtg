@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.error import URLError
 import pytest
 from conftest import ROOT, run, read
-import combos as script, facts, mana
+import combos as script, facts, karsten, mana
 from net import Failed
 
 SAVED = ROOT / "tests" / "spellbook"  # Spellbook's estimate-bracket answers for two real decks and its variants file, trimmed
@@ -190,12 +190,14 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
     # 13 lands and 8 nonlands in the 21 drawn from; 9 nonlands with the commander, 26 mana value between them
     # U: Delta, Strand, Path, Passage, Wilds, Tower, 4 Island; Mox, Signet; Lazav 2, Counterspell 2, Sphinx 2
     # B: Delta, Passage, Wilds, Tower, 3 Swamp; Mox, Ritual, Signet; Lazav 2, Ritual 1, Arena 2, Wurm 3
+    # cheap: Mox, Sol Ring, Ritual, Signet add mana; Arena draws but costs three. 31.42 + 3.13 * 26/9 - 0.28 * 4
+    # U needs: Lazav 4UU 26, Counterspell UU 30, Sphinx 5UU 20. B: Ritual B 19, Lazav 26, Arena 1BB 28, Wurm 3BBB 28
     assert read("run/lazav-mana.md") == """# lazav: mana
 
 ## Curve
-| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 13 | 9 | 2.9 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 1 |
+| Lands | Karsten lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 13 | 39.3 | 9 | 2.9 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 1 |
 
 ## Opening seven
 | 2 lands | 3 lands | 4 lands |
@@ -203,11 +205,48 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 | 4% | 17% | 34% |
 
 ## Colours
-| Colour | Land sources | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
-|---|---|---|---|---|---|
-| U | 10 | 2 | 6 | 3 | 2 |
-| B | 7 | 3 | 8 | 3 | 3 |
+| Colour | Land sources | Karsten sources | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
+|---|---|---|---|---|---|---|---|
+| U | 10 | 30 | Counterspell | 2 | 6 | 3 | 2 |
+| B | 7 | 28 | Phyrexian Arena | 3 | 8 | 3 | 3 |
 """
+
+
+def test_mana_reads_a_cost_off_karstens_table_as_the_listed_one_below_it():
+    oracle = {"Kraken": {"name": "Kraken", "type_line": "Legendary Creature", "cmc": 8, "mana_cost": "{6}{U}{U}",
+                         "color_identity": ["B", "U"]},
+              "Bog Thing": {"name": "Bog Thing", "type_line": "Creature", "cmc": 9, "mana_cost": "{8}{B}"},
+              "Swamp Spirit": {"name": "Swamp Spirit", "type_line": "Creature", "cmc": 2, "mana_cost": "{1}{B}",
+                               "oracle_text": "When this creature enters, draw a card."},
+              "Swamp": {"name": "Swamp", "type_line": "Basic Land — Swamp", "cmc": 0, "produced_mana": ["B"]}}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("kraken", "Kraken", {"Bog Thing": 1, "Swamp Spirit": 1, "Swamp": 6})
+    Path("run").mkdir()
+    mana.write("run", "kraken")
+    # 6UU reads as 5UU, 20; 8B as 5B, 14, below Swamp Spirit's 1B, 19. 31.42 + 3.13 * 19/3 - 0.28 * 1
+    assert "| 6 | 51.0 | 3 | 6.3 |" in read("run/kraken-mana.md")
+    assert "| B | 6 | 19 | Swamp Spirit |" in read("run/kraken-mana.md")
+    assert "| U | 0 | 20 | Kraken |" in read("run/kraken-mana.md")
+    assert (karsten.sources(9, 1), karsten.sources(5, 5), karsten.sources(9, 3)) == (14, 36, 26)
+
+
+@pytest.mark.parametrize("value, text, creature, cheap", [
+    (1, "Look at the top three cards of your library, then put one into your hand.", False, True),
+    (1, "Look at the top three cards of your library, then put one into your hand. You may pay 2 life.", False, False),
+    (2, "When this creature enters, draw a card.", True, True),
+    (2, "Whenever this creature attacks, draw a card.", True, False),
+    (2, "Draw a card. Create a Blood token.", False, False),
+    (3, "Draw two cards.", False, False),
+    (2, "Flying\nCycling {U} ({U}, Discard this card: Draw a card.)", True, True),
+    (2, "Flying\nCycling {2} ({2}, Discard this card: Draw a card.)", True, False),
+    (2, "When this creature dies, add {B}{B}.", True, False),
+    (2, "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", False, True),
+    (2, "Sacrifice this: Search your library for a basic land card, put it onto the battlefield.", False, False),
+    (2, "Whenever enchanted land is tapped for mana, its controller adds an additional {G}.", False, True),
+    (2, "{T}: You may put a creature card with mana value 3 or less from your hand onto the battlefield.", True, True),
+])
+def test_karsten_counts_cheap_draw_and_ramp_by_his_oracle_text_rules(value, text, creature, cheap):
+    assert karsten.cheap(value, text, creature) == cheap
 
 
 def test_mana_odds_are_unknown_with_fewer_than_seven_known_cards(capsys):
@@ -223,9 +262,9 @@ def test_mana_odds_are_unknown_with_fewer_than_seven_known_cards(capsys):
     assert read("run/tiny-mana.md") == """# tiny: mana
 
 ## Curve
-| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 5 | 2 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+| Lands | Karsten lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 5 | 36.1 | 2 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 
 ## Opening seven
 | 2 lands | 3 lands | 4 lands |
@@ -233,9 +272,9 @@ def test_mana_odds_are_unknown_with_fewer_than_seven_known_cards(capsys):
 | unknown | unknown | unknown |
 
 ## Colours
-| Colour | Land sources | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
-|---|---|---|---|---|---|
-| U | 5 | 0 | 1 | 0 | - |
+| Colour | Land sources | Karsten sources | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
+|---|---|---|---|---|---|---|---|
+| U | 5 | 19 | Zara, Tide Caller | 0 | 1 | 0 | - |
 """
 
 
