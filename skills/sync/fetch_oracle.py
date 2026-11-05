@@ -2,21 +2,23 @@
 Adds table of every output/decks/*/nonlands.md and lands.md, each card with its Scryfall rulings (the comment
 texts, oldest first) from Scryfall's bulk rulings file and its tags: the labels of its Scryfall functional tags and every
 tag above them in the tag tree, from Scryfall's bulk oracle tags file, cached as output/data/oracle-tags.jsonl.gz and
-downloaded again only when Scryfall's bulk index shows a newer one. Given card names, instead fetch each one oracle.json
-lacks singly from Scryfall into it, with its rulings and its tags from the cached file, every other entry as it was.
+downloaded again only when Scryfall's bulk index shows a newer one, and its salt, its EDHREC saltiness, from MTGJSON's
+AtomicCards.json.gz, cached in output/data/ and downloaded again only when MTGJSON's Meta.json version changes (no salt
+when MTGJSON has none). Given card names, instead fetch each one oracle.json lacks singly from Scryfall into it, with its
+rulings, and its tags and salt from the cached files, every other entry as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py ["Card Name" ...]"""
 import gzip, json, os, re, sys
 from datetime import datetime
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from net import get, SCRYFALL
+from net import get, MTGJSON, SCRYFALL
 from project import card, write, ORACLE, DATA, DECKS
 from tables import adds
 API, BATCH = f"{SCRYFALL}/cards/collection", 75  # Scryfall's most names per collection request
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
 FACE = ["name", "mana_cost", "type_line", "oracle_text", "colors", "power", "toughness", "loyalty"]
-TAGS = DATA / "oracle-tags.jsonl.gz"
+TAGS, ATOMIC = DATA / "oracle-tags.jsonl.gz", DATA / "AtomicCards.json.gz"
 
 def post(names):
     r = json.loads(get(API, {"identifiers": [{"name": n} for n in names]}))
@@ -56,6 +58,20 @@ def tags(index=None):
         for g in t["taggings"]: out.setdefault(g["oracle_id"], set()).update(labels)
     return {o: sorted(labels) for o, labels in out.items()}
 
+def salts(fresh=False):
+    """oracle_id -> its EDHREC saltiness, from the cached copy of MTGJSON's atomic cards, {} with none; fresh, that copy
+    is downloaded again first when MTGJSON's Meta.json names a version other than its own"""
+    atomic = json.loads(gzip.decompress(ATOMIC.read_bytes())) if ATOMIC.exists() else {}
+    if fresh and atomic.get("meta", {}).get("version") != json.loads(get(f"{MTGJSON}/Meta.json"))["data"]["version"]:
+        raw = get(f"{MTGJSON}/AtomicCards.json.gz")
+        replace(ATOMIC, raw); atomic = json.loads(gzip.decompress(raw))
+    return {f["identifiers"]["scryfallOracleId"]: f["edhrecSaltiness"] for faces in atomic.get("data", {}).values()
+            for f in faces if "edhrecSaltiness" in f and "scryfallOracleId" in f["identifiers"]}
+
+def community(o, tagged, salty):
+    """the tags of the card with oracle id o, and its salt when MTGJSON has one"""
+    return {"tags": tagged.get(o, []), **({"salt": salty[o]} if o in salty else {})}
+
 def entry(c):
     e = {k: c[k] for k in KEEP if k in c}
     e["legalities"] = {"commander": c["legalities"].get("commander")}
@@ -79,15 +95,15 @@ def replace(path, data):
 def save(oracle): replace(ORACLE, json.dumps(oracle, indent=1, sort_keys=True))
 
 def add(names):
-    """fetch each of names oracle.json, if any, lacks singly into it, with its rulings and tags; the names Scryfall has no
-    card for"""
-    oracle = json.loads(ORACLE.read_text()) if ORACLE.exists() else {"cards": {}}; missing = []; tagged = None
+    """fetch each of names oracle.json, if any, lacks singly into it, with its rulings, tags and salt; the names Scryfall
+    has no card for"""
+    oracle = json.loads(ORACLE.read_text()) if ORACLE.exists() else {"cards": {}}; missing = []; known = None
     for n in names:
         c = card(n, oracle["cards"])
         if c is None: missing.append(n)
         elif c not in oracle["cards"].values():
-            tagged = tags() if tagged is None else tagged
-            oracle["cards"][c["name"]] = {**entry(c), "rulings": c["rulings"], "tags": tagged.get(c.get("oracle_id"), [])}
+            known = known or (tags(), salts())
+            oracle["cards"][c["name"]] = {**entry(c), "rulings": c["rulings"], **community(c.get("oracle_id"), *known)}
     save(oracle)
     return missing
 
@@ -105,8 +121,8 @@ def rebuild():
         if n not in out and n.split(" // ")[0] not in {k.split(" // ")[0] for k in out}:
             got, _ = post([n])
             out.update({c["name"]: entry(c) for c in got})
-    index = bulk(); said, tagged = rulings(index), tags(index)
-    for e in out.values(): e["rulings"], e["tags"] = said.get(e.get("oracle_id"), []), tagged.get(e.get("oracle_id"), [])
+    index = bulk(); said, tagged, salty = rulings(index), tags(index), salts(fresh=True)
+    for e in out.values(): e.update(rulings=said.get(e.get("oracle_id"), []), **community(e.get("oracle_id"), tagged, salty))
     save({"cards": out})
     fronts = {n.split(" // ")[0] for n in out}
     print(len(names), "requested,", len(out), "saved; missing:", [n for n in names if n.split(" // ")[0] not in fronts])

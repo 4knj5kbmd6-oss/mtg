@@ -1,8 +1,8 @@
-import gzip, json
+import gzip, importlib, json, sys
 from pathlib import Path
 import pytest
 from conftest import ROOT, run, read, snapshot
-import fetch_oracle, project, sync
+import fetch_oracle, net, project, sync
 
 LIST = "output/decks/zara/list.txt"
 MOX = ROOT / "tests" / "moxfield" / "mox.json"  # fetch.js's answer: Zara, a new deck, two decks sync skips, a blocked one
@@ -71,6 +71,52 @@ def test_import(shape):
     assert out.returncode == 0, out.stderr
     assert out.stdout == "imported: 8 cards, 1 of them commander" + (", 1 in the sideboard" if side else "") + "\n"
     assert read("output/decks/imported/list.txt") == DECK + (SIDE if side else "")
+
+
+DECKS = {"data": [  # MTGJSON's DeckList.json
+    {"name": "Creative Energy", "code": "M3C", "fileName": "CreativeEnergy_M3C", "type": "Commander Deck"},
+    {"name": "Creative Energy Collector's Edition", "code": "M3C", "fileName": "CreativeEnergyCE_M3C", "type": "Commander Deck"},
+    {"name": "Tidal Pull", "code": "ZTC", "fileName": "TidalPull_ZTC", "type": "Commander Deck"},
+    {"name": "Tidal Pulse", "code": "ZTC", "fileName": "TidalPulse_ZTC", "type": "Commander Deck"},
+    {"name": "Zara's Tide", "code": "ZTC", "fileName": "ZarasTide_ZTC", "type": "Commander Deck"},
+    {"name": "Zara's Theme", "code": "ZTH", "fileName": "ZarasTheme_ZTH", "type": "Theme Deck"}]}
+PRECON = {"data": {"name": "Zara's Tide", "commander": [{"name": "Zara, Tide Caller", "count": 1}],  # each printing apart
+                   "mainBoard": [{"name": "Sol Ring", "count": 1}, {"name": "Island", "count": 3},
+                                 {"name": "Brine Elemental", "count": 1}, {"name": "Island", "count": 1},
+                                 {"name": "Coral Signet", "count": 1}], "sideBoard": []}}
+
+
+def precon(monkeypatch, name):
+    """import.py run on a precon name against MTGJSON's deck list and Zara's Tide; the deck files it asked for"""
+    asked, imp = [], importlib.import_module("import")
+    def get(url):
+        if url == f"{net.MTGJSON}/DeckList.json": return json.dumps(DECKS).encode()
+        asked.append(url); return json.dumps(PRECON).encode()
+    monkeypatch.setattr(imp, "get", get)
+    monkeypatch.setattr(sys, "argv", ["import.py", "tide", name])
+    imp.main()
+    return asked
+
+
+@pytest.mark.parametrize("name", ["Zara's Tide", "zara's t", "ZARA"])
+def test_import_a_precon_by_name_or_unique_prefix(monkeypatch, capsys, name):
+    assert precon(monkeypatch, name) == [f"{net.MTGJSON}/decks/ZarasTide_ZTC.json"]
+    assert read("output/decks/tide/list.txt") == DECK
+    assert capsys.readouterr().out == "tide: 8 cards, 1 of them commander\n"
+
+
+def test_import_a_precon_whose_name_begins_another(monkeypatch):
+    assert precon(monkeypatch, "creative energy") == [f"{net.MTGJSON}/decks/CreativeEnergy_M3C.json"]
+
+
+@pytest.mark.parametrize("name, said", [
+    ("tidal", "several Commander precons named 'tidal'; candidates:\nTidal Pull (ZTC)\nTidal Pulse (ZTC)"),
+    ("Zara's Theme", "no Commander precons named \"Zara's Theme\"; candidates:\nCreative Energy (M3C)\n"
+                     "Creative Energy Collector's Edition (M3C)\nTidal Pull (ZTC)\nTidal Pulse (ZTC)\nZara's Tide (ZTC)")])
+def test_an_ambiguous_or_unknown_precon_prints_the_candidates(monkeypatch, name, said):
+    with pytest.raises(SystemExit) as out: precon(monkeypatch, name)
+    assert str(out.value) == said
+    assert not Path("output/decks/tide").exists()
 
 
 def test_import_reports_what_it_cannot_parse():
@@ -153,10 +199,22 @@ TAGS = gzip.compress("\n".join(map(json.dumps, TREE)).encode())
 NOV = "2026-11-01T00:00:00.000+00:00"
 INDEX = {"data": [{"type": "oracle_cards"}, {"type": "rulings", "jsonl_download_uri": "rulings"},
                   {"type": "oracle_tags", "updated_at": NOV, "jsonl_download_uri": "tags"}]}
+ATOMIC = {"meta": {"version": "5.3.0+20261101"}, "data": {  # MTGJSON's atomic cards, one per face
+    "Rising Tide // Tidal Flats": [{"faceName": f, "edhrecSaltiness": 0.5, "identifiers": {"scryfallOracleId": "tide"}}
+                                   for f in ("Rising Tide", "Tidal Flats")],
+    "Sol Ring": [{"edhrecSaltiness": 1.59, "identifiers": {"scryfallOracleId": "Sol Ring"}}],
+    "Tidal Wave": [{"edhrecSaltiness": 0.2, "identifiers": {"scryfallOracleId": "wave"}}],
+    "Island": [{"identifiers": {"scryfallOracleId": "Island"}}]}}
+
+
+def mtgjson(version="5.3.0+20261101"):
+    """MTGJSON's Meta.json naming version, and its atomic cards"""
+    return {f"{net.MTGJSON}/Meta.json": json.dumps({"data": {"version": version}}).encode(),
+            f"{net.MTGJSON}/AtomicCards.json.gz": gzip.compress(json.dumps(ATOMIC).encode())}
 
 
 def scryfall(posts):
-    """Scryfall's collection, bulk-data, rulings and oracle tags answers. A double-faced card is found only by its front face, and
+    """Scryfall's collection, bulk-data, rulings and oracle tags answers, and MTGJSON's. A double-faced card is found only by its front face, and
     Sign in Blood only when posted alone (in a batch it comes back as neither found nor not found)."""
     def get(url, body=None):
         if body:
@@ -169,6 +227,7 @@ def scryfall(posts):
             return json.dumps({"data": data, "not_found": lost}).encode()
         if url.endswith("/bulk-data"): return json.dumps(INDEX).encode()
         if url == "tags": return TAGS
+        if url.startswith(net.MTGJSON): return mtgjson()[url]
         assert url == "rulings"
         return gzip.compress(b'{"oracle_id": "tide", "published_at": "2024-02-01", "comment": "Second."}\n'
                              b'{"oracle_id": "tide", "published_at": "2023-01-01", "comment": "First."}\n')
@@ -189,11 +248,12 @@ def test_rebuild_retries_double_faced_cards_by_front_face_and_lone_names_alone(m
     assert cards["Rising Tide // Tidal Flats"] == {
         "name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
         "legalities": {"commander": "legal"}, "related_tokens": ["Fish"], "rulings": ["First.", "Second."],
-        "tags": ["removal", "removal-creature", "spot removal"], "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
+        "tags": ["removal", "removal-creature", "spot removal"], "salt": 0.5, "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
                        {"name": "Tidal Flats", "type_line": "Land"}]}
     assert cards["Sol Ring"]["rulings"] == []
     assert cards["Sol Ring"]["tags"] == ["mana producer", "mana rock", "ramp"]
-    assert cards["Island"]["tags"] == []
+    assert cards["Island"]["tags"] == [] and "salt" not in cards["Island"]
+    assert cards["Sol Ring"]["salt"] == 1.59
 
 
 def test_tags_download_again_only_when_the_index_shows_a_newer_file(monkeypatch):
@@ -210,9 +270,23 @@ def test_tags_download_again_only_when_the_index_shows_a_newer_file(monkeypatch)
     assert got == ["tags", "tags"]
 
 
+def test_atomic_cards_download_again_only_when_mtgjson_names_a_new_version(monkeypatch):
+    got, answers = [], mtgjson()
+    monkeypatch.setattr(fetch_oracle, "get", lambda url: got.append(url) or answers[url])
+    assert fetch_oracle.salts() == {}
+    assert fetch_oracle.salts(fresh=True) == fetch_oracle.salts(fresh=True) == fetch_oracle.salts() == {
+        "tide": 0.5, "Sol Ring": 1.59, "wave": 0.2}
+    meta, atomic = answers
+    assert got == [meta, atomic, meta]
+    answers.update(mtgjson("5.3.0+20261102"))
+    fetch_oracle.salts(fresh=True)
+    assert got == [meta, atomic, meta, meta, atomic]
+
+
 def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     before = json.loads(read("output/data/oracle.json"))["cards"]
     fetch_oracle.TAGS.write_bytes(TAGS)
+    fetch_oracle.ATOMIC.write_bytes(mtgjson()[f"{net.MTGJSON}/AtomicCards.json.gz"])
     wave = {"name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
             "rulings_uri": "wave-rulings"}
     asked = []
@@ -225,4 +299,4 @@ def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     assert asked == [project.NAMED + "Tidal%20Wave", project.NAMED + "Nothing%20Card"]
     assert json.loads(read("output/data/oracle.json"))["cards"] == {**before, "Tidal Wave": {
         "name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
-        "related_tokens": [], "rulings": ["It waves."], "tags": ["removal", "spot removal"]}}
+        "related_tokens": [], "rulings": ["It waves."], "tags": ["removal", "spot removal"], "salt": 0.2}}

@@ -1,6 +1,7 @@
-"""HTTP for the scripts: paced requests to Scryfall, Commander Spellbook and Wizards."""
+"""HTTP for the scripts: paced requests to Scryfall, Commander Spellbook, MTGJSON and Wizards."""
 import json, re, time, urllib.error, urllib.request
 SCRYFALL, UA = "https://api.scryfall.com", "mtg-toolbox"
+MTGJSON = "https://mtgjson.com/api/v5"
 SEARCH = f"{SCRYFALL}/cards/search?q="
 CHALLENGE = re.compile(r"cf[-_]chl|challenge-platform|Just a moment")
 TIMEOUT = 30  # seconds a server may stall before its request fails

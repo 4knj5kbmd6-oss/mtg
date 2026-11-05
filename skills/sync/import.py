@@ -1,12 +1,17 @@
-"""Write output/decks/<slug>/list.txt from a pasted decklist or a .txt export (Moxfield, Archidekt, MTGO or Arena text).
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/import.py <slug> [file]   (no file: read stdin)
+"""Write output/decks/<slug>/list.txt from a pasted decklist, a .txt export (Moxfield, Archidekt, MTGO or Arena text) or
+a Commander precon's name.
+usage (from the folder that holds output/):
+  python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/import.py <slug> [file | "precon name"]   (neither: read stdin)
+A precon name matches one of MTGJSON's Commander Deck names case-insensitively, a unique prefix enough; that deck's list
+comes from MTGJSON. An ambiguous or unknown name prints the candidates and writes nothing.
 Counts, set codes, collector numbers, foil marks and categories are stripped. The commander is a Commander section
 (up to the next blank line) or category, else a lone block of one or two cards set apart by a blank line at the start or
 end of the list. A Sideboard or Companion section becomes the SIDEBOARD: block; maybeboards are left out. Prints the
 card count and every line it could not parse; those lines are not written."""
-import re, sys
+import json, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from net import get, MTGJSON
 from project import write, DECKS
 
 SECTIONS = {"commander": "commander", "commanders": "commander", "deck": "main", "main": "main", "mainboard": "main",
@@ -51,6 +56,23 @@ def parse(text):
         for n, name in b: boards["main"][name] = boards["main"].get(name, 0) + n
     return boards, bad
 
+def precon(name):
+    """{"commander", "main", "side"}: {name: count} each, of MTGJSON's Commander Deck matching name; exits naming the
+    candidates when no deck or several do"""
+    decks = [d for d in json.loads(get(f"{MTGJSON}/DeckList.json"))["data"] if d["type"] == "Commander Deck"]
+    want = name.casefold()
+    hits = [d for d in decks if d["name"].casefold() == want] or [d for d in decks if d["name"].casefold().startswith(want)]
+    if len(hits) != 1:
+        sys.exit(f"{'several' if hits else 'no'} Commander precons named {name!r}; candidates:\n"
+                 + "\n".join(sorted(f"{d['name']} ({d['code']})" for d in hits or decks)))
+    deck = json.loads(get(f"{MTGJSON}/decks/{hits[0]['fileName']}.json"))["data"]
+    def board(key):
+        """{name: count} of one of the deck's boards, a card listed once per printing summed"""
+        out = {}
+        for c in deck.get(key, []): out[c["name"]] = out.get(c["name"], 0) + c["count"]
+        return out
+    return {"commander": board("commander"), "main": board("mainBoard"), "side": board("sideBoard")}
+
 def listing(boards):
     """list.txt text: commander, blank line, the rest by name, optional SIDEBOARD: block"""
     rows = lambda b: [f"{n} {name}" for name, n in sorted(boards[b].items(), key=lambda e: e[0].casefold())]
@@ -60,8 +82,9 @@ def listing(boards):
 
 def main():
     if len(sys.argv) not in (2, 3): sys.exit(__doc__)
-    slug = sys.argv[1]
-    boards, bad = parse(open(sys.argv[2]).read() if len(sys.argv) == 3 else sys.stdin.read())
+    slug, source = sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None
+    if source and not Path(source).is_file(): boards, bad = precon(source), []
+    else: boards, bad = parse(open(source).read() if source else sys.stdin.read())
     write(DECKS / slug / "list.txt", listing(boards))
     count = lambda b: sum(boards[b].values())
     print(f"{slug}: {count('commander') + count('main')} cards, {count('commander')} of them commander"

@@ -38,12 +38,14 @@ Every script here runs from the folder that holds `output/`.
 
 For each `added:` deck write an empty `output/decks/<slug>/plan.md`.
 
-With no Moxfield, the owner pastes a decklist or names a `.txt` export
-(Moxfield, Archidekt, MTGO or Arena). Save a paste to the scratchpad, run
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/import.py <slug> <file>`, which
-writes `output/decks/<slug>/list.txt` and prints the card count and every
-line it could not parse, then `fetch_oracle.py`. A deck imported this way
-has no `moxfield.json` entry, and the Moxfield pass leaves it alone.
+With no Moxfield, the owner pastes a decklist, names a `.txt` export
+(Moxfield, Archidekt, MTGO or Arena) or names a Commander precon. Save a
+paste to the scratchpad, run
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/import.py <slug> <file or "precon name">`,
+which writes `output/decks/<slug>/list.txt`, a precon's from MTGJSON, and
+prints the card count and every line it could not parse, then
+`fetch_oracle.py`. A deck imported this way has no `moxfield.json` entry,
+and the Moxfield pass leaves it alone.
 
 Report in a line per changed deck: cards in, cards out; then the added
 decks, the landed changes and any blocked deck `sync.py` printed. A

@@ -4,7 +4,7 @@ import gzip, importlib, json, sys
 from pathlib import Path
 import pytest
 from conftest import read
-import fetch_oracle, fetch_rules, project, sync
+import fetch_oracle, fetch_rules, net, project, sync
 
 DECK = {"name": "Zara", "created": "2025-01-01T00:00:00Z", "updated": "2025-06-01T00:00:00Z",
         "commanders": ["1 Zara, Tide Caller"], "mainboard": ["1 Sol Ring"], "sideboard": [],
@@ -19,12 +19,15 @@ def empty(tmp_path, monkeypatch):
 
 
 def scryfall(url, body=None):
-    """Scryfall's collection answer for every name posted, its bulk-data list, one ruling and no tags"""
+    """Scryfall's collection answer for every name posted, its bulk-data list, one ruling and no tags; MTGJSON's version
+    and no atomic cards"""
     if body: return json.dumps({"data": [{"name": i["name"], "oracle_id": i["name"], "type_line": "Creature",
                                           "legalities": {"commander": "legal"}} for i in body["identifiers"]]}).encode()
     if url.endswith("/bulk-data"): return json.dumps({"data": [{"type": "rulings", "jsonl_download_uri": "rulings"},
         {"type": "oracle_tags", "updated_at": "2026-11-01T00:00:00.000+00:00", "jsonl_download_uri": "tags"}]}).encode()
     if url == "tags": return gzip.compress(b"")
+    if url == f"{net.MTGJSON}/Meta.json": return b'{"data": {"version": "5.3.0"}}'
+    if url == f"{net.MTGJSON}/AtomicCards.json.gz": return gzip.compress(b'{"meta": {"version": "5.3.0"}, "data": {}}')
     return gzip.compress(b'{"oracle_id": "Sol Ring", "published_at": "2020-01-01", "comment": "Taps for two."}\n')
 
 
