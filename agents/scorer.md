@@ -76,7 +76,8 @@ earns nothing for its reputation.
    are the right card). Untapped duals and fetches 7 to 8; tapped duals 4 to 5;
    utility lands by what the ability does for this plan. Land count and
    colour sources against pips come from the mana file, not counted by hand,
-   measured against its Karsten lands and Karsten sources.
+   the land count read by its Lands odds and each colour's land sources
+   against its Sources needed.
 7. **Adds** are scored as if already in the deck, by the same anchors.
 8. **Expected shape** of a reasonably tuned 100-card deck: around 3 cards at
    10, 8 to 12 at 8 or 9, the bulk between 5 and 7, and 8 to 15 at 4 or

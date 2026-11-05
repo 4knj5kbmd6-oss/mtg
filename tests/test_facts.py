@@ -1,9 +1,10 @@
 import gzip, json, os, sys, time
+from math import comb
 from pathlib import Path
 from urllib.error import URLError
 import pytest
 from conftest import ROOT, run, read
-import combos as script, facts, karsten, mana
+import combos as script, facts, mana, odds
 from net import Failed
 
 SAVED = ROOT / "tests" / "spellbook"  # Spellbook's estimate-bracket answers for two real decks and its variants file, trimmed
@@ -190,66 +191,58 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
     # 13 lands and 8 nonlands in the 21 drawn from; 9 nonlands with the commander, 26 mana value between them
     # U: Delta, Strand, Path, Passage, Wilds, Tower, 4 Island; Mox, Signet; Lazav 2, Counterspell 2, Sphinx 2
     # B: Delta, Passage, Wilds, Tower, 3 Swamp; Mox, Ritual, Signet; Lazav 2, Ritual 1, Arena 2, Wurm 3
-    # cheap: Mox, Sol Ring, Ritual, Signet add mana; Arena draws but costs three. 31.42 + 3.13 * 26/9 - 0.28 * 4
-    # U needs: Lazav 4UU 26, Counterspell UU 30, Sphinx 5UU 20. B: Ritual B 19, Lazav 26, Arena 1BB 28, Wurm 3BBB 28
+    # U needs: Lazav UU by turn 4 6, Counterspell UU by turn 2 7, Sphinx UU by turn 7 4
+    # B needs: Ritual B by turn 1 5, Lazav BB by turn 4 6, Arena BB by turn 3 6, Wurm BBB by turn 6 7
     assert read("run/lazav-mana.md") == """# lazav: mana
 
 ## Curve
-| Lands | Karsten lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 13 | 39.3 | 9 | 2.9 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 1 |
+| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 13 | 9 | 2.9 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 1 |
 
-## Opening seven
-| 2 lands | 3 lands | 4 lands |
+## Lands
+| 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |
 |---|---|---|
-| 4% | 17% | 34% |
+| 100% | 100% | 100% |
 
 ## Colours
-| Colour | Land sources | Karsten sources | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
+| Colour | Land sources | Sources needed | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
 |---|---|---|---|---|---|---|---|
-| U | 10 | 30 | Counterspell | 2 | 6 | 3 | 2 |
-| B | 7 | 28 | Phyrexian Arena | 3 | 8 | 3 | 3 |
+| U | 10 | 7 | Counterspell | 2 | 6 | 3 | 2 |
+| B | 7 | 7 | Massacre Wurm | 3 | 8 | 3 | 3 |
 """
 
 
-def test_mana_reads_a_cost_off_karstens_table_as_the_listed_one_below_it():
-    oracle = {"Kraken": {"name": "Kraken", "type_line": "Legendary Creature", "cmc": 8, "mana_cost": "{6}{U}{U}",
-                         "color_identity": ["B", "U"]},
-              "Bog Thing": {"name": "Bog Thing", "type_line": "Creature", "cmc": 9, "mana_cost": "{8}{B}"},
-              "Swamp Spirit": {"name": "Swamp Spirit", "type_line": "Creature", "cmc": 2, "mana_cost": "{1}{B}",
-                               "oracle_text": "When this creature enters, draw a card."},
-              "Swamp": {"name": "Swamp", "type_line": "Basic Land — Swamp", "cmc": 0, "produced_mana": ["B"]}}
+def test_mana_needs_the_sources_that_cast_a_card_on_curve_nine_times_in_ten():
+    cost = lambda name, value, cost: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": cost}
+    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{1}{U}"), "color_identity": ["U"]},
+              "Counterspell": cost("Counterspell", 2, "{U}{U}"), "Kraken": cost("Kraken", 9, "{7}{U}{U}"),
+              "Filler": cost("Filler", 2, "{2}"),
+              "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]}}
     Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
-    deck("kraken", "Kraken", {"Bog Thing": 1, "Swamp Spirit": 1, "Swamp": 6})
+    deck("counter", "Zara, Tide Caller", {"Island": 37, "Filler": 61, "Counterspell": 1})
+    deck("kraken", "Zara, Tide Caller", {"Island": 37, "Filler": 61, "Kraken": 1})
     Path("run").mkdir()
+    mana.write("run", "counter")
     mana.write("run", "kraken")
-    # 6UU reads as 5UU, 20; 8B as 5B, 14, below Swamp Spirit's 1B, 19. 31.42 + 3.13 * 19/3 - 0.28 * 1
-    assert "| 6 | 51.0 | 3 | 6.3 |" in read("run/kraken-mana.md")
-    assert "| B | 6 | 19 | Swamp Spirit |" in read("run/kraken-mana.md")
-    assert "| U | 0 | 20 | Kraken |" in read("run/kraken-mana.md")
-    assert (karsten.sources(9, 1), karsten.sources(5, 5), karsten.sources(9, 3)) == (14, 36, 26)
+    # Counterspell sees 9 of the 99 by turn 2; the chance of 2 or more of S sources among them is
+    # 1 - (C(99-S, 9) + S C(99-S, 8)) / C(99, 9): 0.9058 at 36, 0.8946 at 35
+    hit = lambda s, seen: 1 - (comb(99 - s, seen) + s * comb(99 - s, seen - 1)) / comb(99, seen)
+    assert hit(36, 9) >= 0.9 > hit(35, 9)
+    assert "| U | 37 | 36 | Counterspell |" in read("run/counter-mana.md")
+    # 37 lands of 99: 2 or more of 9 cards 0.9160, 3 or more of 10 0.8004, 4 or more of 11 0.6488
+    assert "|---|---|---|\n| 92% | 80% | 65% |\n" in read("run/counter-mana.md")
+    # Kraken's mana value 9 reads as 7: 14 cards seen, 0.9053 at 24 sources, 0.8895 at 23
+    assert hit(24, 14) >= 0.9 > hit(23, 14)
+    assert "| U | 37 | 24 | Kraken |" in read("run/kraken-mana.md")
 
 
-@pytest.mark.parametrize("value, text, creature, cheap", [
-    (1, "Look at the top three cards of your library, then put one into your hand.", False, True),
-    (1, "Look at the top three cards of your library, then put one into your hand. You may pay 2 life.", False, False),
-    (2, "When this creature enters, draw a card.", True, True),
-    (2, "Whenever this creature attacks, draw a card.", True, False),
-    (2, "Draw a card. Create a Blood token.", False, False),
-    (3, "Draw two cards.", False, False),
-    (2, "Flying\nCycling {U} ({U}, Discard this card: Draw a card.)", True, True),
-    (2, "Flying\nCycling {2} ({2}, Discard this card: Draw a card.)", True, False),
-    (2, "When this creature dies, add {B}{B}.", True, False),
-    (2, "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", False, True),
-    (2, "Sacrifice this: Search your library for a basic land card, put it onto the battlefield.", False, False),
-    (2, "Whenever enchanted land is tapped for mana, its controller adds an additional {G}.", False, True),
-    (2, "{T}: You may put a creature card with mana value 3 or less from your hand onto the battlefield.", True, True),
-])
-def test_karsten_counts_cheap_draw_and_ramp_by_his_oracle_text_rules(value, text, creature, cheap):
-    assert karsten.cheap(value, text, creature) == cheap
+def test_odds_count_the_hits_among_the_cards_seen():
+    # 2 hits in a deck of 4, 2 drawn: both 1 in C(4, 2) = 6, at least one 5 in 6; turn one already sees a draw
+    assert (odds.at_least(1, 2, 4, 2), odds.at_least(2, 2, 4, 2), odds.seen(1)) == (5 / 6, 1 / 6, 8)
 
 
-def test_mana_odds_are_unknown_with_fewer_than_seven_known_cards(capsys):
+def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
     oracle = {"Sol Ring": {"name": "Sol Ring", "type_line": "Artifact", "cmc": 1, "mana_cost": "{1}", "produced_mana": ["C"]},
               "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]},
               "Zara, Tide Caller": {"name": "Zara, Tide Caller", "type_line": "Legendary Creature", "cmc": 2,
@@ -262,19 +255,19 @@ def test_mana_odds_are_unknown_with_fewer_than_seven_known_cards(capsys):
     assert read("run/tiny-mana.md") == """# tiny: mana
 
 ## Curve
-| Lands | Karsten lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 5 | 36.1 | 2 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+| Lands | Nonlands | Mean mana value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 5 | 2 | 1.5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
 
-## Opening seven
-| 2 lands | 3 lands | 4 lands |
+## Lands
+| 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |
 |---|---|---|
 | unknown | unknown | unknown |
 
 ## Colours
-| Colour | Land sources | Karsten sources | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
+| Colour | Land sources | Sources needed | For | Nonland sources | Pips | Cards with 2+ pips | Lowest mana value of those |
 |---|---|---|---|---|---|---|---|
-| U | 5 | 19 | Zara, Tide Caller | 0 | 1 | 0 | - |
+| U | 5 | unknown | - | 0 | 1 | 0 | - |
 """
 
 
