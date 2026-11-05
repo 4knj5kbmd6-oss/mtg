@@ -1,10 +1,10 @@
 """The project the scripts run in, the folder that holds output/: its paths, card names, deck lists and cards."""
 import json, re, urllib.parse
 from pathlib import Path
-from net import get, found, SCRYFALL
+from net import get, found, SCRYFALL, SEARCH
 DECKS, DATA = Path("output/decks"), Path("output/data")
-ORACLE, RULES = DATA / "oracle.json", DATA / "rules.txt"
-CHANGES = Path("changes.md")
+ORACLE, RULES, IMAGES = DATA / "oracle.json", DATA / "rules.txt", DATA / "images"
+CHANGES, COLLECTION = Path("changes.md"), Path("collection.md")
 KINDS = ("nonlands", "lands")
 COUNT = r"\s*(?:\((\d+)\)|[x×]\s*(\d+))$"
 NAMED = f"{SCRYFALL}/cards/named?exact="
@@ -36,6 +36,11 @@ def decklist(slug):
     head, _, rest = text.partition("\n\n")
     return rows(head), rows(rest)
 
+def listed():
+    """every card name in a deck's list.txt, commanders and SIDEBOARD block included"""
+    return {m.group(1) for f in DECKS.glob("*/list.txt") for line in f.read_text().splitlines()
+            if (m := re.match(r"\d+ (.+)", line.strip()))}
+
 def front(e): return (e.get("card_faces") or [e])[0]
 
 def is_land(e): return "Land" in front(e).get("type_line", "").split()
@@ -57,3 +62,14 @@ def card(name, oracle):
             if matches(n.casefold()): return e
     if (c := found(NAMED + urllib.parse.quote(name))) is None: return None
     return {**c, "rulings": [r["comment"] for r in json.loads(get(c["rulings_uri"]))["data"]]}
+
+def image_file(name):
+    """output/data/images/<name>.jpg, Scryfall's normal image of name's earliest paper printing (front face of a
+    double-faced card), fetched into it when missing; None if Scryfall has no such card"""
+    path = IMAGES / f"{name}.jpg"
+    if not path.exists():
+        query = urllib.parse.quote(f'!"{name}" game:paper unique:prints order:released dir:asc')
+        if (r := found(SEARCH + query)) is None: return None
+        card = r["data"][0]
+        write(path, get((card.get("image_uris") or card["card_faces"][0]["image_uris"])["normal"]))
+    return path

@@ -1,9 +1,10 @@
-"""The Markdown of a deck's nonlands.md and lands.md: sections, tables and the Shape and Roles lines.
+"""The Markdown of a deck's nonlands.md and lands.md: sections, tables and the Shape and Roles lines; and
+collection.md's cards.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>
 prints the card names of the deck's Adds tables, one per line, and nothing else of its files."""
 import re, sys
 from collections import Counter
-from project import copies, KINDS, DECKS
+from project import copies, KINDS, DECKS, COLLECTION
 CARDS = "| Card | Score | Role | Note |"
 ADDS = "| Card | Score | Role | Note | New | ~Price |"
 CUTS = "| Card | Score | Why it underperforms here |"
@@ -32,6 +33,10 @@ def scores(lines):
 def adds(deck):
     """the Adds rows, as lists of cells, of the deck folder's nonlands.md and lands.md that exist"""
     return [r for k in KINDS if (p := deck / f"{k}.md").exists() for r in scores(dict(split(p.read_text())).get("## Adds", []))]
+
+def owned():
+    """the cards of collection.md's table, [] without it"""
+    return [r[0] for r in cells(COLLECTION.read_text().splitlines())] if COLLECTION.exists() else []
 
 def table(head, rows):
     return "\n".join([head, "|" + "---|" * (head.count("|") - 1)] + ["| " + " | ".join(r) + " |" for r in rows])

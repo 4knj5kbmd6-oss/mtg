@@ -69,6 +69,7 @@ the command line overrides one for that run (`/score budget=50 quota.adds=15`).
 | `quota` | The adds, land adds and cuts each deck's research lists |
 | `universes_beyond` | true: research searches Universes Beyond sets |
 | `new_sets` | true: research recommends only cards from the sets released since each deck's last edit, searched exhaustively |
+| `images` | false: no card image is fetched or stored, and no `changes.png` drawn |
 | `cart` | Condition, language, finish and premium per package removed; asked each cart while null |
 
 ## changes.md
@@ -99,6 +100,7 @@ Your project-wide files, beside `output/` (gitignored):
 | `settings.json` | Your [settings](#settings) |
 | `moxfield.json` | Your Moxfield username, the decks synced and each one's created and updated dates, written by `/sync <username>`; a deck you delete from it stays out |
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
+| `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
 | `rankings.md` | Your decks in strength order: commander, colours, bracket, score (0 to 10, the mean of the six criteria below it), kill turn, Game Changers, why, Moxfield link; then a `Criteria` table of each deck's six scores: speed, consistency, resilience, interaction, ceiling, independence |
 
@@ -107,7 +109,7 @@ Your output, all under `output/` (gitignored):
 | Path | What |
 |---|---|
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score` and `/upgrades`) |
-| `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags` and EDHREC `salt`) and `tokens.md` |
+| `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags` and EDHREC `salt`), `tokens.md` and `images/` (each card's image, fetched once) |
 | `data/variants.json.gz` | Commander Spellbook's combos, cut to the fields `/score` reads, fetched again once a day old |
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |
 | `data/rules.txt` | The Comprehensive Rules, for `/judge` |

@@ -1,5 +1,5 @@
-"""Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt and in the
-Adds table of every output/decks/*/nonlands.md and lands.md, each card with its Scryfall rulings (the comment
+"""Rebuild output/data/oracle.json from Scryfall for every card in output/decks/*/list.txt, in the Adds table of
+every output/decks/*/nonlands.md and lands.md and in collection.md, each card with its Scryfall rulings (the comment
 texts, oldest first) from Scryfall's bulk rulings file and its tags: the labels of its Scryfall functional tags and every
 tag above them in the tag tree, from Scryfall's bulk oracle tags file, cached as output/data/oracle-tags.jsonl.gz and
 downloaded again only when Scryfall's bulk index shows a newer one, and its salt, its EDHREC saltiness, from MTGJSON's
@@ -7,13 +7,13 @@ AtomicCards.json.gz, cached in output/data/ and downloaded again only when MTGJS
 when MTGJSON has none). Given card names, instead fetch each one oracle.json lacks singly from Scryfall into it, with its
 rulings, and its tags and salt from the cached files, every other entry as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py ["Card Name" ...]"""
-import gzip, json, os, re, sys
+import gzip, json, os, sys
 from datetime import datetime
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from net import get, MTGJSON, SCRYFALL
-from project import card, write, ORACLE, DATA, DECKS
-from tables import adds
+from project import card, listed, write, ORACLE, DATA, DECKS
+from tables import adds, owned
 API, BATCH = f"{SCRYFALL}/cards/collection", 75  # Scryfall's most names per collection request
 KEEP = ["name", "oracle_id", "mana_cost", "cmc", "type_line", "oracle_text", "colors", "color_identity",
         "power", "toughness", "loyalty", "produced_mana"]
@@ -81,10 +81,8 @@ def entry(c):
     return e
 
 def card_names():
-    """every card in a deck list or a deck's Adds table"""
-    listed = {m.group(1) for f in DECKS.glob("*/list.txt") for line in f.read_text().splitlines()
-              if (m := re.match(r"\d+ (.+)", line.strip()))}
-    return sorted(listed | {r[0] for d in DECKS.glob("*") for r in adds(d)})
+    """every card in a deck list, a deck's Adds table or collection.md"""
+    return sorted(listed() | {r[0] for d in DECKS.glob("*") for r in adds(d)} | set(owned()))
 
 def replace(path, data):
     """data written whole to a temp file renamed over path, so a failed run leaves the old file"""

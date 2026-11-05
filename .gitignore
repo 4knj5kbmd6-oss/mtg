@@ -6,6 +6,7 @@ output
 /settings.json
 /moxfield.json
 /changes.md
+/collection.md
 /restricted.md
 /rankings.md
 __pycache__/

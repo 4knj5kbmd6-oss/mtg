@@ -31,9 +31,11 @@ inputs named below.
 3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run> <slug>`,
    which prints the adds it drops; then
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py`, `apply.py`
-   once more per deck so each new add is filed by its type, and
+   once more per deck so each new add is filed by its type, and, unless
+   `images` is false,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>`, which
-   writes `output/decks/<slug>/changes.png`.
+   writes `output/decks/<slug>/changes.png`. With `images` false the report
+   says in a line that changes.png was skipped.
 
 Report: three lines per deck, top adds and top cuts, plus any add that
 would change a bracket.

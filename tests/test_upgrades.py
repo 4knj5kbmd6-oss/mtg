@@ -2,7 +2,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 from conftest import run, read, snapshot
-import sheet as script
+import project, sheet as script
 
 ADDS = """# Zara, Tide Caller: top adds (2026-11-02)
 Built 2025-01-01, last edited 2025-06-01, bracket 2.
@@ -90,11 +90,10 @@ def test_apply_twice_is_byte_identical():
 @pytest.fixture
 def sheet(monkeypatch):
     """sheet.py with fetching disabled"""
-    module = script
     def offline(url): raise AssertionError(f"fetched {url}")
-    monkeypatch.setattr(module, "get", offline)
-    monkeypatch.setattr(module, "found", offline)
-    return module
+    monkeypatch.setattr(project, "get", offline)
+    monkeypatch.setattr(project, "found", offline)
+    return script
 
 
 def test_grid_choice(sheet):
@@ -122,8 +121,8 @@ def test_an_image_comes_from_the_cache_or_is_fetched_into_it(sheet, monkeypatch)
     blue = Path("blue.jpg")
     Image.new("RGB", (10, 14), "blue").save(blue)
     face = {"data": [{"card_faces": [{"image_uris": {"normal": "front.jpg"}}, {"image_uris": {"normal": "back.jpg"}}]}]}
-    monkeypatch.setattr(sheet, "found", lambda url: face if "Rising" in url else None)
-    monkeypatch.setattr(sheet, "get", {"front.jpg": blue.read_bytes()}.__getitem__)
+    monkeypatch.setattr(project, "found", lambda url: face if "Rising" in url else None)
+    monkeypatch.setattr(project, "get", {"front.jpg": blue.read_bytes()}.__getitem__)
     assert sheet.image("Rising Tide").getpixel((sheet.W // 2, sheet.H // 2))[2] > 200
     assert Path("output/data/images/Rising Tide.jpg").read_bytes() == blue.read_bytes()
     assert sheet.image("No Such Card") is None
@@ -149,3 +148,10 @@ def test_band_layout_with_stub_images(sheet, monkeypatch, capsys):
     assert [inked(c, second) for c in range(3)] == [True, False, False]
     assert label(2, row2).tobytes() == label(0, HEAD).tobytes() != label(1, HEAD).tobytes()  # 7, 7, then B's -
     assert "not on Scryfall, left blank: Missing" in capsys.readouterr().out
+
+
+def test_images_false_draws_nothing():
+    Path("settings.json").write_text('{"images": false}')
+    out = run("skills/upgrades/sheet.py", "zara")
+    assert (out.returncode, out.stdout) == (0, "images is false in settings.json: no sheet drawn\n")
+    assert not Path("output/decks/zara/changes.png").exists() and not Path("output/data/images").exists()

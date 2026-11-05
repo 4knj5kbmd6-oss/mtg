@@ -5,29 +5,22 @@ Four bands top to bottom, each a plain heading over its cards in table order: no
 that table's row, `-` when it has none. The bands share one column count, the one that makes the sheet's longer side
 shortest. A card's image is Scryfall's normal image of its earliest paper printing (front face of a double-faced
 card), cached as output/data/images/<name>.jpg so a later run fetches only new cards. A card Scryfall does not
-find is printed and left a blank slot."""
-import sys, urllib.parse
+find is printed and left a blank slot. With `images` false in settings.json it draws nothing."""
+import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from net import get, found, SEARCH
-from project import key, write, KINDS, DECKS, DATA
+from project import key, image_file, KINDS, DECKS
+from settings import settings
 from tables import split, cells
-CACHE = DATA / "images"
 BANDS = (("Nonland adds", "nonlands", "## Adds"), ("Nonland cuts", "nonlands", "## Cuts"),
          ("Land adds", "lands", "## Adds"), ("Land cuts", "lands", "## Cuts"))
 W, H, GAP, HEAD = 488, 680, 12, 72
 FONT = ImageFont.load_default(48)
 
 def image(name):
-    """the image of name's earliest paper printing, from the cache or fetched into it; None if Scryfall has no such card"""
-    path = CACHE / f"{name}.jpg"
-    if not path.exists():
-        query = urllib.parse.quote(f'!"{name}" game:paper unique:prints order:released dir:asc')
-        if (r := found(SEARCH + query)) is None: return None
-        card = r["data"][0]
-        write(path, get((card.get("image_uris") or card["card_faces"][0]["image_uris"])["normal"]))
-    return Image.open(path).convert("RGB").resize((W, H))
+    """name's cached image at card size; None if Scryfall has no such card"""
+    return (path := image_file(name)) and Image.open(path).convert("RGB").resize((W, H))
 
 def bands(slug):
     """[(heading, cards)] of the deck's bands that have rows, each card a (name by its front face, Score) pair, in
@@ -63,6 +56,7 @@ def sheet(bands):
     return out
 
 if __name__ == "__main__":
+    if not settings()["images"]: print("images is false in settings.json: no sheet drawn"); sys.exit()
     for slug in sys.argv[1:] or sorted(p.name for p in DECKS.iterdir() if p.is_dir()):
         if not (b := bands(slug)): print(f"{slug}: no adds or cuts"); continue
         s = sheet(b); s.save(DECKS / slug / "changes.png")
