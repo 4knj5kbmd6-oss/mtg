@@ -43,6 +43,61 @@ def test_sync_drops_landed_rows_but_unowned():
     assert rows == ["| zara | Pearl Diver |  | unowned |"]
 
 
+def changes(*rows):
+    """changes.md holding only these zara rows, each (In, Out, Note)"""
+    Path("changes.md").write_text("| Deck | In | Out | Note |\n|---|---|---|---|\n"
+                                  + "".join(f"| zara | {i} | {o} | {n} |\n" for i, o, n in rows))
+
+
+def test_to_copies_sets_a_card_up_in_place_and_adds_an_absent_one():
+    changes(("Island", "", "to 6 copies"), ("Tidepool Ruins", "", "to 2 copies"))
+    out = run("skills/sync/apply_changes.py")
+    assert out.stdout == "zara: in Island (6); Tidepool Ruins (2) | out -\n"
+    assert "6 Island\n" in read(LIST) and read(LIST).splitlines()[-1] == "2 Tidepool Ruins"
+    lands = read("output/decks/zara/lands.md")
+    assert "| Island (6) | 6 | land | Basic |" in lands and "Island (4)" not in lands
+    assert "| Tidepool Ruins (2) | - | - | Untapped utility land |" in lands
+    assert "Tidepool Ruins | - | - | Untapped utility land | No" not in lands   # left the Adds table
+    assert lands.endswith("5-7: 8 / 4 or below: 0, mean 6.0 (by card copy), 3 scorers.\n")
+    assert read("output/decks/zara/nonlands.md").endswith("lands 8\n")
+
+
+def test_to_copies_sets_a_card_down_and_to_zero():
+    changes(("", "Island", "to 2 copies"), ("", "Misty Cove", "to 0 copies"))
+    out = run("skills/sync/apply_changes.py")
+    assert out.stdout == "zara: in - | out Island; Misty Cove\n"
+    assert "2 Island\n" in read(LIST) and "Misty Cove" not in read(LIST)
+    lands = read("output/decks/zara/lands.md")
+    assert "| Island (2) | 6 | land | Basic |" in lands and "Misty Cove" not in lands   # its Cards and Cuts rows
+    assert lands.endswith("5-7: 3 / 4 or below: 0, mean 6.3 (by card copy), 3 scorers.\n")
+    assert read("output/decks/zara/nonlands.md").endswith("lands 3\n")
+
+
+def test_to_copies_twice_changes_nothing():
+    changes(("Island", "", "to 6 copies"), ("", "Misty Cove", "to 0 copies"), ("Tidepool Ruins", "", "to 2 copies"))
+    run("skills/sync/apply_changes.py")
+    once = snapshot()
+    assert run("skills/sync/apply_changes.py").stdout == ""
+    assert snapshot() == once
+
+
+def test_to_copies_on_a_row_naming_two_cards_is_skipped():
+    changes(("Island", "Sol Ring", "to 3 copies"))
+    before = snapshot()
+    out = run("skills/sync/apply_changes.py")
+    assert out.stdout == 'skip zara: Island for Sol Ring, "to 3 copies" sets one card\n'
+    assert snapshot() == before
+
+
+def test_sync_drops_a_to_copies_row_once_moxfield_shows_that_count():
+    changes(("Island", "", "to 6 copies"), ("", "Misty Cove", "to 0 copies"), ("Forest", "", "to 2 copies"))
+    sync.drop_landed({"zara": ["1 Zara, Tide Caller", "", "4 Island", "1 Forest", "", "SIDEBOARD:", "1 Forest", ""]})
+    assert "| zara |  | Misty Cove | to 0 copies |" not in read("changes.md")
+    assert "Island" in read("changes.md") and "Forest" in read("changes.md")
+    sync.drop_landed({"zara": ["1 Zara, Tide Caller", "", "6 Island", "2 Forest", ""]})
+    assert [l for l in read("changes.md").splitlines() if l.startswith("| zara")] == []
+
+
 DECK = """1 Zara, Tide Caller
 
 1 Brine Elemental

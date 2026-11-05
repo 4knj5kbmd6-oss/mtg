@@ -61,18 +61,27 @@ def tokens(decks):
     out += [f"| {e['name']} | {e['pt']} | {''.join(sorted(e['colors'] or [])) or '-'} | {e['type']} | {', '.join(sorted(e['decks']))} |" for e in rows]
     return "\n".join(out) + "\n"
 
+def shows(deck, card_in, card_out, note):
+    """whether a dumped list shows a changes.md row landed: In card in the deck or In blank, Out card gone or Out
+    blank; for a "to n copies" row, its one card at n copies before any SIDEBOARD block"""
+    if (n := apply_changes.to(note)) is not None:
+        end = deck.index("SIDEBOARD:") if "SIDEBOARD:" in deck else len(deck)
+        held = sum(int(l.split()[0]) for l in deck[:end] if l.strip() and match(card_in or card_out)(l))
+        return not (card_in and card_out) and held == n
+    has = lambda name: any(map(match(name), deck))
+    return (not card_in or has(card_in)) and (not card_out or not has(card_out))
+
 def drop_landed(dumped):
-    """remove the rows of changes.md that the dumped lists show landed (In card in the deck or In blank, Out card gone
-    or Out blank), except those noted unowned; print each. A card is matched by its front face, so a back face's name
-    alone never matches."""
+    """remove the rows of changes.md that the dumped lists show landed, except those noted unowned; print each. A card
+    is matched by its front face, so a back face's name alone never matches."""
     if not CHANGES.exists(): return
     keep, landed = [], []
     for l in CHANGES.read_text().splitlines(keepends=True):
         c = next(iter(cells([l])), [])
         deck = dumped.get(c[0]) if len(c) >= 3 else None
-        has = lambda name: any(map(match(name), deck))
-        unowned = len(c) > 3 and "unowned" in c[3].lower()  # still to buy: stays until the owner clears the note
-        if deck is not None and not unowned and (not c[1] or has(c[1])) and (not c[2] or not has(c[2])):
+        note = c[3] if len(c) > 3 else ""
+        unowned = "unowned" in note.lower()  # still to buy: stays until the owner clears the note
+        if deck is not None and not unowned and shows(deck, c[1], c[2], note):
             landed.append(c)
         else: keep.append(l)
     if landed: CHANGES.write_text("".join(keep))

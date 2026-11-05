@@ -85,7 +85,8 @@ each row once Moxfield shows it.
 
 Either card may be blank. A Note of `unowned` keeps the row until you clear
 it; `<n> copies` adds n copies of the In card and cuts every copy of the
-Out card.
+Out card; `to <n> copies` sets the row's one card, In or Out, to exactly n
+copies, 0 cutting it, so basics can be swapped.
 
 ## Layout
 
