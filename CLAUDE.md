@@ -35,3 +35,7 @@ dispatching the agents in `agents/`. The repo is the `mtg-toolbox` plugin;
   `.claude-plugin/plugin.json` inside the landing commit itself, never
   in a commit of its own, so installed copies update; minor and major
   numbers are the owner's.
+- A reply ends with its recap alone: no question block, button or
+  suggested next action. The owner reads what is open and picks the
+  next move; a decision that blocks the work is asked in the body,
+  once, as a plain question.
