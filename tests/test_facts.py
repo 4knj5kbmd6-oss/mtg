@@ -61,6 +61,29 @@ def write(combos, slug):
     return read(f"run/{slug}-combos.md")
 
 
+def cached():
+    return json.loads(gzip.decompress(CACHED.read_bytes()))
+
+
+def slimmed():
+    """the saved variants file as the cache keeps it: no timestamp or version"""
+    return {"variants": json.loads((SAVED / "variants.json").read_text())["variants"]}
+
+
+def test_the_cache_keeps_only_the_fields_read_and_rereads_to_the_same_combos():
+    full = json.loads((SAVED / "variants.json").read_text())
+    for v in full["variants"]:
+        v.update(description="Tap and sacrifice.", legalities={"commander": True}, prices={"tcgplayer": "1.00"})
+        for u in v["uses"]: u.update(zoneLocations=["B"], card={**u["card"], "id": 1, "oracleId": "x"})
+        for p in v["produces"]: p["feature"]["id"] = 2
+    bulk = gzip.compress(json.dumps(full).encode())
+    slim = script.slim(bulk)
+    kept = json.loads(gzip.decompress(slim))
+    assert kept == slimmed()
+    assert {*kept["variants"][0]} == {"id", "uses", "produces", "identity", "bracketTag", "salt", "popularity"}
+    assert script.parse(slim) == script.parse(bulk) != []
+
+
 def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, capsys):
     deck("beamtown", "The Beamtown Bullies", {"Bloom Tender": 1, "Seeker of Skybreak": 1, "Bronze Bombshell": 1,
                                               "Not A Card": 1},
@@ -85,7 +108,7 @@ def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, capsys
     assert combos.asked[1][1] == {"commanders": [{"card": "The Beamtown Bullies"}], "main": [
         {"card": "Bloom Tender", "quantity": 1}, {"card": "Seeker of Skybreak", "quantity": 1},
         {"card": "Bronze Bombshell", "quantity": 1}, {"card": "Not A Card", "quantity": 1}]}
-    assert gzip.decompress(CACHED.read_bytes()) == (SAVED / "variants.json").read_bytes()
+    assert cached() == slimmed()
     assert capsys.readouterr().out == "beamtown: not on Commander Spellbook: Not A Card\n"
 
 
@@ -125,7 +148,7 @@ def test_a_cached_variants_file_is_read_until_it_is_a_day_old(combos):
     combos.variants.cache_clear()
     os.utime(CACHED, (time.time() - 24 * 60 * 60 - 60,) * 2)
     assert "| Gravecrawler + Phyrexian Altar |" in write(combos, "braids")
-    assert gzip.decompress(CACHED.read_bytes()) == (SAVED / "variants.json").read_bytes()
+    assert cached() == slimmed()
 
 
 @pytest.mark.parametrize("answer", [URLError("down"), Failed(f"{BULK}: HTTP 503"), b"<title>Just a moment...</title>"])

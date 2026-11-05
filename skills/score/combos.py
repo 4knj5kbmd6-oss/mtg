@@ -1,12 +1,12 @@
 """A deck's combo facts from Commander Spellbook, its <run_dir>/<slug>-combos.md, for facts.py.
-write() matches output/decks/<slug>/list.txt, commanders included, against Spellbook's bulk variants file, cached in
-output/data/variants.json.gz and fetched again when missing or a day old, and posts the list to estimate-bracket; writes
-the Included table (each combo whose cards are all in the list, within the commanders' colour identity, its result,
-whether Spellbook marks it a definite or arguable two-card combo), the Almost included table (combos one card short
-whose missing card is in the deck's Adds tables), each with the combo's bracket tag and salt, and the cards Spellbook
-flags as mass land denial or extra turns. Prints the deck's names Spellbook does not know. If Spellbook does not
-answer, a cached variants file is used however old and the title line says so; with none, or with no JSON from
-estimate-bracket, prints one line naming the URL and writes nothing."""
+write() matches output/decks/<slug>/list.txt, commanders included, against Spellbook's bulk variants file, cut at
+download to the fields read here and cached in output/data/variants.json.gz, fetched again when missing or a day old,
+and posts the list to estimate-bracket; writes the Included table (each combo whose cards are all in the list, within
+the commanders' colour identity, its result, whether Spellbook marks it a definite or arguable two-card combo), the
+Almost included table (combos one card short whose missing card is in the deck's Adds tables), each with the combo's
+bracket tag and salt, and the cards Spellbook flags as mass land denial or extra turns. Prints the deck's names
+Spellbook does not know. If Spellbook does not answer, a cached variants file is used however old and the title line
+says so; with none, or with no JSON from estimate-bracket, prints one line naming the URL and writes nothing."""
 import gzip, json, sys, time
 from functools import cache
 from pathlib import Path
@@ -38,15 +38,22 @@ def parse(data):
     """the combos of the variants file's bytes, the most played first"""
     return [combo(v) for v in sorted(json.loads(gzip.decompress(data))["variants"], key=lambda v: -(v["popularity"] or 0))]
 
+def slim(data):
+    """the variants file's bytes with each variant cut to the fields combo() and parse() read"""
+    keep = lambda v: {"id": v["id"], "uses": [{"card": {"name": u["card"]["name"]}} for u in v["uses"]],
+                      "produces": [{"feature": {"name": p["feature"]["name"]}} for p in v["produces"]],
+                      **{f: v[f] for f in ("identity", "bracketTag", "salt", "popularity")}}
+    variants = [keep(v) for v in json.loads(gzip.decompress(data))["variants"]]
+    return gzip.compress(json.dumps({"variants": variants}, separators=(",", ":")).encode())
+
 @cache
 def variants():
     """(every combo, the date of the stale copy they come from or None), the cached file fetched again when missing or
     a day old; None when Spellbook does not send it and nothing is cached"""
     if VARIANTS.exists() and time.time() - VARIANTS.stat().st_mtime < DAY: return parse(VARIANTS.read_bytes()), None
     try:
-        combos = parse(data := get(BULK))
-        save(VARIANTS, data)
-        return combos, None
+        save(VARIANTS, data := slim(get(BULK)))
+        return parse(data), None
     except (OSError, ValueError, EOFError, Failed):
         if not VARIANTS.exists(): return None
         return parse(VARIANTS.read_bytes()), time.strftime("%Y-%m-%d", time.localtime(VARIANTS.stat().st_mtime))
