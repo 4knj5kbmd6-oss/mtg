@@ -6,14 +6,20 @@ a copies note); once gone, its Cards and Cuts rows go too. A "to n copies" note 
 exactly n copies, its count changed in place where the list and Cards table hold it, added as an In card where they
 do not, removed as an Out card at 0; a row naming two cards with it is reported and skipped. Both Shape lines are
 recomputed, each keeping its scorer count, and so is nonlands.md's Roles line where it has one. Running it twice
-changes nothing. Prints one line per changed deck: cards in or raised, cards out or lowered."""
+changes nothing. Prints one line per changed deck: cards in or raised, cards out or lowered, and the deck's card count,
+commander included and SIDEBOARD block left out, marked short or over when it is not 100."""
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from project import match, norm, KINDS, DECKS, CHANGES
+from project import match, norm, decklist, KINDS, DECKS, CHANGES
 from tables import split, join, cells, scores, recount, tally
 
 def counted(name, n): return f"{name} ({n})" if n > 1 else name
+
+def size(slug):
+    """the deck's card count from its list.txt: 100, else marked as 99 (short 1) or 102 (over 2)"""
+    n = sum(q for part in decklist(slug) for q, _ in part)
+    return f"{n}" if n == 100 else f"{n} ({'short' if n < 100 else 'over'} {abs(n - 100)})"
 
 def to(note):
     """n of a "to n copies" note, else None"""
@@ -84,6 +90,6 @@ def main():
         (deck / "list.txt").write_text("\n".join(lines))
         paths = {k: deck / f"{k}.md" for k in KINDS if (deck / f"{k}.md").exists()}
         for k, text in apply_scores({k: p.read_text() for k, p in paths.items()}, ins, outs).items(): paths[k].write_text(text)
-        print(f"{slug}: in {'; '.join(counted(n, q) for n, q in ins) or '-'} | out {'; '.join(n for n, _ in outs) or '-'}")
+        print(f"{slug}: in {'; '.join(counted(n, q) for n, q in ins) or '-'} | out {'; '.join(n for n, _ in outs) or '-'} | {size(slug)}")
 
 if __name__ == "__main__": main()

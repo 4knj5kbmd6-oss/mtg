@@ -11,7 +11,7 @@ MOX = ROOT / "tests" / "moxfield" / "mox.json"  # fetch.js's answer: Zara, a new
 def test_changes_in_and_out():
     out = run("skills/sync/apply_changes.py")
     assert out.returncode == 0, out.stderr
-    assert out.stdout == "zara: in Deep Current; Pearl Diver | out Wave Breaker\n"
+    assert out.stdout == "zara: in Deep Current; Pearl Diver | out Wave Breaker | 14 (short 86)\n"
     assert read(LIST).splitlines()[-3:] == ["1 Tidal Insight", "1 Deep Current", "1 Pearl Diver"]
     assert "Wave Breaker" not in read(LIST)
     nonlands = read("output/decks/zara/nonlands.md")
@@ -52,7 +52,7 @@ def changes(*rows):
 def test_to_copies_sets_a_card_up_in_place_and_adds_an_absent_one():
     changes(("Island", "", "to 6 copies"), ("Tidepool Ruins", "", "to 2 copies"))
     out = run("skills/sync/apply_changes.py")
-    assert out.stdout == "zara: in Island (6); Tidepool Ruins (2) | out -\n"
+    assert out.stdout == "zara: in Island (6); Tidepool Ruins (2) | out - | 17 (short 83)\n"
     assert "6 Island\n" in read(LIST) and read(LIST).splitlines()[-1] == "2 Tidepool Ruins"
     lands = read("output/decks/zara/lands.md")
     assert "| Island (6) | 6 | land | Basic |" in lands and "Island (4)" not in lands
@@ -65,7 +65,7 @@ def test_to_copies_sets_a_card_up_in_place_and_adds_an_absent_one():
 def test_to_copies_sets_a_card_down_and_to_zero():
     changes(("", "Island", "to 2 copies"), ("", "Misty Cove", "to 0 copies"))
     out = run("skills/sync/apply_changes.py")
-    assert out.stdout == "zara: in - | out Island; Misty Cove\n"
+    assert out.stdout == "zara: in - | out Island; Misty Cove | 10 (short 90)\n"
     assert "2 Island\n" in read(LIST) and "Misty Cove" not in read(LIST)
     lands = read("output/decks/zara/lands.md")
     assert "| Island (2) | 6 | land | Basic |" in lands and "Misty Cove" not in lands   # its Cards and Cuts rows
@@ -87,6 +87,18 @@ def test_to_copies_on_a_row_naming_two_cards_is_skipped():
     out = run("skills/sync/apply_changes.py")
     assert out.stdout == 'skip zara: Island for Sol Ring, "to 3 copies" sets one card\n'
     assert snapshot() == before
+
+
+@pytest.mark.parametrize("islands, count", [(91, "100"), (90, "99 (short 1)"), (93, "102 (over 2)")])
+def test_changes_line_ends_with_the_deck_count(islands, count):
+    changes(("Island", "", f"to {islands} copies"))
+    assert run("skills/sync/apply_changes.py").stdout == f"zara: in Island ({islands}) | out - | {count}\n"
+
+
+def test_changes_count_leaves_out_the_sideboard():
+    Path(LIST).write_text(read(LIST) + "\nSIDEBOARD:\n1 Spare Card\n")
+    changes(("Island", "", "to 91 copies"))
+    assert run("skills/sync/apply_changes.py").stdout == "zara: in Island (91) | out - | 100\n"
 
 
 def test_sync_drops_a_to_copies_row_once_moxfield_shows_that_count():
@@ -209,7 +221,7 @@ def test_sync_adds_a_deck_and_leaves_blocked_and_stale_ones():
     out = run("skills/sync/sync.py", str(MOX))
     assert out.returncode == 0, out.stderr
     assert out.stdout.splitlines() == ["added: krakens (k1)", f"blocked: blocked (Cloudflare challenge); {UNBLOCK}",
-                                       "not in the dump: stale", "zara: in Deep Current; Pearl Diver | out Wave Breaker",
+                                       "not in the dump: stale", "zara: in Deep Current; Pearl Diver | out Wave Breaker | 14 (short 86)",
                                        "rescore: krakens", "rescore: zara",
                                        "not refreshed: blocked, stale (tokens.md left as it was)"]
     assert json.loads(read("moxfield.json")) == {"user": "owner", "decks": {"z1": "zara", "b1": "blocked", "s1": "stale",

@@ -87,6 +87,8 @@ Either card may be blank. A Note of `unowned` keeps the row until you clear
 it; `<n> copies` adds n copies of the In card and cuts every copy of the
 Out card; `to <n> copies` sets the row's one card, In or Out, to exactly n
 copies, 0 cutting it, so basics can be swapped.
+Each deck's apply line ends with its card count, commander in and SIDEBOARD
+block out, as `| 100`, or `| 99 (short 1)` / `| 102 (over 2)` when not 100.
 
 ## Layout
 
