@@ -142,8 +142,21 @@ TIDE = {"name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": 
         "all_parts": [{"component": "token", "name": "Fish"}, {"component": "combo_piece", "name": "Rising Tide"}]}
 
 
+TREE = [  # Scryfall's oracle tags bulk: each tag's direct taggings only, its parents by id
+    {"id": "r", "label": "ramp", "type": "oracle", "parent_ids": [], "taggings": []},
+    {"id": "p", "label": "mana producer", "type": "oracle", "parent_ids": ["r"], "taggings": []},
+    {"id": "m", "label": "mana rock", "type": "oracle", "parent_ids": ["p"], "taggings": [{"oracle_id": "Sol Ring"}]},
+    {"id": "x", "label": "removal", "type": "oracle", "parent_ids": None, "taggings": []},
+    {"id": "s", "label": "spot removal", "type": "oracle", "parent_ids": ["x"], "taggings": [{"oracle_id": "wave"}]},
+    {"id": "c", "label": "removal-creature", "type": "oracle", "parent_ids": ["s", "x"], "taggings": [{"oracle_id": "tide"}]}]
+TAGS = gzip.compress("\n".join(map(json.dumps, TREE)).encode())
+NOV = "2026-11-01T00:00:00.000+00:00"
+INDEX = {"data": [{"type": "oracle_cards"}, {"type": "rulings", "jsonl_download_uri": "rulings"},
+                  {"type": "oracle_tags", "updated_at": NOV, "jsonl_download_uri": "tags"}]}
+
+
 def scryfall(posts):
-    """Scryfall's collection, bulk-data and rulings answers. A double-faced card is found only by its front face, and
+    """Scryfall's collection, bulk-data, rulings and oracle tags answers. A double-faced card is found only by its front face, and
     Sign in Blood only when posted alone (in a batch it comes back as neither found nor not found)."""
     def get(url, body=None):
         if body:
@@ -154,8 +167,8 @@ def scryfall(posts):
             data = [card(n) for n in names if n in PLAIN + ["Rising Tide"] or names == ["Sign in Blood"]]
             lost = [{"name": n} for n in names if n not in PLAIN + ["Rising Tide", "Sign in Blood"]]
             return json.dumps({"data": data, "not_found": lost}).encode()
-        if url.endswith("/bulk-data"):
-            return json.dumps({"data": [{"type": "oracle_cards"}, {"type": "rulings", "jsonl_download_uri": "rulings"}]}).encode()
+        if url.endswith("/bulk-data"): return json.dumps(INDEX).encode()
+        if url == "tags": return TAGS
         assert url == "rulings"
         return gzip.compress(b'{"oracle_id": "tide", "published_at": "2024-02-01", "comment": "Second."}\n'
                              b'{"oracle_id": "tide", "published_at": "2023-01-01", "comment": "First."}\n')
@@ -176,14 +189,32 @@ def test_rebuild_retries_double_faced_cards_by_front_face_and_lone_names_alone(m
     assert cards["Rising Tide // Tidal Flats"] == {
         "name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
         "legalities": {"commander": "legal"}, "related_tokens": ["Fish"], "rulings": ["First.", "Second."],
-        "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
+        "tags": ["removal", "removal-creature", "spot removal"], "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
                        {"name": "Tidal Flats", "type_line": "Land"}]}
     assert cards["Sol Ring"]["rulings"] == []
+    assert cards["Sol Ring"]["tags"] == ["mana producer", "mana rock", "ramp"]
+    assert cards["Island"]["tags"] == []
+
+
+def test_tags_download_again_only_when_the_index_shows_a_newer_file(monkeypatch):
+    got = []
+    monkeypatch.setattr(fetch_oracle, "get", lambda url: got.append(url) or TAGS)
+    index = lambda when: {"oracle_tags": {"updated_at": when, "jsonl_download_uri": "tags"}}
+    assert fetch_oracle.tags() == {}
+    fetch_oracle.tags(index(NOV))
+    assert fetch_oracle.tags(index(NOV)) == fetch_oracle.tags() == {
+        "Sol Ring": ["mana producer", "mana rock", "ramp"], "wave": ["removal", "spot removal"],
+        "tide": ["removal", "removal-creature", "spot removal"]}
+    assert got == ["tags"]
+    fetch_oracle.tags(index("2026-11-02T00:00:00.000+00:00"))
+    assert got == ["tags", "tags"]
 
 
 def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     before = json.loads(read("output/data/oracle.json"))["cards"]
-    wave = {"name": "Tidal Wave", "type_line": "Sorcery", "legalities": {"commander": "legal"}, "rulings_uri": "wave-rulings"}
+    fetch_oracle.TAGS.write_bytes(TAGS)
+    wave = {"name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
+            "rulings_uri": "wave-rulings"}
     asked = []
     def found(url):
         asked.append(url)
@@ -193,5 +224,5 @@ def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     assert fetch_oracle.add(["sol ring", "Tidal Wave", "Nothing Card"]) == ["Nothing Card"]
     assert asked == [project.NAMED + "Tidal%20Wave", project.NAMED + "Nothing%20Card"]
     assert json.loads(read("output/data/oracle.json"))["cards"] == {**before, "Tidal Wave": {
-        "name": "Tidal Wave", "type_line": "Sorcery", "legalities": {"commander": "legal"}, "related_tokens": [],
-        "rulings": ["It waves."]}}
+        "name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
+        "related_tokens": [], "rulings": ["It waves."], "tags": ["removal", "spot removal"]}}

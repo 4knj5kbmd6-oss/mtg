@@ -54,6 +54,8 @@ earns nothing for its reputation.
    commander, ramp, draw, tutor, removal, wipe, protection, fodder, outlet,
    combo, payoff, recursion, engine, threat, land. A land that does a job
    for the plan takes that job's role; a basic or plain dual is `land`.
+   The card's `tags` in oracle.json are the baseline; its Role may differ
+   when this deck uses the card otherwise.
    Judge rate and fit within that job: a 2-mana answer and a 5-mana answer
    to the same thing are not the same score.
 2. **Power here, not in general.** How much does the card actually do in

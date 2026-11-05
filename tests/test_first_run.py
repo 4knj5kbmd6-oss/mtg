@@ -19,10 +19,12 @@ def empty(tmp_path, monkeypatch):
 
 
 def scryfall(url, body=None):
-    """Scryfall's collection answer for every name posted, its bulk-data list and one ruling"""
+    """Scryfall's collection answer for every name posted, its bulk-data list, one ruling and no tags"""
     if body: return json.dumps({"data": [{"name": i["name"], "oracle_id": i["name"], "type_line": "Creature",
                                           "legalities": {"commander": "legal"}} for i in body["identifiers"]]}).encode()
-    if url.endswith("/bulk-data"): return json.dumps({"data": [{"type": "rulings", "jsonl_download_uri": "rulings"}]}).encode()
+    if url.endswith("/bulk-data"): return json.dumps({"data": [{"type": "rulings", "jsonl_download_uri": "rulings"},
+        {"type": "oracle_tags", "updated_at": "2026-11-01T00:00:00.000+00:00", "jsonl_download_uri": "tags"}]}).encode()
+    if url == "tags": return gzip.compress(b"")
     return gzip.compress(b'{"oracle_id": "Sol Ring", "published_at": "2020-01-01", "comment": "Taps for two."}\n')
 
 
@@ -57,7 +59,7 @@ def test_first_single_card_fetch_writes_oracle(monkeypatch):
     assert fetch_oracle.add(["Sol Ring"]) == []
     assert json.loads(read("output/data/oracle.json")) == {"cards": {"Sol Ring": {
         "name": "Sol Ring", "type_line": "Artifact", "legalities": {"commander": "legal"}, "related_tokens": [],
-        "rulings": ["Taps for two."]}}}
+        "rulings": ["Taps for two."], "tags": []}}}
 
 
 def test_first_judge_writes_the_rules(monkeypatch, capsys):
