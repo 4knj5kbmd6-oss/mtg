@@ -119,9 +119,10 @@ def page(slug, commanders, rest, weight, skipped):
     size, landed = count(rest), count((n, e) for n, e in rest if is_land(e))
     known = lambda t: size >= odds.seen(t)
     on_curve = [f"{odds.at_least(k, landed, size, odds.seen(k)):.0%}" if known(k) else "unknown" for k in (2, 3, 4)]
-    rows = []
+    rows, held = [], {}
     for c in identity:
         sources = lambda cards: count((n, e) for n, e in cards if c in colours(e, identity))
+        held[c] = sources(lands)
         heavy = [(n, e) for n, e in spells if pips(e, c) >= 2]
         lowest = f"{min(e.get('cmc', 0) for _, e in heavy):g}" if heavy else "-"
         wanting = [e for _, e in spells if pips(e, c)]
@@ -130,8 +131,10 @@ def page(slug, commanders, rest, weight, skipped):
         most = lambda e: needs[e["name"]] or landed + 1
         top = min(wanting, key=lambda e: (-most(e), e.get("cmc", 0), e["name"])) if told else None
         need = [str(needs[top["name"]] or "-"), top["name"]] if top else ["unknown" if wanting else "-", "-"]
-        rows.append([c, str(sources(lands)), *need,
+        rows.append([c, str(held[c]), *need,
                      *map(str, (sources(spells), sum(n * pips(e, c) for n, e in spells), count(heavy))), lowest])
+    share = recommend.shares(held) if sum(held.values()) else {}
+    split_now = ", ".join(f"{c} {share[c]}% ({held[c]})" for c in identity) if share else "-"
     return "\n".join([f"# {slug}: mana", "",
                       "## Curve", table("| Lands | Nonlands | Not cast | Mean mana value | " + " | ".join(CURVE) + " |",
                                         [[str(count(lands)), str(count(spells)),
@@ -140,8 +143,8 @@ def page(slug, commanders, rest, weight, skipped):
                       "## Lands", table("| 2 by turn 2 | 3 by turn 3 | 4 by turn 4 |", [on_curve]), "",
                       "## Colours", table("| Colour | Land sources | Sources needed | For | Nonland sources | Pips |"
                                           " Cards with 2+ pips | Lowest mana value of those |", rows), "",
-                      "## Recommendation", table("| " + " | ".join(["Lands", "Lands now", *identity]) + " |",
-                                                 [advice(identity, commanders, rest, weight, skipped)]), ""])
+                      "## Recommendation", table("| " + " | ".join(["Lands", "Lands now", *identity, "Split now"]) + " |",
+                                                 [[*advice(identity, commanders, rest, weight, skipped), split_now]]), ""])
 
 def write(run, slug):
     cards = json.loads(ORACLE.read_text())["cards"]

@@ -132,6 +132,7 @@ twentieths, so the shares are multiples of 5 summing to 100.
 | Lands | The recommended L; `unknown` when N < 7 + H |
 | Lands now | The N's land drops, X left out, modal lands included, so it compares with Lands, not with the Curve's Lands |
 | One per colour | `share% (s_c)`; `-` when L is 0, `unknown` with Lands |
+| Split now | Each colour's Land sources as shares of their sum over the identity, a land making two colours counted in both, rounded as the shares are: `colour share% (sources)`, joined by `, `; `-` with no land sources |
 
 Sources needed and the split can disagree: Sources needed is the 90% bar for
 the colour's most demanding card on any mix of lands, the split the most

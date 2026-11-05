@@ -184,7 +184,7 @@ CARDS = {  # name: (type, cost, mana value, produced_mana, oracle text)
 def recommendation(text):
     """the Recommendation row's Lands and each colour's sources"""
     row = [c.strip() for c in text.split("## Recommendation\n")[1].splitlines()[2].strip("|").split("|")]
-    return int(row[0]), [int(c.split("(")[1].rstrip(")")) for c in row[2:]]
+    return int(row[0]), [int(c.split("(")[1].rstrip(")")) for c in row[2:-1]]
 
 
 def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
@@ -219,9 +219,9 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 | B | 7 | 7 | Massacre Wurm | 3 | 8 | 3 | 3 |
 
 ## Recommendation
-| Lands | Lands now | U | B |
-|---|---|---|---|
-| 8 | 13 | 40% (3) | 60% (5) |
+| Lands | Lands now | U | B | Split now |
+|---|---|---|---|---|
+| 8 | 13 | 40% (3) | 60% (5) | U 60% (10), B 40% (7) |
 """
     # ramp: Mox Opal, Sol Ring, Arcane Signet (Dark Ritual is an instant); 3/8 and 5/8 tie on remainder, U first
     lands, sources = recommendation(read("run/lazav-mana.md"))
@@ -308,9 +308,9 @@ def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
 | U | 5 | unknown | - | 0 | 1 | 0 | - |
 
 ## Recommendation
-| Lands | Lands now | U |
-|---|---|---|
-| unknown | 5 | unknown |
+| Lands | Lands now | U | Split now |
+|---|---|---|---|
+| unknown | 5 | unknown | U 100% (5) |
 """
 
 
@@ -348,7 +348,7 @@ def test_mana_recommends_the_lands_and_split_that_cast_the_most_spells_on_time()
         return sum(w * (1 - C(4 - u, k) / C(4, k)) for k, w in ways.items()) / sum(ways.values())
     G = lambda u: met(u, 20, 8) + 16 / 13 * (9 * met(u, 19, 7) + 4 * met(4 - u, 19, 7))
     assert [round(G(u), 3) for u in (2, 3, 4)] == [11.99, 12.794, 12.077] and max(range(5), key=G) == 3
-    assert "## Recommendation\n| Lands | Lands now | U | B |\n|---|---|---|---|\n| 4 | 7 | 75% (3) | 25% (1) |\n" in text
+    assert "## Recommendation\n| Lands | Lands now | U | B | Split now |\n|---|---|---|---|---|\n| 4 | 7 | 75% (3) | 25% (1) | U 55% (4), B 45% (3) |\n" in text
     lands, sources = recommendation(text)
     assert 0 <= lands <= 20 and sum(sources) == lands
 
@@ -369,7 +369,7 @@ def test_mana_holds_the_cards_not_cast_as_draws_that_count_for_nothing():
     G = lambda u: met(u, 20, 8) + 2 * 4 * met(3 - u, 19, 7)
     assert [round(G(u), 3) for u in (0, 1)] == [8.0, 6.851] and max(range(4), key=G) == 0
     assert "| Lands | Nonlands | Not cast |" in text and "\n| 7 | 14 | 9 | 1.0 |" in text
-    assert "## Recommendation\n| Lands | Lands now | U | B |\n|---|---|---|---|\n| 3 | 7 | 0% (0) | 100% (3) |\n" in text
+    assert "## Recommendation\n| Lands | Lands now | U | B | Split now |\n|---|---|---|---|---|\n| 3 | 7 | 0% (0) | 100% (3) | U 55% (4), B 45% (3) |\n" in text
 
 
 def test_a_not_cast_name_off_the_list_is_printed_and_ignored(capsys):
@@ -377,6 +377,21 @@ def test_a_not_cast_name_off_the_list_is_printed_and_ignored(capsys):
     text = ixi("- **Not cast:** Sprite, Mystery Card, Ixi, Tide Caller\n")
     assert capsys.readouterr().out == "ixi: Not cast, not in list.txt: Mystery Card\n"
     assert "\n| 7 | 14 | 10 | 1.0 |" in text
+
+
+def test_split_now_counts_a_dual_land_in_both_its_colours():
+    land = lambda name, made: {"name": name, "type_line": "Land", "cmc": 0, "produced_mana": made}
+    oracle = {"Ixi, Tide Caller": {"name": "Ixi, Tide Caller", "type_line": "Legendary Creature", "cmc": 1,
+                                   "mana_cost": "{U}", "color_identity": ["B", "U"]},
+              "Watery Grave": land("Watery Grave", ["U", "B"]), "Island": land("Island", ["U"]),
+              "Swamp": land("Swamp", ["B"])}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("duals", "Ixi, Tide Caller", {"Watery Grave": 3, "Island": 1, "Swamp": 2})
+    Path("run").mkdir()
+    mana.write("run", "duals")
+    # 6 lands make 4 U and 5 B sources: 80/9 and 100/9 twentieths are 8 and 11, the one left over to U's remainder
+    assert read("run/duals-mana.md").endswith("## Recommendation\n| Lands | Lands now | U | B | Split now |\n"
+                                               "|---|---|---|---|---|\n| unknown | 6 | unknown | unknown | U 45% (4), B 55% (5) |\n")
 
 
 def test_odds_mana_counts_ramp_from_the_turn_after_it_is_drawn():
