@@ -24,6 +24,9 @@ dispatching the agents in `agents/`. The repo is the `mtg-toolbox` plugin;
   score on each card and the recommended adds; every generated file is a
   table with one short reason per row and no prose around it. Rankings
   are the table alone. Agents, skills and docs say each thing once.
+- Numbers are computed from the deck, never copied from a published
+  table; a method may follow an article, and no file, column or name
+  carries an author's name.
 - Plans are the owner's. Draft changes for their review; add no intent they
   have not stated.
 - Agents write to the scratchpad; the orchestrator copies results in; a
