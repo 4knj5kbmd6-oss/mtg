@@ -19,14 +19,14 @@ ROLES = {"Zara, Tide Caller": "commander", "Sol Ring": "ramp", "Tidal Insight": 
 
 
 def scorers(letters="ABC", scores=SCORES):
-    """one scorer file per letter in run/, as the scorer agent shapes them"""
-    Path("run").mkdir()
+    """one scorer file per letter, each in its own run/work-x-<letter>/ subfolder, as the scorer agent shapes them"""
     for i, letter in enumerate(letters):
         text = f"# Zara, Tide Caller: fit scores ({letter})\n"
         for section, cards in scores.items():
             text += f"\n## {section}\n| Card | Score | Role | Note |\n|---|---|---|---|\n"
             text += "".join(f"| {card} | {s[i]} | {role(card, i)} | fits |\n" for card, s in cards.items())
-        Path(f"run/zara-{letter}.md").write_text(text + "\n## Shape\nignored\n")
+        Path(f"run/work-x-{letter}").mkdir(parents=True)
+        Path(f"run/work-x-{letter}/zara.md").write_text(text + "\n## Shape\nignored\n")
 
 
 def role(card, i):
@@ -42,7 +42,7 @@ def without_roles(path):
 
 def test_parse_reads_every_section():
     scorers("A")
-    got = merge.parse("run/zara-A.md")
+    got = merge.parse("run/work-x-A/zara.md")
     assert got["Island"] == ("Island (4)", 6, "land", "fits", "lands")
     assert got["Deep Current"] == ("Deep Current", 8, "engine", "fits", "adds")
     assert got["Zara, Tide Caller"][4] == "nonlands"
@@ -105,6 +105,14 @@ def test_one_scorer_stands_alone():
     out = run("skills/score/merge.py", "run", "zara")
     assert out.stderr.endswith("1 scorer.\n")
     assert not Path("run/zara-flagged.md").exists()
+    assert "| Brine Elemental | 2 | threat | fits |" in read("run/merged/zara/nonlands.md")
+
+
+def test_a_scorer_file_in_the_run_folder_itself_is_ignored():
+    scorers("A")
+    Path("run/zara-A.md").write_text(read("run/work-x-A/zara.md").replace("| Brine Elemental | 2 |", "| Brine Elemental | 9 |"))
+    out = run("skills/score/merge.py", "run", "zara")
+    assert out.returncode == 0 and out.stderr.endswith("1 scorer.\n"), out.stderr
     assert "| Brine Elemental | 2 | threat | fits |" in read("run/merged/zara/nonlands.md")
 
 

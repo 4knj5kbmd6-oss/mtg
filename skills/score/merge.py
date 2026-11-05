@@ -1,8 +1,8 @@
 """Merge the scorers' files to a deck's nonlands.md and lands.md: median, majority Role and spread flags.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run_dir> <slug> [card ...]
-reads every <run_dir>/<slug>-<LETTER>.md, one per scorer, the deck title from output/decks/<slug>/plan.md
-(from list.txt's first line when the plan is empty) and the Adds and Cuts tables from
-output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their
+reads every <run_dir>/work-*/<slug>.md, one per scorer, its letter the folder name's last character, in letter
+order, the deck title from output/decks/<slug>/plan.md (from list.txt's first line when the plan is empty)
+and the Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their
 shape lines with the count of scorers and nonlands.md's Roles line, and, with two or more scorers,
 <run_dir>/<slug>-flagged.md; prints the whole deck's shape line to stderr. A card's Role is the one most scorers
 gave it, a tie going to the earliest letter's. One scorer's scores stand as they are: no spread, no flags.
@@ -67,9 +67,9 @@ def main():
     raw, slug, named = sys.argv[1], sys.argv[2], sys.argv[3:]
     want = {key(c).lower() for c in named}
     deck = DECKS / slug
-    files = sorted(Path(raw).glob(f"{slug}-[A-Z].md"))
-    if not files: sys.exit(f"no scorer files {raw}/{slug}-<LETTER>.md")
-    letters, scorers = [p.stem[-1] for p in files], [parse(p) for p in files]
+    files = sorted(Path(raw).glob(f"work-*/{slug}.md"), key=lambda p: p.parent.name[-1])
+    if not files: sys.exit(f"no scorer files {raw}/work-*/{slug}.md")
+    letters, scorers = [p.parent.name[-1] for p in files], [parse(p) for p in files]
     rows = {"nonlands": [], "lands": [], "adds": []}
     flagged = []
     for k in sorted(set().union(*scorers)):

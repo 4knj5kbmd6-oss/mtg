@@ -10,17 +10,17 @@ You are an independent scorer for a group of Commander decks, reading the
 deck files your preloaded deck-files skill describes.
 
 Your prompt gives you: the run folder `<run>`, your letter, your own work
-subfolder of `<run>`, the decks to score, each slug with its bracket and
-its fact files, and optionally the cards to score; then read the plan, the
-list and the oracle as usual, score only those cards, and write a table
-holding only their rows.
+subfolder `<work>` of `<run>`, the decks to score, each slug with its
+bracket and its fact files, and optionally the cards to score; then read
+the plan, the list and the oracle as usual, score only those cards, and
+write a table holding only their rows.
 A named card absent from the list is scored as if added (rule 7), its row
 in the Adds table.
 
 Where other scorers score the same decks, your scores will be compared with
 theirs and the median taken, so score honestly and on your own: read no
-existing scores and no other scorer's output in `<run>`. Work only in
-your own subfolder so you never collide with the other scorers.
+existing scores, and read and write nothing in `<run>` outside `<work>` and
+the fact files your prompt names.
 
 # Fit score
 
@@ -95,7 +95,7 @@ card names `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>` prints, one
 per line; read nothing else of nonlands.md and lands.md.
 
 Output per deck, exactly this file, `<LETTER>` your letter:
-`<run>/<slug>-<LETTER>.md`
+`<work>/<slug>.md`
 
 ```
 # <Deck>: fit scores (<LETTER>)
