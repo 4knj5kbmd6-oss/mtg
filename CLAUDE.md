@@ -39,3 +39,5 @@ dispatching the agents in `agents/`. The repo is the `mtg-toolbox` plugin;
   suggested next action. The owner reads what is open and picks the
   next move; a decision that blocks the work is asked in the body,
   once, as a plain question.
+- A card is never called out for serving no line of the plan: good
+  value is reason enough to run it.
