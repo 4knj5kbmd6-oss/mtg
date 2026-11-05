@@ -1,5 +1,11 @@
 # Contributing
 
+Pull requests are welcome, and every one gets a review. A fix, a new skill,
+a sharper metric, a better word in a doc: if it makes the toolbox better for
+someone's decks, open it. Not sure where a change belongs or whether it fits?
+Open an issue and ask; a question is a fine first contribution. The steps
+below keep a change easy to review and land.
+
 1. **An issue first.** Open a [bug](.github/ISSUE_TEMPLATE/bug.md) or an
    [enhancement](.github/ISSUE_TEMPLATE/enhancement.md) with the request in
    your own words. Before work starts it gains a technical design: the
