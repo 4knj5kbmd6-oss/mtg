@@ -1,0 +1,338 @@
+{
+ "timestamp": "2026-11-05T00:12:03.232133+00:00",
+ "version": "7.3.4",
+ "variants": [
+  {
+   "id": "4050-8304--73",
+   "uses": [
+    {
+     "card": {
+      "name": "Lieutenant Commander Data"
+     }
+    },
+    {
+     "card": {
+      "name": "Phyrexian Altar"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite card draw"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite draw triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Near-infinite colored mana"
+     }
+    },
+    {
+     "feature": {
+      "name": "Near-infinite creature ETB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Near-infinite creature LTB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Near-infinite creature sacrifice triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Near-infinite death triggers"
+     }
+    }
+   ],
+   "identity": "U",
+   "bracketTag": "B",
+   "salt": null,
+   "popularity": 5
+  },
+  {
+   "id": "1385-2577-5670",
+   "uses": [
+    {
+     "card": {
+      "name": "Warren Soultrader"
+     }
+    },
+    {
+     "card": {
+      "name": "Gravecrawler"
+     }
+    },
+    {
+     "card": {
+      "name": "Zulaport Cutthroat"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite creature ETB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature LTB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature sacrifice triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite death triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite lifegain triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite lifeloss"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite storm count"
+     }
+    }
+   ],
+   "identity": "B",
+   "bracketTag": "E",
+   "salt": 1.9,
+   "popularity": 43664
+  },
+  {
+   "id": "2178-4114-4859",
+   "uses": [
+    {
+     "card": {
+      "name": "The Beamtown Bullies"
+     }
+    },
+    {
+     "card": {
+      "name": "Bronze Bombshell"
+     }
+    },
+    {
+     "card": {
+      "name": "Thornbite Staff"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite damage"
+     }
+    }
+   ],
+   "identity": "BRG",
+   "bracketTag": "E",
+   "salt": null,
+   "popularity": 1657
+  },
+  {
+   "id": "283-3457",
+   "uses": [
+    {
+     "card": {
+      "name": "Seeker of Skybreak"
+     }
+    },
+    {
+     "card": {
+      "name": "Illusionist's Bracers"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite mana creatures you control can produce"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite untap of creatures you control"
+     }
+    }
+   ],
+   "identity": "G",
+   "bracketTag": "S",
+   "salt": null,
+   "popularity": 4365
+  },
+  {
+   "id": "2645-5168",
+   "uses": [
+    {
+     "card": {
+      "name": "Staff of Domination"
+     }
+    },
+    {
+     "card": {
+      "name": "Bloom Tender"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite lifegain triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite lifegain"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite card draw"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite untap of creatures you control"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite draw triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite mana creatures you control can produce"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite colored mana"
+     }
+    }
+   ],
+   "identity": "G",
+   "bracketTag": "S",
+   "salt": null,
+   "popularity": 14657
+  },
+  {
+   "id": "1580-2034-4871",
+   "uses": [
+    {
+     "card": {
+      "name": "Pitiless Plunderer"
+     }
+    },
+    {
+     "card": {
+      "name": "Ashnod's Altar"
+     }
+    },
+    {
+     "card": {
+      "name": "Reassembling Skeleton"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite colorless mana"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite death triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature ETB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature LTB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature sacrifice triggers"
+     }
+    }
+   ],
+   "identity": "B",
+   "bracketTag": "E",
+   "salt": 1.39,
+   "popularity": 66041
+  },
+  {
+   "id": "2577-4050",
+   "uses": [
+    {
+     "card": {
+      "name": "Gravecrawler"
+     }
+    },
+    {
+     "card": {
+      "name": "Phyrexian Altar"
+     }
+    }
+   ],
+   "produces": [
+    {
+     "feature": {
+      "name": "Infinite death triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature ETB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature LTB"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite creature sacrifice triggers"
+     }
+    },
+    {
+     "feature": {
+      "name": "Infinite storm count"
+     }
+    }
+   ],
+   "identity": "B",
+   "bracketTag": "E",
+   "salt": 2.53,
+   "popularity": 79643
+  }
+ ]
+}

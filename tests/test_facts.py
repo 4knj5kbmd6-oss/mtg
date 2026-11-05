@@ -1,4 +1,4 @@
-import json, sys
+import gzip, json, os, sys, time
 from pathlib import Path
 from urllib.error import URLError
 import pytest
@@ -6,29 +6,52 @@ from conftest import ROOT, run, read
 import combos as script, facts, mana
 from net import Failed
 
-SAVED = ROOT / "tests" / "spellbook"  # Spellbook's answers for two real decks, trimmed to a few combos
+SAVED = ROOT / "tests" / "spellbook"  # Spellbook's estimate-bracket answers for two real decks and its variants file, trimmed
 SLUG = {"The Beamtown Bullies": "beamtown", "Braids, Arisen Nightmare": "braids"}  # each saved deck by its commander
+COLOURS = {"The Beamtown Bullies": ["B", "G", "R"], "Braids, Arisen Nightmare": ["B"]}
+BULK = "https://json.commanderspellbook.com/variants.json.gz"
+BRACKET = "https://backend.commanderspellbook.com/estimate-bracket/"
+CACHED = Path("output/data/variants.json.gz")
 
 
 def deck(slug, commander, cards, adds=()):
-    """a deck folder with this list and these cards in its nonlands.md Adds table"""
+    """a deck folder with this list and these cards in its nonlands.md Adds table; a saved deck's commander goes
+    into oracle.json with its colours"""
     folder = Path(f"output/decks/{slug}"); folder.mkdir()
     (folder / "list.txt").write_text(f"1 {commander}\n\n" + "".join(f"{n} {c}\n" for c, n in cards.items()))
     (folder / "nonlands.md").write_text("# Deck: nonlands\n\n## Adds\n| Card | Score | Note | New | ~Price |\n"
                                         "|---|---|---|---|---|\n" + "".join(f"| {a} | - | fits | No | $1 |\n" for a in adds))
+    if commander in COLOURS:
+        oracle = json.loads(read("output/data/oracle.json"))
+        oracle["cards"][commander] = {"name": commander, "color_identity": COLOURS[commander]}
+        Path("output/data/oracle.json").write_text(json.dumps(oracle))
+
+
+def answering(combos, monkeypatch, url, answer):
+    """Spellbook answering url with answer, raised when it is an error, and everything else as saved"""
+    saved = combos.get
+    def get(u, body=None):
+        if u != url: return saved(u, body)
+        if isinstance(answer, BaseException): raise answer
+        return answer
+    monkeypatch.setattr(combos, "get", get)
 
 
 @pytest.fixture
 def combos(monkeypatch):
-    """combos.py with Spellbook answering from the saved files of the deck whose commander is posted"""
-    module, posted = script, []
-    def get(url, body):
-        posted.append((url, body))
-        return (SAVED / f"{SLUG[body['commanders'][0]['card']]}-{url.rstrip('/').rsplit('/', 1)[1]}.json").read_bytes()
+    """combos.py with Spellbook sending the saved variants file, gzipped, and answering estimate-bracket with the
+    saved answer of the deck whose commander is posted"""
+    module, asked = script, []
+    def get(url, body=None):
+        asked.append((url, body))
+        if url == BULK: return gzip.compress((SAVED / "variants.json").read_bytes())
+        return (SAVED / f"{SLUG[body['commanders'][0]['card']]}-estimate-bracket.json").read_bytes()
     monkeypatch.setattr(module, "get", get)
-    module.posted = posted
+    module.variants.cache_clear()
+    module.asked = asked
     Path("run").mkdir()
-    return module
+    yield module
+    module.variants.cache_clear()
 
 
 def write(combos, slug):
@@ -36,71 +59,100 @@ def write(combos, slug):
     return read(f"run/{slug}-combos.md")
 
 
-def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, monkeypatch, capsys):
+def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, capsys):
     deck("beamtown", "The Beamtown Bullies", {"Bloom Tender": 1, "Seeker of Skybreak": 1, "Bronze Bombshell": 1,
                                               "Not A Card": 1},
          adds=["Illusionist's Bracers", "Thornbite Staff"])
-    assert write(combos, "beamtown") == """# beamtown: Commander Spellbook combos
+    assert write(combos, "beamtown") == """# beamtown: combos from commanderspellbook.com
 
 ## Included
-| Cards | Result | Two-card |
-|---|---|---|
+| Cards | Result | Two-card | Bracket tag | Salt |
+|---|---|---|---|---|
 
 ## Almost included
-| Missing | Present | Result |
-|---|---|---|
-| Illusionist's Bracers | Seeker of Skybreak | Infinite mana creatures you control can produce, Infinite untap of creatures you control |
-| Thornbite Staff | The Beamtown Bullies + Bronze Bombshell | Infinite damage |
+| Missing | Present | Result | Bracket tag | Salt |
+|---|---|---|---|---|
+| Illusionist's Bracers | Seeker of Skybreak | Infinite mana creatures you control can produce, Infinite untap of creatures you control | Spicy | - |
+| Thornbite Staff | The Beamtown Bullies + Bronze Bombshell | Infinite damage | Exhibition | - |
 
 ## Flagged cards
 | Card | Flag |
 |---|---|
 """
-    assert [u for u, _ in combos.posted] == ["https://backend.commanderspellbook.com/find-my-combos/",
-                                             "https://backend.commanderspellbook.com/estimate-bracket/"]
-    assert combos.posted[0][1] == {"commanders": [{"card": "The Beamtown Bullies"}], "main": [
+    assert [u for u, _ in combos.asked] == [BULK, BRACKET]
+    assert combos.asked[1][1] == {"commanders": [{"card": "The Beamtown Bullies"}], "main": [
         {"card": "Bloom Tender", "quantity": 1}, {"card": "Seeker of Skybreak", "quantity": 1},
         {"card": "Bronze Bombshell", "quantity": 1}, {"card": "Not A Card", "quantity": 1}]}
+    assert gzip.decompress(CACHED.read_bytes()) == (SAVED / "variants.json").read_bytes()
     assert capsys.readouterr().out == "beamtown: not on Commander Spellbook: Not A Card\n"
 
 
-def test_included_combos_carry_spellbooks_two_card_mark_and_flags(combos, monkeypatch):
+def test_included_combos_carry_spellbooks_two_card_mark_and_flags_and_stay_in_colour(combos, monkeypatch):
     deck("braids", "Braids, Arisen Nightmare", {"Ashnod's Altar": 1, "Gravecrawler": 1, "Phyrexian Altar": 1,
-                                                "Pitiless Plunderer": 1, "Reassembling Skeleton": 1})
+                                                "Pitiless Plunderer": 1, "Reassembling Skeleton": 1},
+         adds=["Lieutenant Commander Data", "Warren Soultrader", "Zulaport Cutthroat"])
     bracket = json.loads((SAVED / "braids-estimate-bracket.json").read_text())
     bracket["combos"][0]["arguablyTwoCard"] = bracket["combos"][1]["definitelyTwoCard"] = True
     bracket["cards"][0]["massLandDenial"] = bracket["cards"][0]["extraTurn"] = True
-    saved = combos.get
-    monkeypatch.setattr(combos, "get", lambda url, body: json.dumps(bracket).encode() if "bracket" in url else saved(url, body))
-    text = write(combos, "braids")
-    assert text.split("## Almost included")[0] == """# braids: Commander Spellbook combos
+    answering(combos, monkeypatch, BRACKET, json.dumps(bracket).encode())
+    assert write(combos, "braids") == """# braids: combos from commanderspellbook.com
 
 ## Included
-| Cards | Result | Two-card |
-|---|---|---|
-| Gravecrawler + Phyrexian Altar | Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers, Infinite storm count | definite |
-| Pitiless Plunderer + Ashnod's Altar + Reassembling Skeleton | Infinite colorless mana, Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers | arguable |
+| Cards | Result | Two-card | Bracket tag | Salt |
+|---|---|---|---|---|
+| Gravecrawler + Phyrexian Altar | Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers, Infinite storm count | definite | Exhibition | 2.5 |
+| Pitiless Plunderer + Ashnod's Altar + Reassembling Skeleton | Infinite colorless mana, Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers | arguable | Exhibition | 1.4 |
 
+## Almost included
+| Missing | Present | Result | Bracket tag | Salt |
+|---|---|---|---|---|
+
+## Flagged cards
+| Card | Flag |
+|---|---|
+| Ashnod's Altar | mass land denial |
+| Ashnod's Altar | extra turns |
 """
-    assert text.endswith("## Flagged cards\n| Card | Flag |\n|---|---|\n| Ashnod's Altar | mass land denial |\n"
-                         "| Ashnod's Altar | extra turns |\n")
+
+
+def test_a_cached_variants_file_is_read_until_it_is_a_day_old(combos):
+    deck("braids", "Braids, Arisen Nightmare", {"Gravecrawler": 1, "Phyrexian Altar": 1})
+    CACHED.write_bytes(gzip.compress(b'{"variants": []}'))
+    assert "| Gravecrawler + Phyrexian Altar |" not in write(combos, "braids")
+    assert [u for u, _ in combos.asked] == [BRACKET]
+    combos.variants.cache_clear()
+    os.utime(CACHED, (time.time() - 24 * 60 * 60 - 60,) * 2)
+    assert "| Gravecrawler + Phyrexian Altar |" in write(combos, "braids")
+    assert gzip.decompress(CACHED.read_bytes()) == (SAVED / "variants.json").read_bytes()
+
+
+@pytest.mark.parametrize("answer", [URLError("down"), Failed(f"{BULK}: HTTP 503"), b"<title>Just a moment...</title>"])
+def test_a_stale_cached_variants_file_is_used_when_spellbook_sends_none(combos, monkeypatch, capsys, answer):
+    deck("braids", "Braids, Arisen Nightmare", {"Gravecrawler": 1, "Phyrexian Altar": 1})
+    CACHED.write_bytes(gzip.compress((SAVED / "variants.json").read_bytes()))
+    old = time.mktime((2026, 11, 2, 12, 0, 0, 0, 0, -1))
+    os.utime(CACHED, (old, old))
+    answering(combos, monkeypatch, BULK, answer)
+    text = write(combos, "braids")
+    assert text.startswith("# braids: combos from commanderspellbook.com, from a stale copy of 2026-11-02\n")
+    assert "| Gravecrawler + Phyrexian Altar |" in text
+    assert CACHED.stat().st_mtime == old and capsys.readouterr().out == ""
 
 
 @pytest.mark.parametrize("answer, url", [
-    (URLError("down"), "find-my-combos"),
-    (Failed("https://backend.commanderspellbook.com/find-my-combos/: HTTP 503"), "find-my-combos"),
-    (b"<title>Just a moment...</title>", "estimate-bracket"),
+    (URLError("down"), BULK),
+    (Failed(f"{BULK}: HTTP 503"), BULK),
+    (b"<title>Just a moment...</title>", BULK),
+    (URLError("down"), BRACKET),
+    (b"<title>Just a moment...</title>", BRACKET),
 ])
 def test_no_answer_from_spellbook_names_the_url_and_writes_nothing(combos, monkeypatch, capsys, answer, url):
     deck("beamtown", "The Beamtown Bullies", {"Seeker of Skybreak": 1})
-    def get(u, body):
-        if url not in u: return (SAVED / "beamtown-find-my-combos.json").read_bytes()
-        if isinstance(answer, BaseException): raise answer
-        return answer
-    monkeypatch.setattr(combos, "get", get)
+    answering(combos, monkeypatch, url, answer)
     combos.write("run", "beamtown")
-    assert capsys.readouterr().out == f"Commander Spellbook unreachable: https://backend.commanderspellbook.com/{url}/\n"
+    assert capsys.readouterr().out == f"Commander Spellbook unreachable: {url}\n"
     assert not Path("run/beamtown-combos.md").exists()
+    assert CACHED.exists() == (url == BRACKET)
 
 
 ANY = ["B", "G", "R", "U", "W"]
