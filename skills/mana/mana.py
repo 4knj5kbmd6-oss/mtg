@@ -21,6 +21,7 @@ SEARCH = re.compile(r"search your library for [^.]*?\b(?:land|Plains|Island|Swam
                     r"\bonto the battlefield", re.I)
 SPENDS = re.compile(r"\bsacrifice (?:a|any number of) lands?\b", re.I)
 NOT_CAST = re.compile(r"^- \*\*Not cast:\*\*(.*)$", re.M)
+SYMBOL = re.compile(r"\{([^}]*)\}")
 
 def colours(e, identity):
     """the colours of the identity e makes mana of, a fetch land's by the land types it searches for"""
@@ -30,6 +31,12 @@ def colours(e, identity):
             typed = {c for t, c in TYPES.items() if re.search(rf"\b{t}\b", want)}
             got |= typed or (set(identity) if "basic land card" in want else set())
     return got & set(identity)
+
+def mv(e):
+    """e's mana value: its cmc, or for a split, aftermath or Room card, whose cmc sums both halves, its front half's"""
+    if " // " not in e.get("mana_cost", ""): return e.get("cmc", 0)
+    value = lambda s: int(s.split("/")[0]) if s.split("/")[0].isdigit() else 0 if s in ("X", "Y", "Z") else 1
+    return sum(map(value, SYMBOL.findall(e["mana_cost"].split(" // ")[0])))
 
 def pips(e, colour): return front(e).get("mana_cost", "").count(f"{{{colour}}}")
 
@@ -50,15 +57,15 @@ def ramp(e):
 
 def due(e):
     """the turn e is due on curve: its mana value, or its pips when more, 1 at least"""
-    return max(1, int(e.get("cmc", 0)), sum(pips(e, c) for c in COLOURS))
+    return max(1, int(mv(e)), sum(pips(e, c) for c in COLOURS))
 
-def turn(e): return min(int(e.get("cmc", 0)), 7)
+def turn(e): return min(int(mv(e)), 7)
 
 def needed(e, colour, lands, size):
     """the fewest of the lands in a deck of size cards to be sources of the colour that give e its pips of it by its turn
     CHANCE of the times its lands are seen, None when none do"""
     want, seen = pips(e, colour), odds.seen(turn(e))
-    least = max(int(e.get("cmc", 0)), want)
+    least = max(int(mv(e)), want)
     return next((s for s in range(want, lands + 1)
                  if odds.given_lands(want, s, lands, size, seen, least) >= CHANCE), None)
 
@@ -91,7 +98,7 @@ def advice(identity, commanders, rest, weight, skipped):
     """the Recommendation table's row: the lands, the land drops now and each colour's share and sources, the skipped
     cards held in the deck as draws that count for nothing"""
     each = lambda cards: [e for n, e in cards for _ in range(n) if e["name"] not in skipped]
-    card = lambda e: (weight(e["name"]), int(e.get("cmc", 0)), due(e), {c: pips(e, c) for c in identity if pips(e, c)})
+    card = lambda e: (weight(e["name"]), int(mv(e)), due(e), {c: pips(e, c) for c in identity if pips(e, c)})
     deck = each(rest)
     played = [(*card(e), ramp(e)) for e in deck if not land_drop(e)]
     led = [card(e) for e in each(commanders)]
@@ -114,7 +121,7 @@ def page(slug, commanders, rest, weight, skipped):
     lands = [(n, e) for n, e in deck if is_land(e)]
     spells = [(n, e) for n, e in deck if not is_land(e)]
     count = lambda cards: sum(n for n, _ in cards)
-    mean = sum(n * e.get("cmc", 0) for n, e in spells) / max(count(spells), 1)
+    mean = sum(n * mv(e) for n, e in spells) / max(count(spells), 1)
     curve = [count((n, e) for n, e in spells if turn(e) == i) for i in range(8)]
     size, landed = count(rest), count((n, e) for n, e in rest if is_land(e))
     known = lambda t: size >= odds.seen(t)
@@ -124,12 +131,12 @@ def page(slug, commanders, rest, weight, skipped):
         sources = lambda cards: count((n, e) for n, e in cards if c in colours(e, identity))
         held[c] = sources(lands)
         heavy = [(n, e) for n, e in spells if pips(e, c) >= 2]
-        lowest = f"{min(e.get('cmc', 0) for _, e in heavy):g}" if heavy else "-"
-        wanting = [e for _, e in spells if pips(e, c)]
+        lowest = f"{min(mv(e) for _, e in heavy):g}" if heavy else "-"
+        wanting = [e for _, e in spells if pips(e, c) and e["name"] not in skipped]
         told = wanting and all(known(turn(e)) for e in wanting)
         needs = {e["name"]: needed(e, c, landed, size) for e in wanting} if told else {}
         most = lambda e: needs[e["name"]] or landed + 1
-        top = min(wanting, key=lambda e: (-most(e), e.get("cmc", 0), e["name"])) if told else None
+        top = min(wanting, key=lambda e: (-most(e), mv(e), e["name"])) if told else None
         need = [str(needs[top["name"]] or "-"), top["name"]] if top else ["unknown" if wanting else "-", "-"]
         rows.append([c, str(held[c]), *need,
                      *map(str, (sources(spells), sum(n * pips(e, c) for n, e in spells), count(heavy))), lowest])

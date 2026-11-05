@@ -14,7 +14,7 @@ left out.
 | Commanders | The lines before the list's first blank line, always available from the command zone |
 | Identity | The colours of the commanders' colour identity, in WUBRG order |
 | Draws | A uniform shuffle of the N: positions 1 to 7 are the opening hand, position 7 + u is drawn on turn u, turn 1 included; no mulligan |
-| Mana value, mv | The card's `cmc`, rounded down |
+| Mana value, mv | The card's `cmc`, rounded down; a split, aftermath or Room card, whose `mana_cost` holds ` // `, takes its front half's cost instead, since its `cmc` sums both halves; adventure and modal double-faced cards keep their `cmc` |
 | Pips of a colour | The `{W}` `{U}` `{B}` `{R}` `{G}` symbols of the front face's cost; hybrid and Phyrexian symbols are not counted |
 | Due turn, t | max(1, mv, the card's pips summed over the colours) |
 | Land drop | A card whose front face is a Land, or whose second face is a Land and whose front does not transform; a modal double-faced land is a land drop and its spell side is not counted |
@@ -43,7 +43,8 @@ land drops among the cards seen by turn u (7 + u of them).
                          sum over k >= m of C(ℓ, k) C(N - ℓ, n - k)
 
   The colour needs the most any of its cards needs (ties: the lower mv, then
-  the name). `-` when no s up to ℓ reaches 90%; `unknown` when N is below the
+  the name), X left out; Land sources, Nonland sources, Pips and the two pip
+  columns count X. `-` when no s up to ℓ reaches 90%; `unknown` when N is below the
   cards seen by the turn of any of its cards.
 
 ## Land count

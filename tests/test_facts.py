@@ -269,6 +269,30 @@ def test_mana_never_needs_more_sources_than_lands():
     assert "| U | 10 | 10 | Cryptic |" in read("run/mono-mana.md")
 
 
+def test_mana_reads_a_split_card_at_its_front_halfs_mana_value():
+    # a Room's cmc sums both halves; an adventure's top-level cost holds only its creature's, so it keeps its cmc
+    room = {"name": "Funeral Room // Awakening Hall", "cmc": 11, "mana_cost": "{2}{B} // {6}{B}{B}",
+            "card_faces": [{"mana_cost": "{2}{B}"}, {"mana_cost": "{6}{B}{B}"}]}
+    giant = {"name": "Bonecrusher Giant // Stomp", "cmc": 3, "mana_cost": "{2}{R}",
+             "card_faces": [{"mana_cost": "{2}{R}"}, {"mana_cost": "{1}{R}"}]}
+    assert (mana.due(room), mana.turn(room), mana.due(giant)) == (3, 3, 3)
+
+
+def test_mana_needs_no_sources_for_a_card_not_cast():
+    cost = lambda name, value, cost: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": cost}
+    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{2}"), "color_identity": ["U"]},
+              "Counterspell": cost("Counterspell", 2, "{U}{U}"), "Kraken": cost("Kraken", 9, "{7}{U}{U}"),
+              "Filler": cost("Filler", 2, "{2}"),
+              "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]}}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("held", "Zara, Tide Caller", {"Island": 37, "Filler": 60, "Counterspell": 1, "Kraken": 1})
+    Path("output/decks/held/plan.md").write_text("- **Not cast:** Counterspell\n")
+    Path("run").mkdir()
+    mana.write("run", "held")
+    # Counterspell would need 31 sources, as above; not cast, Kraken's 13 set the colour, both still counted for pips
+    assert "| U | 37 | 13 | Kraken | 0 | 4 | 2 | 2 |" in read("run/held-mana.md")
+
+
 def test_odds_count_the_hits_among_the_cards_seen():
     # 2 hits in a deck of 4, 2 drawn: both 1 in C(4, 2) = 6, at least one 5 in 6; turn one already sees a draw
     assert (odds.at_least(1, 2, 4, 2), odds.at_least(2, 2, 4, 2), odds.seen(1)) == (5 / 6, 1 / 6, 8)
