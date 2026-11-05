@@ -1,6 +1,5 @@
-"""A deck's recommended lands for mana.py, from its numbers alone: the land count that casts the most weighted spells on
-time in a game of HORIZON turns, and the split of those lands among the identity's colours that casts the most cards'
-pips on curve. Spells come one per card copy of the deck without its commanders and its land drops."""
+"""A deck's recommended land count and its split among the identity's colours, for mana.py, from the deck's numbers
+alone, as METHOD.md defines them."""
 from collections import Counter
 import odds
 

@@ -7,7 +7,8 @@ argument-hint: "<slug> [slug ...]"
 # mana
 
 The script runs from the folder that holds `output/`; `/score` and
-`/upgrades` read the same file through `facts.py`.
+`/upgrades` read the same file through `facts.py`; every number is defined in
+`${CLAUDE_PLUGIN_ROOT}/skills/mana/METHOD.md`.
 
 For `/mana <slug> [slug ...]`:
 

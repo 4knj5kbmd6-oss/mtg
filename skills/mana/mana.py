@@ -1,28 +1,7 @@
-"""A deck's mana facts from its list and oracle.json, its <run_dir>/<slug>-mana.md, for facts.py and the mana skill.
+"""A deck's mana file, <run_dir>/<slug>-mana.md, from its list.txt, its plan.md's Not cast line and oracle.json, for
+facts.py and the mana skill: the Curve, Lands, Colours and Recommendation tables, each number as METHOD.md defines it.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/mana/mana.py <run_dir> <slug> [slug ...]
-write() counts card copies of output/decks/<slug>/list.txt, commanders included: the lands; the nonlands; the cards the
-plan's "- **Not cast:** Card, Card" line names, by name or either face, any other name printed; the nonlands' mean
-mana value and curve; the chance of at least 2 lands by turn 2, 3 by turn 3 and 4 by turn 4 (odds.py) drawn from the
-deck without its commanders; and per colour of the commanders' identity, the land sources, the sources needed and the
-card that sets them, the nonland sources, the pips, the cards with two or more pips of it and the lowest mana value
-among those. A nonland card with pips of a colour needs the fewest of the deck's lands to be sources of it that give it
-at least that many among the cards seen by the turn of its mana value, 7 at most, 90% of the times at least its mana
-value of lands are seen, or its pips when more; - when the deck has too few lands to see that many. The colour needs
-the most any of its cards needs (ties: the lowest mana value, then by name). A chance or need is unknown when fewer of
-the deck's cards are known than are seen by its turn. A card's colours are its produced_mana within the identity; a fetch land's are also those of
-the basic land types it searches for, or every colour of the identity when it searches for a basic land card of no
-type. Pips are the {W} {U} {B} {R} {G} symbols of the front face's cost. The recommendation (recommend.py) is the fewest
-lands that cast the most spells on time in a ten-turn game, each spell weighted by its Score in the deck's nonlands.md,
-the mean score when it has none, 1 when the deck has no scores: on time is on its due turn, its mana value or its pips
-when more, or the turn it is drawn if later, with lands played one a turn and each ramp piece, a permanent that taps for
-mana or a card that puts lands from the library onto the battlefield, a mana from the turn after both its mana value and
-the turn it is drawn; modal double-faced lands count as lands, in Lands now too. A card not cast stays in the deck as a draw that
-counts for nothing, neither land nor ramp, held fixed beside the ramp as the other spells scale with the lands. The split gives each colour of the
-identity the number of those lands, each making one colour, that casts the most cards' pips on their due turn given that
-turn's lands, and its share of them rounded to 5%. A real base meets the split when its lands match one to one the
-split's sources, each making its source's colour, which holds when every set of colours has at least its sources' total
-among the lands making one of them; every card's chance is then at least the split's. Prints any card oracle.json lacks,
-left out of the counts."""
+Prints any card oracle.json lacks, left out of the counts, and any Not cast name off the list."""
 import json, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))

@@ -1,5 +1,5 @@
-"""Hypergeometric odds for mana.py, on the play in Commander: seven cards in hand and a draw every turn, turn one
-included."""
+"""Hypergeometric odds for mana.py and recommend.py, on the play in Commander with a draw on turn one, as METHOD.md
+uses them."""
 from functools import cache
 from itertools import product
 from math import comb

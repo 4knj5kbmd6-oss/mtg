@@ -45,7 +45,8 @@ first use and looks up on Scryfall any card it has not seen.
 1. `/sync <moxfield username>` adds your public Commander decks to
    `moxfield.json` and writes each deck's `list.txt`.
 2. Write each deck's `output/decks/<slug>/plan.md`: the lines the deck means
-   to play.
+   to play. A bullet `- **Not cast:** Card, Card` names the cards it cheats
+   into play rather than casts; `/mana` leaves them out of its land count.
 3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
 
 **Cost.** Every deck in a `/score` run is read by `scorers` scorers on `model`
