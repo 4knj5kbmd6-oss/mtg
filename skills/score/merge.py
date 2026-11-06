@@ -1,7 +1,7 @@
 """Merge the scorers' files to a deck's nonlands.md and lands.md: median, majority Role and spread flags.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run_dir> <slug> [card ...]
 reads every <run_dir>/work-*/<slug>.md, one per scorer, its letter the folder name's last character, in letter
-order, the deck title from output/decks/<slug>/plan.md (from list.txt's first line when the plan is empty)
+order, the deck title from output/decks/<slug>/plan.md's first `# ` heading (else list.txt's first line)
 and the Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their
 shape lines with the count of scorers and nonlands.md's Roles line, and, with two or more scorers,
 <run_dir>/<slug>-flagged.md; prints the whole deck's shape line to stderr. A card's Role is the one most scorers
@@ -46,10 +46,12 @@ def parse(p):
     return out
 
 def whole(deck, rows, scorers):
-    """{kind: text} of the deck's nonlands.md and lands.md written whole from this run's rows, the title from plan.md
-    (list.txt's first line when the plan is empty), the Adds and Cuts tables kept with this run's scores"""
-    plan = (deck / "plan.md").read_text().strip()
-    title = re.sub(r"^#\s*|:\s*plan\s*$", "", plan.splitlines()[0]) if plan else norm((deck / "list.txt").read_text().splitlines()[0])
+    """{kind: text} of the deck's nonlands.md and lands.md written whole from this run's rows, the title from plan.md's
+    first `# ` heading less `: plan` (list.txt's first line when it has none or there is no plan.md), the Adds and
+    Cuts tables kept with this run's scores"""
+    plan = deck / "plan.md"
+    head = re.search(r"^# (.+)$", plan.read_text() if plan.exists() else "", re.M)
+    title = re.sub(r":\s*plan\s*$", "", head[1]).strip() if head else norm((deck / "list.txt").read_text().splitlines()[0])
     old = [dict(split(p.read_text())) for p in (deck / f"{k}.md" for k in KINDS) if p.exists()]
     rest = {k: [] for k in KINDS}
     if any("## Adds" in o for o in old):  # research metadata and order stay; scores, add notes and cut scores are this run's

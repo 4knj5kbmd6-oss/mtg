@@ -1,5 +1,6 @@
-import copy
+import copy, json
 from pathlib import Path
+import pytest
 from conftest import run, read
 import merge, merge_rankings, project, settings
 
@@ -53,6 +54,20 @@ def test_key_and_copies():
     assert project.key("4 Island (4)") == "Island"
     assert project.key("Rising Tide // Tidal Flats") == "Rising Tide"
     assert project.copies("Island (4)") == 4 and project.copies("Island x 3") == 3 and project.copies("Sol Ring") == 1
+
+
+def test_a_deck_with_no_list_stops_naming_the_file():
+    with pytest.raises(SystemExit) as stop: project.decklist("nodeck")
+    assert stop.value.code == "no output/decks/nodeck/list.txt"
+
+
+@pytest.mark.parametrize("plan", [None, "- **Win:** Out-card: Zara, Tide Caller + Tidal Insight. Draws the table out.\n"])
+def test_merge_titles_a_deck_with_no_plan_or_no_heading_from_its_list(plan):
+    scorers()
+    Path("output/decks/zara/plan.md").unlink() if plan is None else Path("output/decks/zara/plan.md").write_text(plan)
+    out = run("skills/score/merge.py", "run", "zara")
+    assert out.returncode == 0, out.stderr
+    assert read("run/merged/zara/nonlands.md").startswith("# Zara, Tide Caller: nonlands\n")
 
 
 def test_merge_writes_the_file_pair():
@@ -249,6 +264,36 @@ def test_settings_overrides():
     out = run("lib/settings.py", "budget=50", "universes_beyond=false", "new_sets=true")
     assert out.returncode == 0 and '"budget": 50' in out.stdout and '"universes_beyond": false' in out.stdout
     assert '"new_sets": true' in out.stdout
+
+
+@pytest.mark.parametrize("text, said", [
+    ('{"scorers": 1,}', None), ("[1]", "not an object"), ('{"models": "x"}', "models must be an object"),
+    ('{"budget": "50"}', "budget must be a number or null"), ('{"budget": true}', "budget must be a number or null"),
+    ('{"scorers": 0}', "scorers must be a whole number ≥ 1"), ('{"rankers": 2.5}', "rankers must be a whole number ≥ 1"),
+    ('{"images": "yes"}', "images must be true or false")])
+def test_a_malformed_settings_json_stops_with_one_line(text, said):
+    Path("settings.json").write_text(text)
+    if said is None:   # not JSON: json's own error, its wording Python's
+        with pytest.raises(ValueError) as error: json.loads(text)
+        said = str(error.value)
+    out = run("lib/settings.py")
+    assert (out.returncode, out.stdout, out.stderr) == (1, "", f"settings.json: {said}\n")
+
+
+@pytest.mark.parametrize("word, said", [("scorers=0", "scorers must be a whole number ≥ 1"),
+                                        ("models=x", "models must be an object"),
+                                        ("budget=fifty", "budget must be a number or null"),
+                                        ("new_sets=1", "new_sets must be true or false")])
+def test_an_override_of_the_wrong_kind_stops_naming_the_word(word, said):
+    out = run("lib/settings.py", word)
+    assert (out.returncode, out.stdout, out.stderr) == (1, "", f"{word}: {said}\n")
+
+
+def test_an_unknown_settings_key_is_named_and_ignored():
+    Path("settings.json").write_text('{"ranker": 5, "budget": 20}')
+    out = run("lib/settings.py")
+    assert (out.returncode, out.stderr) == (0, "settings.json: unknown key ranker\n")
+    assert '"budget": 20' in out.stdout
 
 
 # each deck's Score and four criteria from rankers A, B and C, Salt the same from each, and each ranker's own

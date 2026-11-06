@@ -1,5 +1,5 @@
 """The project the scripts run in, the folder that holds output/: its paths, card names, deck lists and cards."""
-import json, re, urllib.parse
+import json, re, sys, urllib.parse
 from pathlib import Path
 from net import get, found, SCRYFALL, SEARCH
 DECKS, DATA = Path("output/decks"), Path("output/data")
@@ -30,8 +30,10 @@ def copies(n):
 
 def decklist(slug):
     """([(copies, name)] of the commanders, [(copies, name)] of the rest) from output/decks/<slug>/list.txt, the
-    commanders being the lines before its first blank line and its SIDEBOARD: block left out"""
-    text = (DECKS / slug / "list.txt").read_text().split("SIDEBOARD:")[0].strip()
+    commanders being the lines before its first blank line and its SIDEBOARD: block left out; no list.txt stops the
+    run"""
+    if not (path := DECKS / slug / "list.txt").exists(): sys.exit(f"no {path}")
+    text = path.read_text().split("SIDEBOARD:")[0].strip()
     rows = lambda t: [(int(m[1]), m[2]) for l in t.splitlines() if (m := re.match(r"(\d+)\s+(.+)", l.strip()))]
     head, _, rest = text.partition("\n\n")
     return rows(head), rows(rest)
