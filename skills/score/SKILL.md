@@ -24,6 +24,12 @@ files in `<run>`: combos and counts. When all are back, run
 it exits naming a ranker file, re-dispatch that letter alone and merge
 again. Copy `<run>/rankings.md` over `rankings.md`.
 
+After a change to a computed criterion alone (merge_rankings.py's
+`COMPUTED`), run `facts.py <run>` with every slug as above, then
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py --recompute <run>`,
+then copy `<run>/rankings.md` over `rankings.md`; no ranker runs. A change
+to a judged criterion or its levels still ranks the decks.
+
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
 2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact

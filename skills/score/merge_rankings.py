@@ -1,5 +1,5 @@
 """Merge the rankers' judgments into rankings.md, computing every cell a ranker does not judge.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run_dir>
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py [--recompute] <run_dir>
 The decks are the slugs of <run_dir>/*-counts.md. Each <run_dir>/rankings-<letter>.md, in the ranker agent's shape,
 must hold each deck exactly once, its JUDGED criteria whole numbers from 1 to 9, its Kill turn N or N-M and its Bracket
 1 to 5, optionally followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter>.md: <slug>: <what>"
@@ -18,7 +18,9 @@ line per fault and writes nothing. Writes <run_dir>/rankings.md: its Rankings, C
   moxfield.json's decks, or - when it lacks the deck;
 - rows sort by Score descending, then by the deck's mean place across the rankers' tables, then by slug.
 Prints to stderr, per deck, the JUDGED criteria the rankers put SPLIT or more apart, each with its values in letter
-order."""
+order. With --recompute, rankings.md beside output/ is the only judged source and no ranker file is read: each deck's
+JUDGED criteria as written, its Bracket, Kill turn, Why and JUDGED Ledger rows, and its row there as its place; a deck
+of the run it lacks exits 1 with "<slug>: not in rankings.md, rank the decks"."""
 import json, math, re, sys
 from collections import Counter
 from fractions import Fraction
@@ -36,7 +38,7 @@ RANKINGS = "| # | Commander | Colours | Bracket | Score | Kill turn | Game Chang
 CRITERIA = "| # | Commander | " + " | ".join(JUDGED + COMPUTED) + " |"
 LEDGER = "| Commander | Criterion | Value | Count | Cards |"
 KILL, BRACKET = re.compile(r"\d+(-\d+)?"), re.compile(r"[1-5](, (top|low))?")
-MOXFIELD = Path("moxfield.json")
+MOXFIELD, RANKED = Path("moxfield.json"), Path("rankings.md")
 
 def tenths(x):
     """x rounded half up to one decimal, exactly"""
@@ -89,20 +91,43 @@ def computed(run, slug):
     return {c: (int(got[c][1]), [c, got[c][1], count, cards or "-"])
             for c in COMPUTED if c in got for count, _, cards in [got[c][2].partition("; ")]}
 
-def merged(rankers, comp):
-    """{slug: (mean place, [JUDGED values], bracket, kill, why, Ledger rows)} from each ranker's (judgments, Ledger)
-    and each deck's computed(); prints the split criteria"""
+def merged(run, decks, comp):
+    """({slug: (mean place, [JUDGED values], bracket, kill, why, Ledger rows)}, faults) from the ranker files and each
+    deck's computed(); prints the split criteria"""
+    files = sorted(run.glob("rankings-?.md"))
+    if not files: sys.exit(f"no ranker files {run}/rankings-<letter>.md")
+    rankers, ledgers, faults = zip(*(judgments(p, decks) for p in files))
+    if faults := sum(faults, []): return {}, faults
     found = {}
-    for d in comp:
-        got, own = [r[d] for r, _ in rankers], [comp[d][c][0] for c in COMPUTED]
+    for d in decks:
+        got, own = [r[d] for r in rankers], [comp[d][c][0] for c in COMPUTED]
         each = list(zip(*(g[1] for g in got)))
         median = sorted(range(len(got)), key=lambda i: score(got[i][1] + own))[(len(got) - 1) // 2]
         _, _, bracket, kill, why = got[median]
         found[d] = (mean([g[0] for g in got]), [middle(v) for v in each], bracket, kill, why,
-                    sorted(rankers[median][1].get(d, []), key=lambda r: JUDGED.index(r[0])))
+                    sorted(ledgers[median].get(d, []), key=lambda r: JUDGED.index(r[0])))
         apart = [f"{n} {'/'.join(map(str, v))}" for n, v in zip(JUDGED, each) if max(v) - min(v) >= SPLIT]
         if apart: print(f"{d}: split {', '.join(apart)}", file=sys.stderr)
-    return found
+    return found, []
+
+def written(decks):
+    """({slug: (place, [JUDGED values], bracket, kill, why, Ledger rows)}, faults) as rankings.md holds them"""
+    secs = dict(split(RANKED.read_text())) if RANKED.exists() else {None: []}
+    head = next((l for l in secs.get("## Criteria", []) if l.startswith("| # |")), "")
+    columns = [c.strip() for c in head.strip().strip("|").split("|")]
+    if missing := [c for c in JUDGED if RANKED.exists() and c not in columns]:
+        return {}, [f"rankings.md has no {c} column, rank the decks" for c in missing]
+    crit = {r[0]: r for r in cells(secs.get("## Criteria", []))}
+    found, owners, seen = {}, {}, Counter()
+    for place, r in enumerate(cells(secs[None])):
+        name, d = re.fullmatch(r"\[(.*)\]\(output/decks/([^/)]+)/?\)", r[1]).groups()
+        found[d] = (place, [Fraction(crit[r[0]][columns.index(c)]) for c in JUDGED], r[3], r[5], r[7], [])
+        owners.setdefault(name, []).append(d)
+    for r in rows(secs.get("## Ledger", []), "Commander"):  # the k-th row of a name and criterion is its k-th deck's
+        k, seen[r[0], r[1]] = seen[r[0], r[1]], seen[r[0], r[1]] + 1
+        if r[1] in JUDGED and k < len(owners.get(r[0], [])): found[owners[r[0]][k]][5].append(r[1:])
+    faults = [f"{d}: not in rankings.md, rank the decks" for d in decks if d not in found]
+    return {d: found[d] for d in decks if d in found}, faults
 
 def write(run, judged, comp):
     """write <run>/rankings.md from {slug: (place, [JUDGED values], bracket, kill, why, Ledger rows)} and each deck's
@@ -127,20 +152,22 @@ def write(run, judged, comp):
         + "\n\n## Ledger\n\n" + table(LEDGER, [l for r in decks for l in r[5]]) + "\n")
 
 def facts_of(run):
-    """(the run's decks, {slug: computed()}, faults) from <run>/*-counts.md"""
+    """(the run's decks, {slug: computed()}) from <run>/*-counts.md; exits naming a counts file that lacks a row"""
     decks = sorted(p.name.removesuffix("-counts.md") for p in run.glob("*-counts.md"))
     if not decks: sys.exit(f"no fact files {run}/<slug>-counts.md, run facts.py")
     comp = {d: computed(run, d) for d in decks}
-    return decks, comp, [f"{d}-counts.md: no {c} row, rerun facts.py" for d in decks for c in COMPUTED if c not in comp[d]]
+    if faults := [f"{d}-counts.md: no {c} row, rerun facts.py" for d in decks for c in COMPUTED if c not in comp[d]]:
+        sys.exit("\n".join(faults))
+    return decks, comp
 
 def main():
-    if len(sys.argv) != 2: sys.exit(__doc__)
-    run = Path(sys.argv[1])
-    decks, comp, faults = facts_of(run)
-    files = sorted(run.glob("rankings-?.md"))
-    if not files: sys.exit(f"no ranker files {run}/rankings-<letter>.md")
-    rankers = [judgments(p, decks) for p in files]
-    if faults := faults + [f for _, _, fs in rankers for f in fs]: sys.exit("\n".join(faults))
-    write(run, merged([r[:2] for r in rankers], comp), comp)
+    args = sys.argv[1:]
+    recompute = args[:1] == ["--recompute"]
+    if len(args) != 1 + recompute: sys.exit(__doc__)
+    run = Path(args[-1])
+    decks, comp = facts_of(run)
+    judged, faults = written(decks) if recompute else merged(run, decks, comp)
+    if faults: sys.exit("\n".join(faults))
+    write(run, judged, comp)
 
 if __name__ == "__main__": main()

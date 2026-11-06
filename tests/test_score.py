@@ -461,3 +461,41 @@ def test_merge_rankings_computes_the_link_game_changers_and_colours():
     assert got["zara"]["Colours"] == "WUG"
     Path("moxfield.json").unlink()
     assert merges("zara: split Speed 7/6/3, Interaction 5/5/9")["zara"]["Moxfield"] == "-"
+
+
+def recomputed():
+    """the merged rankings.md beside output/, the run's own copy and ranker files gone, then a recompute"""
+    rankers()
+    merges("zara: split Speed 7/6/3, Interaction 5/5/9")
+    Path("rankings.md").write_text(read("run/rankings.md"))
+    for p in Path("run").glob("rankings*.md"): p.unlink()
+    return run("skills/score/merge_rankings.py", "--recompute", "run")
+
+
+def test_recompute_on_an_unchanged_project_reproduces_rankings_md():
+    out = recomputed()
+    assert (out.returncode, out.stderr) == (0, "")
+    assert read("run/rankings.md") == read("rankings.md")
+
+
+def test_recompute_after_a_salt_change_moves_only_that_decks_salt_score_and_place():
+    assert recomputed().returncode == 0
+    before = ranked()
+    oracle = json.loads(read("output/data/oracle.json"))
+    oracle["cards"]["Zara, Tide Caller"]["salt"] = 0.9
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    for slug in ("zara", "kor"): facts.counts("run", slug)
+    assert run("skills/score/merge_rankings.py", "--recompute", "run").returncode == 0
+    after = ranked()
+    # zara's Salt 9: (5.3 + 4.7 + 6.3 + 9) / 4 = 6.325, its Score 66.6 above kor's 62.5
+    assert list(after) == ["zara", "kor"]
+    assert after["kor"] == before["kor"] | {"#": "2"}
+    assert after["zara"] == before["zara"] | {"#": "1", "Salt": "9.0", "Score": "66.6"}
+    assert "| Zara, Tide Caller | Salt | 9 | mean 0.90 over 1 cards | - |" in read("run/rankings.md")
+
+
+def test_recompute_stops_on_a_deck_rankings_md_lacks():
+    assert recomputed().returncode == 0
+    Path("run/ghost-counts.md").write_text(read("run/zara-counts.md"))
+    out = run("skills/score/merge_rankings.py", "--recompute", "run")
+    assert (out.returncode, out.stderr) == (1, "ghost: not in rankings.md, rank the decks\n")
