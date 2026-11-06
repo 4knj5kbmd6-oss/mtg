@@ -19,7 +19,7 @@ prose. Earlier rankings are not read.
 
 A line may close by lethal or by a lock.
 
-Score each deck's strength in a four-player game on these criteria, each 1 to 9: Speed, Setup, Rebuild and Flow you judge, and Resilience is the mean of Setup, Rebuild and Flow; Interaction and Salt are computed, and you do not write them. On a judged criterion a deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
+Score each deck's strength in a four-player game on these criteria: you judge Speed from 1 to 9 and Setup, Rebuild and Flow each from 1 to 5, and Resilience is their mean on 1 to 5; Interaction and Salt are computed, each 1 to 9, and you do not write them. On a judged criterion a deck gets the highest defined level whose line it meets in full; on Speed alone it gets the even value between two levels when it sits between them, and Setup, Rebuild and Flow have no value between their levels.
 
 **Speed: the turn it wins or locks the table in a typical four-player game, where opponents trade damage too**
 | | |
@@ -33,28 +33,28 @@ Score each deck's strength in a four-player game on these criteria, each 1 to 9:
 **Setup: how much board the win needs, how far ahead opponents see it**
 | | |
 |---|---|
-| 9 | Wins from hand and mana in one turn; nothing has to survive a turn cycle |
-| 7 | One permanent or the commander must survive a turn |
-| 5 | Two or three pieces in play, or a modest board, before the winning turn |
-| 3 | A built board over several turns that the table sees coming |
+| 5 | Wins from hand and mana in one turn; nothing has to survive a turn cycle |
+| 4 | One permanent or the commander must survive a turn |
+| 3 | Two or three pieces in play, or a modest board, before the winning turn |
+| 2 | A built board over several turns that the table sees coming |
 | 1 | A large telegraphed board that invites a wipe before it wins |
 
 **Rebuild: recovery after disruption**
 | | |
 |---|---|
-| 9 | Loses the board and presents the win again next turn from hand, graveyard or command zone |
-| 7 | Rebuilds within two turns through recursion or redundancy |
-| 5 | Rebuilds in a few turns, slower than the first time |
-| 3 | One disruption sets it back to the mid-game |
+| 5 | Loses the board and presents the win again next turn from hand, graveyard or command zone |
+| 4 | Rebuilds within two turns through recursion or redundancy |
+| 3 | Rebuilds in a few turns, slower than the first time |
+| 2 | One disruption sets it back to the mid-game |
 | 1 | One wipe or exile ends its game |
 
 **Flow: how the deck keeps finding its pieces**
 | | |
 |---|---|
-| 9 | A repeatable draw engine most games plus tutors or cantrips; never out of cards |
-| 7 | Several draw engines or a dense cantrip suite; rarely out of gas |
-| 5 | Some card advantage; a few dead turns in a long game |
-| 3 | Topdecking after the opening hand, with a draw spell or two |
+| 5 | A repeatable draw engine most games plus tutors or cantrips; never out of cards |
+| 4 | Several draw engines or a dense cantrip suite; rarely out of gas |
+| 3 | Some card advantage; a few dead turns in a long game |
+| 2 | Topdecking after the opening hand, with a draw spell or two |
 | 1 | No card advantage; plays what it drew |
 
 **Salt: how much the table dislikes facing it**
@@ -84,14 +84,15 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 | Deck | Criterion | Value | Count | Cards |
 |---|---|---|---|---|
-| <slug> | Setup | <1-9> | - | <names> |
-| <slug> | Rebuild | <1-9> | - | <names> |
-| <slug> | Flow | <1-9> | - | <names> |
+| <slug> | Setup | <1-5> | - | <names> |
+| <slug> | Rebuild | <1-5> | - | <names> |
+| <slug> | Flow | <1-5> | - | <names> |
 ...one row per deck per axis...
 ```
 
 - Deck: the slug as the prompt gives it.
-- Speed, Setup, Rebuild, Flow: each value a whole number from 1 to 9 (`7`, `6`).
+- Speed: a whole number from 1 to 9 (`7`, `6`); Setup, Rebuild, Flow: each a whole
+  number from 1 to 5 (`4`, `2`).
 - Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
   (`4`, `3, top`, `3`, `3, low`).
 - Why: one line.

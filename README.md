@@ -105,7 +105,7 @@ Your project-wide files, beside `output/` (gitignored):
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
-| `rankings.md` | Your decks in strength order: commander, colours, bracket, score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), each 1 to 9, the Score their mean normalised to 100; then a `Resilience` table of the three judged axes whose mean is Resilience; then a `Ledger` table of the cards behind each score |
+| `rankings.md` | Your decks in strength order: commander, colours, bracket, score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Resilience 1 to 5 and the rest 1 to 9, the Score the mean of each normalised from its own range to 100; then a `Resilience` table of the three judged axes, each 1 to 5, whose mean is Resilience; then a `Ledger` table of the cards behind each score |
 
 Your output, all under `output/` (gitignored):
 

@@ -1,19 +1,20 @@
 """Merge the rankers' judgments into rankings.md, computing every cell a ranker does not judge.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py [--recompute] <run_dir>
 The decks are the slugs of <run_dir>/*-counts.md. Each <run_dir>/rankings-<letter>.md, in the ranker agent's shape,
-must hold each deck exactly once, its JUDGED criteria whole numbers from 1 to 9 and its Bracket 1 to 5, optionally
-followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter>.md: <slug>: <what>" line per fault
-and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria, Resilience and Ledger tables, where
+must hold each deck exactly once, each JUDGED criterion a whole number from 1 to its SCALE and its Bracket 1 to 5,
+optionally followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter>.md: <slug>: <what>" line
+per fault and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria, Resilience and Ledger tables, where
 - each JUDGED criterion is the mean of the rankers' values sorted with the lowest and highest dropped while five or more
   remain (the middle three of five, all of four or fewer);
-- Resilience is the mean of the merged AXES; the Criteria table shows SCORED, the Resilience table the AXES, its
-  decks in the same order and numbering;
+- Resilience is the mean of the merged AXES, on 1 to 5; the Criteria table shows SCORED, the Resilience table the
+  AXES, its decks in the same order and numbering, each column headed by its criterion and, when its SCALE is not 9,
+  " /<top>";
 - each COMPUTED criterion is read from the deck's counts file: Salt the Count of its Salt row, its Cards the Ledger
   row's Count (up to the first "; ") and Cards; Interaction the level of the Interaction table below, its Ledger row's
   Count "<n> answers, <m> instant; <counters>/<creature>/<noncreature>", each coverage yes or no, its Cards the
   Answers row's Cards;
-- the Score is (mean of SCORED as written - 1) / 8 * 100; every mean and Score is an exact fraction rounded half
-  up to one decimal;
+- the Score is the mean over SCORED of (value as written - 1) / (top - 1) * 100, each criterion's top its SCALE;
+  every mean and Score is an exact fraction rounded half up to one decimal;
 - each ranker's own Score, computed the same way from its own values, picks the median ranker (the lower middle when
   even), whose Bracket, Why and Ledger rows the deck takes;
 - Commander is the front-face names of list.txt's commander lines, joined by " / ", linked to output/decks/<slug>/;
@@ -26,8 +27,9 @@ order. With --recompute, rankings.md beside output/ is the only judged source an
 JUDGED criteria as written, Speed in its Criteria table and the AXES in its Resilience table, its Bracket, Why and
 JUDGED Ledger rows, and its row there as its place; a deck of the run it lacks exits 1 with "<slug>: not in
 rankings.md, rank the decks", a file without a Resilience table exits 1 with "rankings.md has no Resilience table,
-rank the decks", and one without a JUDGED column exits 1 with "rankings.md has no <criterion> column, rank the
-decks".
+rank the decks", one whose Resilience table heads an axis without its " /5" exits 1 with "rankings.md axes are not
+on 1 to 5, rank the decks", and one without a JUDGED column exits 1 with "rankings.md has no <column> column, rank
+the decks".
 
 Interaction, what the deck stops. An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece.
 Answers is the counts file's Answers row, instant its Instant-speed answers row, a wipe its Wipes row above 0, and the
@@ -51,12 +53,18 @@ AXES = ("Setup", "Rebuild", "Flow")  # Resilience is their mean
 JUDGED = ("Speed",) + AXES  # read from the ranker files
 COMPUTED = ("Interaction", "Salt")  # read from the counts files, from these rows
 SCORED = ("Speed", "Resilience") + COMPUTED  # the Score's criteria
+SCALE = {"Speed": 9, "Setup": 5, "Rebuild": 5, "Flow": 5, "Resilience": 5, "Interaction": 9, "Salt": 9}  # each top
 COUNTED = ("Answers", "Instant-speed answers", "Wipes", "Counters", "Creature removal", "Noncreature removal", "Salt")
 SPLIT = 4  # a criterion the rankers put this far apart is printed
 JUDGMENTS = "| Deck | " + " | ".join(JUDGED) + " | Bracket | Why |"
 RANKINGS = "| # | Commander | Colours | Bracket | Score | Game Changers | Why | |"
-CRITERIA = "| # | Commander | " + " | ".join(SCORED) + " |"
-RESILIENCE = "| # | Commander | " + " | ".join(AXES) + " |"
+
+def column(c):
+    """the rankings.md column of criterion c: its name, with its top when that is not 9"""
+    return c if SCALE[c] == 9 else f"{c} /{SCALE[c]}"
+
+CRITERIA = "| # | Commander | " + " | ".join(map(column, SCORED)) + " |"
+RESILIENCE = "| # | Commander | " + " | ".join(map(column, AXES)) + " |"
 LEDGER = "| Commander | Criterion | Value | Count | Cards |"
 BRACKET = re.compile(r"[1-5](, (top|low))?")
 MOXFIELD, RANKED = Path("moxfield.json"), Path("rankings.md")
@@ -75,7 +83,9 @@ def middle(values):
     while len(v) >= 5: v = v[1:-1]
     return tenths(mean(v))
 
-def score(values): return tenths((mean(values) - 1) / 8 * 100)
+def score(criteria):
+    """the Score of the SCORED criteria: the mean of each normalised from 1 to its top, out of 100, to one decimal"""
+    return tenths(mean([Fraction(v - 1, SCALE[c] - 1) for c, v in zip(SCORED, criteria)]) * 100)
 
 def scored(values, levels):
     """the SCORED criteria of JUDGED values and the COMPUTED levels, Resilience the mean of the AXES to one decimal"""
@@ -99,8 +109,8 @@ def judgments(path, decks):
         if len(r) != width:
             faults.append(f"{r[0]}: {len(r)} cells, not {width}"); continue
         values, (bracket, why) = r[1:1 + len(JUDGED)], r[1 + len(JUDGED):]
-        faults += [f"{r[0]}: {n} {v} is not a whole number from 1 to 9" for n, v in zip(JUDGED, values)
-                   if not re.fullmatch(r"[1-9]", v)]
+        faults += [f"{r[0]}: {n} {v} is not a whole number from 1 to {SCALE[n]}" for n, v in zip(JUDGED, values)
+                   if not (re.fullmatch(r"[1-9]", v) and int(v) <= SCALE[n])]
         if not BRACKET.fullmatch(bracket): faults.append(f"{r[0]}: Bracket {bracket} is not 1 to 5 with ', top' or ', low'")
         out[r[0]] = (place, [int(v) if v.isdigit() else 0 for v in values], bracket, why)
     ledger = {}
@@ -155,12 +165,13 @@ def written(decks):
     secs = dict(split(RANKED.read_text())) if RANKED.exists() else {None: []}
     if RANKED.exists() and "## Resilience" not in secs: return {}, ["rankings.md has no Resilience table, rank the decks"]
     (crit_heads, crit), (resil_heads, resil) = (numbered(secs.get(s, [])) for s in ("## Criteria", "## Resilience"))
-    if missing := [c for c in JUDGED if RANKED.exists() and c not in crit_heads + resil_heads]:
+    if any(a in resil_heads for a in AXES): return {}, ["rankings.md axes are not on 1 to 5, rank the decks"]
+    if missing := [column(c) for c in JUDGED if RANKED.exists() and column(c) not in crit_heads + resil_heads]:
         return {}, [f"rankings.md has no {c} column, rank the decks" for c in missing]
     found, owners, seen = {}, {}, Counter()
     for place, r in enumerate(cells(secs[None])):
         name, d = re.fullmatch(r"\[(.*)\]\(output/decks/([^/)]+)/?\)", r[1]).groups()
-        found[d] = (place, [Fraction((crit[r[0]] | resil[r[0]])[c]) for c in JUDGED], r[3], r[6], [])
+        found[d] = (place, [Fraction((crit[r[0]] | resil[r[0]])[column(c)]) for c in JUDGED], r[3], r[6], [])
         owners.setdefault(name, []).append(d)
     for r in rows(secs.get("## Ledger", []), "Commander"):  # the k-th row of a name and criterion is its k-th deck's
         k, seen[r[0], r[1]] = seen[r[0], r[1]], seen[r[0], r[1]] + 1
