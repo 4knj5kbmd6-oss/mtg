@@ -155,3 +155,22 @@ def test_images_false_draws_nothing():
     out = run("skills/upgrades/sheet.py", "zara")
     assert (out.returncode, out.stdout) == (0, "images is false in settings.json: no sheet drawn\n")
     assert not Path("output/decks/zara/changes.png").exists() and not Path("output/data/images").exists()
+
+
+def test_every_add_scored_by_name_reaches_the_sheet(sheet):
+    """upgrades step 3: each add, as tables.py prints it, scored as a candidate and merged by name, shows its score"""
+    research()
+    names = run("lib/tables.py", "zara").stdout.splitlines()
+    assert names == ["Deep Current", "Pearl Diver", "Rising Tide // Tidal Flats", "Odd Relic", "Tidepool Ruins"]
+    score = dict(zip(names, ("8", "6", "5", "3", "7")))
+    for letter in "AB":
+        Path(f"run/work-zara-{letter}").mkdir()
+        Path(f"run/work-zara-{letter}/zara.md").write_text("# Zara, Tide Caller: fit scores\n\n## Adds\n"
+            "| Card | Score | Role | Note |\n|---|---|---|---|\n" + "".join(f"| {n} | {s} | draw | fits |\n" for n, s in score.items()))
+    out = run("skills/score/merge.py", "run", "zara", *names)
+    assert out.returncode == 0, out.stderr
+    for k in project.KINDS: Path(f"output/decks/zara/{k}.md").write_text(read(f"run/merged/zara/{k}.md"))
+    assert dict(sheet.bands("zara")) == {
+        "Nonland adds": [("Deep Current", "8"), ("Pearl Diver", "6"), ("Rising Tide", "5"), ("Odd Relic", "3")],
+        "Nonland cuts": [("Wave Breaker", "3")], "Land adds": [("Tidepool Ruins", "7")], "Land cuts": [("Misty Cove", "5")]}
+    assert "| Pearl Diver | 6 | draw | fits | Yes | $0.25 |" in read("output/decks/zara/nonlands.md")

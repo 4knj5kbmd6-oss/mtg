@@ -1,6 +1,6 @@
 ---
 name: upgrades
-description: Research ranked adds and cuts for one or more of your Commander decks, from the whole card pool by fit and price or, with new_sets=true, only from the sets released since each deck's last edit, and write them as the Adds and Cuts tables of output/decks/<slug>/nonlands.md and lands.md. Use when asked for upgrades, new cards, what to cut, or to refresh the adds and cuts lists.
+description: Research ranked adds and cuts for one or more of your Commander decks, from the whole card pool by fit and price or, with new_sets=true, only from the sets released since each deck's last edit, and write them as the Adds and Cuts tables of output/decks/<slug>/nonlands.md and lands.md, each add scored. Use when asked for upgrades, new cards, what to cut, or to refresh the adds and cuts lists.
 argument-hint: "[slug ...] [key=value ...]"
 ---
 
@@ -30,12 +30,17 @@ inputs named below.
    bracket and two fact files.
 3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run> <slug>`,
    which prints the adds it drops; then
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py`, `apply.py`
-   once more per deck so each new add is filed by its type, and, unless
-   `images` is false,
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>`, which
-   writes `output/decks/<slug>/changes.png`. With `images` false the report
-   says in a line that changes.png was skipped.
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py` and `apply.py`
+   once more per deck so each new add is filed by its type. Then score each
+   deck's adds, the names `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>`
+   prints, as the card names paragraph of
+   `${CLAUDE_PLUGIN_ROOT}/skills/score/SKILL.md` scores candidates, its steps
+   2 to 4 in this `<run>`: `scorers` `mtg-toolbox:scorer` agents per deck,
+   each with its own `<run>/work-<slug>-<letter>/` subfolder, the deck's
+   bracket and two fact files and those names; then `merge.py <run> <slug>`
+   given the names, which patches each Adds row's Score, the merged pair
+   copied in and changes.png drawn after, so every add on it carries its
+   score.
 
-Report: three lines per deck, top adds and top cuts, plus any add that
-would change a bracket.
+Report: three lines per deck, top adds with their scores and top cuts,
+plus any add that would change a bracket.
