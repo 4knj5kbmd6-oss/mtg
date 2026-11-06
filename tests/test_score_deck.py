@@ -86,33 +86,33 @@ def merges(*stderr):
     return ranked()
 
 
-def test_merge_rankings_takes_the_mean_of_three_rankers_and_computes_the_rest():
+def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest():
     rankers()
     merges("zara: split Win 6/7/3")
-    # zara's Win 16 / 3 = 5.3 and Development 15 / 3 = 5.0, Speed their mean 5.15, 5.2; with Interaction 1 and Card
-    # quality 4.8 its Score is (4.2 / 8 + 0 / 8 + 3.8 / 8) / 3 * 100 = 33.33; its own Scores 34.6 (5.5), 38.8 (6.5) and
-    # 26.3 (3.5) make A the median; kor's Win 7.0 and Development 6.7, Speed 6.85, 6.9, with Card quality 2.5
-    # (5.9 + 1.5) / 24 * 100 = 30.83, its own 25.0, 33.3 and 33.3 make B the median
+    # zara's Win 6/7/3 has median 6 and Development 5/6/4 median 5, Speed their mean 5.5; with Interaction 1 and Card
+    # quality 4.8 its Score is (4.5 / 8 + 0 / 8 + 3.8 / 8) / 3 * 100 = 34.58; its own Scores 34.6 (5.5), 38.8 (6.5) and
+    # 26.3 (3.5) make A the median; kor's Win 8 and Development 7, Speed 7.5, with Card quality 2.5
+    # (6.5 + 1.5) / 24 * 100 = 33.33, its own 25.0, 33.3 and 33.3 make B the median
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
 |---|---|---|---|---|---|---|---|
-| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 33.3 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
-| 2 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 30.8 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
+| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 34.6 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
+| 2 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 33.3 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
 
 ## Criteria
 
 | # | Commander | Speed | Interaction | Card quality |
 |---|---|---|---|---|
-| 1 | Zara, Tide Caller | 5.2 | 1.0 | 4.8 |
-| 2 | Kor Skyfisher | 6.9 | 1.0 | 2.5 |
+| 1 | Zara, Tide Caller | 5.5 | 1.0 | 4.8 |
+| 2 | Kor Skyfisher | 7.5 | 1.0 | 2.5 |
 
 ## Speed
 
 | # | Commander | Win | Development |
 |---|---|---|---|
-| 1 | Zara, Tide Caller | 5.3 | 5.0 |
-| 2 | Kor Skyfisher | 7.0 | 6.7 |
+| 1 | Zara, Tide Caller | 6.0 | 5.0 |
+| 2 | Kor Skyfisher | 8.0 | 7.0 |
 
 ## Card quality
 
@@ -182,24 +182,26 @@ def test_merge_rankings_stops_on_a_counts_file_without_a_row_it_reads(row):
     assert (out.returncode, out.stderr) == (1, f"zara-counts.md: no {row} row, rerun facts.py\n")
 
 
-def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_cells():
-    # each Speed axis 1 5 6 7 9 keeps 5 6 7; own Scores 15.8 49.2 32.5 36.7 40.8 make D the median
-    five = {"zara": {"A": flat(1), "B": flat(9), "C": flat(5), "D": flat(6), "E": flat(7)},
-            "kor": {x: flat(5) for x in "ABCDE"}}
-    rankers(five, "ABCDE")
-    got = merges("zara: split Win 1/9/5/6/7, Development 1/9/5/6/7")["zara"]
-    # (5.0 / 8 + 0 / 8 + 3.8 / 8) / 3 * 100 = 36.67, its Score 36.7
+@pytest.mark.parametrize("values, median", [([6, 7, 3], "6.0"), ([3, 5, 6, 9], "5.5"), ([9, 5, 9, 7], "8.0"),
+                                            ([1, 9, 5, 6, 7], "6.0"), ([5, 6], "5.5")])
+def test_each_judged_criterion_is_the_median_the_mean_of_the_middle_two_when_even(values, median):
+    assert merge_rankings.shown(merge_rankings.middle(values)) == median
+
+
+def test_merge_rankings_takes_the_median_of_four_and_the_median_rankers_cells():
+    # each Speed axis 9 5 9 7 sorts to 5 7 9 9, its median 8; own Scores 49.2 32.5 49.2 40.8 make D the median
+    four = {"zara": {"A": flat(9), "B": flat(5), "C": flat(9), "D": flat(7)}, "kor": {x: flat(5) for x in "ABCD"}}
+    rankers(four, "ABCD")
+    got = merges("zara: split Win 9/5/9/7, Development 9/5/9/7")["zara"]
+    # (7.0 / 8 + 0 / 8 + 3.8 / 8) / 3 * 100 = 45.0
     assert [got[c] for c in ("Speed", "Interaction", "Card quality", "Score", "Bracket", "Why")] == \
-        ["6.0", "1.0", "4.8", "36.7", "3, top", "why D"]
+        ["8.0", "1.0", "4.8", "45.0", "3, top", "why D"]
     assert "| Zara, Tide Caller | Win | 5 | - | cards D |" in read("run/rankings.md")
 
 
-def test_merge_rankings_rounds_a_mean_of_two_or_four_half_up():
+def test_merge_rankings_rounds_speed_half_up():
     rankers({"zara": {"A": [5, 5], "B": [6, 5]}, "kor": {x: flat(5) for x in "AB"}}, "AB")
     assert [merges()["zara"][c] for c in ("Win", "Development", "Speed")] == ["5.5", "5.0", "5.3"]  # 10.5 / 2 = 5.25
-    rankers({"zara": {"A": flat(5), "B": flat(5), "C": flat(5), "D": flat(6)},
-             "kor": {x: flat(5) for x in "ABCD"}}, "ABCD")
-    assert merges()["zara"]["Win"] == "5.3"  # 21 / 4 = 5.25
 
 
 def test_speed_is_the_mean_of_its_merged_axes_and_the_score_normalises_each_criterion_from_1_to_9():
@@ -328,18 +330,18 @@ def test_recompute_after_a_salt_change_moves_only_that_decks_card_quality_score_
     for slug in ("zara", "kor"): facts.counts("run", slug)
     assert run("skills/score-deck/merge_rankings.py", "--recompute", "run").returncode == 0
     after = ranked()
-    # kor's Commander salt 9: Card quality 16 / 4 = 4.0, (5.9 + 0 + 3) / 24 * 100 = 37.08, its Score 37.1 above
-    # zara's 33.3
+    # kor's Commander salt 9: Card quality 16 / 4 = 4.0, (6.5 + 0 + 3) / 24 * 100 = 39.58, its Score 39.6 above
+    # zara's 34.6
     assert list(after) == ["kor", "zara"]
     assert after["zara"] == before["zara"] | {"#": "2"}
-    assert after["kor"] == before["kor"] | {"#": "1", "Commander salt": "9.0", "Card quality": "4.0", "Score": "37.1"}
+    assert after["kor"] == before["kor"] | {"#": "1", "Commander salt": "9.0", "Card quality": "4.0", "Score": "39.6"}
     assert "| Kor Skyfisher | Card quality | 4.0 | cmdr salt 9, cmdr price 1, 99 salt 5, 99 price 1 | " \
            "Kor Skyfisher 0.90; Kor Skyfisher $1.00 |" in read("run/rankings.md")
 
 
 def test_recompute_reads_the_speed_table_and_computes_speed_from_it():
     assert recomputed().returncode == 0
-    Path("rankings.md").write_text(read("rankings.md").replace("| Zara, Tide Caller | 5.3 | 5.0 |",
+    Path("rankings.md").write_text(read("rankings.md").replace("| Zara, Tide Caller | 6.0 | 5.0 |",
                                                                "| Zara, Tide Caller | 9.0 | 5.0 |"))
     assert run("skills/score-deck/merge_rankings.py", "--recompute", "run").returncode == 0
     # Win 9.0 and Development 5.0: Speed 7.0; (6 + 0 + 3.8) / 24 * 100 = 40.83

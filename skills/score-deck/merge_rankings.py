@@ -4,8 +4,7 @@ The decks are the slugs of <run_dir>/*-counts.md. Each <run_dir>/rankings-<lette
 must hold each deck exactly once, each JUDGED criterion a whole number from 1 to 9 and its Bracket 1 to 5, optionally
 followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter>.md: <slug>: <what>" line per fault
 and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria, Speed, Card quality and Ledger tables, where
-- each JUDGED criterion is the mean of the rankers' values sorted with the lowest and highest dropped while five or more
-  remain (the middle three of five, all of four or fewer);
+- each JUDGED criterion is the median of the rankers' values, the mean of the middle two when their count is even;
 - Speed is the mean of the merged JUDGED axes; the Criteria table shows SCORED and the Speed table the JUDGED axes,
   every criterion and axis on 1 to 9, their decks in the same order and numbering;
 - each COMPUTED criterion is read from the deck's counts file: Interaction the level of the Interaction table below,
@@ -76,10 +75,9 @@ def shown(x): return f"{float(x):.1f}"
 def mean(values): return Fraction(sum(values), len(values))
 
 def middle(values):
-    """the mean of values sorted, the lowest and highest dropped while five or more remain, to one decimal"""
-    v = sorted(values)
-    while len(v) >= 5: v = v[1:-1]
-    return tenths(mean(v))
+    """the median of values, the mean of the middle two when their count is even, to one decimal"""
+    v, n = sorted(values), len(values)
+    return tenths(mean(v[(n - 1) // 2:n // 2 + 1]))
 
 def score(criteria):
     """the Score of the SCORED criteria: the mean of each normalised from 1 to 9, out of 100, to one decimal"""

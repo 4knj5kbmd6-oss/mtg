@@ -8,7 +8,7 @@ the run with one line naming the file or the word; a top-level key not in DEFAUL
 on."""
 import json, sys
 from pathlib import Path
-DEFAULTS = {"scorers": 3, "rankers": 3,
+DEFAULTS = {"scorers": 3, "rankers": 4,
             "models": {"scorer": "claude-sonnet-5-5", "ranker": "claude-sonnet-5-5", "researcher": "claude-opus-5-5",
                        "judge": "claude-sonnet-5-5", "librarian": "claude-sonnet-5-5", "shopper": "claude-sonnet-5-5",
                        "planner": "claude-opus-5-5"},

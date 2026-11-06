@@ -53,7 +53,7 @@ first use and looks up on Scryfall any card it has not seen.
 **Cost.** Every deck in a `/score-cards` run is read by `scorers` scorers on
 their `models` entry (defaults in [`settings.py`](lib/settings.py)), each
 taking a group of decks that share colours; a `/score-deck` run, or a deck
-with no bracket yet, adds `rankers` rankers reading every deck. `scorers`, `rankers` and `models`
+with no bracket yet, adds `rankers` rankers reading every deck, each Speed axis the median across them. `scorers`, `rankers` and `models`
 in `settings.json` lower it.
 
 ## Settings
