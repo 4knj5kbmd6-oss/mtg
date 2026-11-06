@@ -27,6 +27,7 @@ Paths are relative to the working directory, the folder that holds `output/`.
 
 - **Win:** <name>: <role> + <role> (+ <role>). <One sentence: how it closes.>
 - **Commander:** <one sentence: its job in the lines above>
+- **cEDH:** yes
 - **Not cast:** Card; Card
 - **Restriction:** <for research only; the ranker does not read it>
 ```
@@ -35,8 +36,10 @@ Win bullets are the plan. A line joins its roles with `+`; a role is one
 card, or a role name with the cards that fill it in brackets, separated by
 `;` since card names hold commas. A combo is a line whose every role has one
 card; a fair deck has several cards per role. Not cast names the cards the
-deck cheats into play rather than casts. A plan is a few Win lines, each one
-sentence beside its roles; names in brackets are free.
+deck cheats into play rather than casts. cEDH, an optional line, says the
+deck is built for the cEDH metagame, the owner's call: only such a deck is
+bracket 5. A plan is a few Win lines, each one sentence beside its roles;
+names in brackets are free.
 Every card named must be in `list.txt`, which
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...` checks.
 

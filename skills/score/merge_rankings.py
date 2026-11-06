@@ -18,13 +18,16 @@ tables, where
   every mean and Score is an exact fraction rounded half up to one decimal;
 - each ranker's own Score, computed the same way from its own values, picks the median ranker (the lower middle when
   even), whose Bracket, Why and Ledger rows the deck takes;
+- the Bracket is 5 when the deck's plan.md carries `- **cEDH:** yes`, whatever the rankers wrote, and a 5 of any other
+  deck is "4, top";
 - Commander is the front-face names of list.txt's commander lines, joined by " / ", linked to output/decks/<slug>/;
   Colours the commanders' colour identity from oracle.json in WUBRG order, or C with none; Game Changers facts.py's
   game_changers() joined by ", ", or none; the link [Moxfield](https://moxfield.com/decks/<id>) with the id from
   moxfield.json's decks, or - when it lacks the deck;
 - rows sort by Score descending, then by the deck's mean place across the rankers' tables, then by slug.
 Prints to stderr, per deck, the JUDGED criteria the rankers put SPLIT or more apart, each with its values in letter
-order. With --recompute, rankings.md beside output/ is the only judged source and no ranker file is read: each deck's
+order, and per deck whose Bracket the plan changed "<slug>: bracket 5 by plan" or "<slug>: bracket 5 capped at 4,
+top". With --recompute, rankings.md beside output/ is the only judged source and no ranker file is read: each deck's
 JUDGED criteria as written, the SPEED_AXES in its Speed table and the RESILIENCE_AXES in its Resilience table, its
 Bracket, Why and JUDGED Ledger rows, and its row there as its place; a deck of the run it lacks exits 1 with "<slug>:
 not in rankings.md, rank the decks", a file without a Speed or Resilience table exits 1 with "rankings.md has no
@@ -46,7 +49,7 @@ from collections import Counter
 from fractions import Fraction
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from project import decklist, named
+from project import cedh, decklist, named
 from tables import split, cells, table
 import facts
 
@@ -160,6 +163,16 @@ def merged(run, decks, comp):
         if apart: print(f"{d}: split {', '.join(apart)}", file=sys.stderr)
     return found, []
 
+def by_plan(judged):
+    """judged with each deck's bracket 5 when its plan declares cEDH and a 5 otherwise capped at "4, top"; prints a
+    line per deck changed"""
+    out = {}
+    for d, (place, values, bracket, why, ledger) in judged.items():
+        held = "5" if cedh(d) else "4, top" if bracket.startswith("5") else bracket
+        if held != bracket: print(f"{d}: bracket 5 {'by plan' if held == '5' else 'capped at 4, top'}", file=sys.stderr)
+        out[d] = (place, values, held, why, ledger)
+    return out
+
 def numbered(lines):
     """(the columns, {#: {column: cell}}) of the "| # |" table in lines"""
     head = next((l for l in lines if l.startswith("| # |")), "")
@@ -229,6 +242,6 @@ def main():
     decks, comp = facts_of(run)
     judged, faults = written(decks) if recompute else merged(run, decks, comp)
     if faults: sys.exit("\n".join(faults))
-    write(run, judged, comp)
+    write(run, by_plan(judged), comp)
 
 if __name__ == "__main__": main()

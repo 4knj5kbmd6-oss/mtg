@@ -431,6 +431,7 @@ def test_plan_check_prints_the_plan_cards_not_in_the_list():
         "- **Win:** Beats: Zara, Tide Caller + big fish (Brine Elemental; Wave Breaker; Lost Fish) + mana (Sol Ring;"
         " Ghost Signet). Swings for lethal (twice).\n"
         "- **Commander:** draws a card on every spell.\n"
+        "- **cEDH:** yes\n"
         "- **Not cast:** Brine Elemental; Nowhere Card\n")
     out = run("skills/sync/plan_check.py", "zara", "nodeck")
     assert out.returncode == 0, out.stderr

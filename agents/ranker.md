@@ -77,10 +77,10 @@ full criteria (bracket intent, how early and reliably the deck wins,
 two-card infinites and when they come online, tutor density, mass land
 denial, chained extra turns, Game Changers, optimization level), the deck's
 Game Changers from the counts file's `Game Changers` row and its combos,
-mass land denial and extra turns from its combos file. Bracket 5 goes only
-to a deck built for the cEDH metagame, a list that matches an archetype
-played in cEDH events in its commander, win lines and interaction suite;
-every other deck is 4 at most, whatever its Game Changer count or win turn.
+mass land denial and extra turns from its combos file. Never award 5 on
+your own judgment: whether a deck is built for the cEDH metagame is the
+owner's call, and a 5 stands only when its plan declares `- **cEDH:** yes`,
+which the merge applies; every other deck is 4 at most.
 Fetch nothing.
 
 Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:

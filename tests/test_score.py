@@ -562,6 +562,25 @@ def test_merge_rankings_computes_the_link_game_changers_and_colours():
     assert merges("zara: split Win 6/7/3")["zara"]["Moxfield"] == "-"
 
 
+def declare_cedh():
+    """zara's plan with the cEDH line after its Commander bullet"""
+    plan = Path("output/decks/zara/plan.md")
+    head, _, rest = plan.read_text().partition("- **Commander:**")
+    first, _, after = rest.partition("\n")
+    plan.write_text(f"{head}- **Commander:**{first}\n- **cEDH:** yes\n{after}")
+
+
+@pytest.mark.parametrize("zara, stderr", [("5", []), ("4, top", ["zara: bracket 5 by plan"])])
+def test_merge_rankings_keeps_5_for_a_plan_declaring_cedh_and_caps_any_other_5(monkeypatch, zara, stderr):
+    # A is zara's median ranker, B kor's
+    monkeypatch.setitem(OWN, "A", zara)
+    monkeypatch.setitem(OWN, "B", "5, low")
+    declare_cedh()
+    rankers()
+    got = merges("zara: split Win 6/7/3", "kor: bracket 5 capped at 4, top", *stderr)
+    assert (got["zara"]["Bracket"], got["kor"]["Bracket"]) == ("5", "4, top")
+
+
 def recomputed():
     """the merged rankings.md beside output/, the run's own copy and ranker files gone, then a recompute"""
     rankers()
@@ -620,6 +639,16 @@ def test_recompute_stops_on_a_rankings_md_without_an_axis_table(name):
     Path("rankings.md").write_text(tables.join(secs))
     out = run("skills/score/merge_rankings.py", "--recompute", "run")
     assert (out.returncode, out.stderr) == (1, f"rankings.md has no {name} table, rank the decks\n")
+
+
+def test_recompute_keeps_5_for_a_plan_declaring_cedh_and_caps_any_other_5():
+    assert recomputed().returncode == 0
+    Path("rankings.md").write_text(read("rankings.md").replace("| W | 4 |", "| W | 5 |"))
+    declare_cedh()
+    out = run("skills/score/merge_rankings.py", "--recompute", "run")
+    assert (out.returncode, out.stderr) == (0, "kor: bracket 5 capped at 4, top\nzara: bracket 5 by plan\n")
+    got = ranked()
+    assert (got["zara"]["Bracket"], got["kor"]["Bracket"]) == ("5", "4, top")
 
 
 def test_recompute_stops_on_a_deck_rankings_md_lacks():
