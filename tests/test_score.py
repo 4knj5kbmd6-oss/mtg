@@ -347,11 +347,12 @@ def rankers(judged=JUDGED, letters="ABC", order=None):
 
 
 def ranked():
-    """run/rankings.md as {slug: {column: cell}}, its Rankings and Criteria columns, its decks in order"""
+    """run/rankings.md as {slug: {column: cell}}, its Rankings, Criteria and Resilience columns, its decks in order"""
     secs = dict(tables.split(read("run/rankings.md")))
     heads = lambda h: [c.strip() or "Moxfield" for c in h.strip("|").split("|")]
     crit = {r[0]: dict(zip(heads(merge_rankings.CRITERIA), r)) for r in tables.cells(secs["## Criteria"])}
-    return {r[1].split("decks/")[1].rstrip("/)"): crit[r[0]] | dict(zip(heads(merge_rankings.RANKINGS), r))
+    resil = {r[0]: dict(zip(heads(merge_rankings.RESILIENCE), r)) for r in tables.cells(secs["## Resilience"])}
+    return {r[1].split("decks/")[1].rstrip("/)"): crit[r[0]] | resil[r[0]] | dict(zip(heads(merge_rankings.RANKINGS), r))
             for r in tables.cells(secs[None])}
 
 
@@ -377,10 +378,17 @@ def test_merge_rankings_takes_the_mean_of_three_rankers_and_computes_the_rest():
 
 ## Criteria
 
-| # | Commander | Speed | Resilience | Interaction | Salt | Setup | Rebuild | Flow |
-|---|---|---|---|---|---|---|---|---|
-| 1 | Kor Skyfisher | 7.0 | 7.0 | 1.0 | 3.0 | 7.0 | 7.0 | 7.0 |
-| 2 | Zara, Tide Caller | 5.3 | 5.3 | 1.0 | 4.0 | 5.0 | 5.3 | 5.7 |
+| # | Commander | Speed | Resilience | Interaction | Salt |
+|---|---|---|---|---|---|
+| 1 | Kor Skyfisher | 7.0 | 7.0 | 1.0 | 3.0 |
+| 2 | Zara, Tide Caller | 5.3 | 5.3 | 1.0 | 4.0 |
+
+## Resilience
+
+| # | Commander | Setup | Rebuild | Flow |
+|---|---|---|---|---|
+| 1 | Kor Skyfisher | 7.0 | 7.0 | 7.0 |
+| 2 | Zara, Tide Caller | 5.0 | 5.3 | 5.7 |
 
 ## Ledger
 
@@ -562,11 +570,20 @@ def test_recompute_after_a_salt_change_moves_only_that_decks_salt_score_and_plac
 
 def test_recompute_reads_the_axes_and_computes_resilience_from_them():
     assert recomputed().returncode == 0
-    Path("rankings.md").write_text(read("rankings.md").replace("| 4.0 | 5.0 | 5.3 | 5.7 |", "| 4.0 | 8.0 | 5.3 | 5.7 |"))
+    Path("rankings.md").write_text(read("rankings.md").replace("| Zara, Tide Caller | 5.0 | 5.3 | 5.7 |",
+                                                               "| Zara, Tide Caller | 8.0 | 5.3 | 5.7 |"))
     assert run("skills/score/merge_rankings.py", "--recompute", "run").returncode == 0
     # axes 8.0, 5.3 and 5.7: Resilience 19 / 3 = 6.33; (5.3 + 6.3 + 1 + 4) / 4 = 4.15, its Score 39.375
     got = ranked()["zara"]
     assert [got[c] for c in ("Setup", "Resilience", "Score")] == ["8.0", "6.3", "39.4"]
+
+
+def test_recompute_stops_on_a_rankings_md_without_a_resilience_table():
+    assert recomputed().returncode == 0
+    secs = [s for s in tables.split(read("rankings.md")) if s[0] != "## Resilience"]
+    Path("rankings.md").write_text(tables.join(secs))
+    out = run("skills/score/merge_rankings.py", "--recompute", "run")
+    assert (out.returncode, out.stderr) == (1, "rankings.md has no Resilience table, rank the decks\n")
 
 
 def test_recompute_stops_on_a_deck_rankings_md_lacks():

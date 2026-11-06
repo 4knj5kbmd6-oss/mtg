@@ -3,10 +3,11 @@ usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills
 The decks are the slugs of <run_dir>/*-counts.md. Each <run_dir>/rankings-<letter>.md, in the ranker agent's shape,
 must hold each deck exactly once, its JUDGED criteria whole numbers from 1 to 9 and its Bracket 1 to 5, optionally
 followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter>.md: <slug>: <what>" line per fault
-and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria and Ledger tables, where
+and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria, Resilience and Ledger tables, where
 - each JUDGED criterion is the mean of the rankers' values sorted with the lowest and highest dropped while five or more
   remain (the middle three of five, all of four or fewer);
-- Resilience is the mean of the merged AXES; the Criteria table shows SCORED, then the AXES;
+- Resilience is the mean of the merged AXES; the Criteria table shows SCORED, the Resilience table the AXES, its
+  decks in the same order and numbering;
 - each COMPUTED criterion is read from the deck's counts file: Salt the Count of its Salt row, its Cards the Ledger
   row's Count (up to the first "; ") and Cards; Interaction the level of the Interaction table below, its Ledger row's
   Count "<n> answers, <m> instant; <counters>/<creature>/<noncreature>", each coverage yes or no, its Cards the
@@ -22,9 +23,11 @@ and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria and Led
 - rows sort by Score descending, then by the deck's mean place across the rankers' tables, then by slug.
 Prints to stderr, per deck, the JUDGED criteria the rankers put SPLIT or more apart, each with its values in letter
 order. With --recompute, rankings.md beside output/ is the only judged source and no ranker file is read: each deck's
-JUDGED criteria as written, its Bracket, Why and JUDGED Ledger rows, and its row there as its place; a deck of the
-run it lacks exits 1 with "<slug>: not in rankings.md, rank the decks", and a Criteria table without a JUDGED column
-exits 1 with "rankings.md has no <criterion> column, rank the decks".
+JUDGED criteria as written, Speed in its Criteria table and the AXES in its Resilience table, its Bracket, Why and
+JUDGED Ledger rows, and its row there as its place; a deck of the run it lacks exits 1 with "<slug>: not in
+rankings.md, rank the decks", a file without a Resilience table exits 1 with "rankings.md has no Resilience table,
+rank the decks", and one without a JUDGED column exits 1 with "rankings.md has no <criterion> column, rank the
+decks".
 
 Interaction, what the deck stops. An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece.
 Answers is the counts file's Answers row, instant its Instant-speed answers row, a wipe its Wipes row above 0, and the
@@ -52,7 +55,8 @@ COUNTED = ("Answers", "Instant-speed answers", "Wipes", "Counters", "Creature re
 SPLIT = 4  # a criterion the rankers put this far apart is printed
 JUDGMENTS = "| Deck | " + " | ".join(JUDGED) + " | Bracket | Why |"
 RANKINGS = "| # | Commander | Colours | Bracket | Score | Game Changers | Why | |"
-CRITERIA = "| # | Commander | " + " | ".join(SCORED + AXES) + " |"
+CRITERIA = "| # | Commander | " + " | ".join(SCORED) + " |"
+RESILIENCE = "| # | Commander | " + " | ".join(AXES) + " |"
 LEDGER = "| Commander | Criterion | Value | Count | Cards |"
 BRACKET = re.compile(r"[1-5](, (top|low))?")
 MOXFIELD, RANKED = Path("moxfield.json"), Path("rankings.md")
@@ -140,18 +144,23 @@ def merged(run, decks, comp):
         if apart: print(f"{d}: split {', '.join(apart)}", file=sys.stderr)
     return found, []
 
+def numbered(lines):
+    """(the columns, {#: {column: cell}}) of the "| # |" table in lines"""
+    head = next((l for l in lines if l.startswith("| # |")), "")
+    columns = [c.strip() for c in head.strip().strip("|").split("|")]
+    return columns, {r[0]: dict(zip(columns, r)) for r in cells(lines)}
+
 def written(decks):
     """({slug: (place, [JUDGED values], bracket, why, Ledger rows)}, faults) as rankings.md holds them"""
     secs = dict(split(RANKED.read_text())) if RANKED.exists() else {None: []}
-    head = next((l for l in secs.get("## Criteria", []) if l.startswith("| # |")), "")
-    columns = [c.strip() for c in head.strip().strip("|").split("|")]
-    if missing := [c for c in JUDGED if RANKED.exists() and c not in columns]:
+    if RANKED.exists() and "## Resilience" not in secs: return {}, ["rankings.md has no Resilience table, rank the decks"]
+    (crit_heads, crit), (resil_heads, resil) = (numbered(secs.get(s, [])) for s in ("## Criteria", "## Resilience"))
+    if missing := [c for c in JUDGED if RANKED.exists() and c not in crit_heads + resil_heads]:
         return {}, [f"rankings.md has no {c} column, rank the decks" for c in missing]
-    crit = {r[0]: r for r in cells(secs.get("## Criteria", []))}
     found, owners, seen = {}, {}, Counter()
     for place, r in enumerate(cells(secs[None])):
         name, d = re.fullmatch(r"\[(.*)\]\(output/decks/([^/)]+)/?\)", r[1]).groups()
-        found[d] = (place, [Fraction(crit[r[0]][columns.index(c)]) for c in JUDGED], r[3], r[6], [])
+        found[d] = (place, [Fraction((crit[r[0]] | resil[r[0]])[c]) for c in JUDGED], r[3], r[6], [])
         owners.setdefault(name, []).append(d)
     for r in rows(secs.get("## Ledger", []), "Commander"):  # the k-th row of a name and criterion is its k-th deck's
         k, seen[r[0], r[1]] = seen[r[0], r[1]], seen[r[0], r[1]] + 1
@@ -173,13 +182,15 @@ def write(run, judged, comp):
         link = f"[Moxfield](https://moxfield.com/decks/{ids[d]})" if d in ids else "-"
         row = [f"[{name}](output/decks/{d}/)", "".join(c for c in "WUBRG" if c in colours) or "C", bracket,
                shown(score(criteria)), ", ".join(facts.game_changers(d)) or "none", why, link]
-        decks.append((-score(criteria), place, d, row, [name] + [shown(v) for v in criteria + values[1:]],
+        decks.append((-score(criteria), place, d, row, [name] + [shown(v) for v in criteria],
+                      [name] + [shown(v) for v in values[1:]],
                       [[name] + r for r in ledger + [comp[d][c][1] for c in COMPUTED]]))
     decks.sort(key=lambda r: r[:3])
     Path(run, "rankings.md").write_text(
         "# Rankings\n\n" + table(RANKINGS, [[str(i)] + r[3] for i, r in enumerate(decks, 1)])
         + "\n\n## Criteria\n\n" + table(CRITERIA, [[str(i)] + r[4] for i, r in enumerate(decks, 1)])
-        + "\n\n## Ledger\n\n" + table(LEDGER, [l for r in decks for l in r[5]]) + "\n")
+        + "\n\n## Resilience\n\n" + table(RESILIENCE, [[str(i)] + r[5] for i, r in enumerate(decks, 1)])
+        + "\n\n## Ledger\n\n" + table(LEDGER, [l for r in decks for l in r[6]]) + "\n")
 
 def facts_of(run):
     """(the run's decks, {slug: computed()}) from <run>/*-counts.md; exits naming a counts file that lacks a row"""
