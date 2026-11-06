@@ -297,12 +297,17 @@ def test_an_unknown_settings_key_is_named_and_ignored():
     assert '"budget": 20' in out.stdout
 
 
-# each deck's Speed and Resilience from rankers A to E; zara's Salt is 4, kor's 3, and both decks' Interaction 1, their
-# cards untagged
-JUDGED = {"zara": {"A": [6, 5], "B": [7, 6], "C": [3, 5]},
-          "kor": {"A": [5, 5], "B": [8, 8], "C": [8, 8]}}
+# each deck's Speed, Setup, Rebuild and Flow from rankers A to E; zara's Salt is 4, kor's 3, and both decks' Interaction
+# 1, their cards untagged
+JUDGED = {"zara": {"A": [6, 4, 5, 6], "B": [7, 5, 6, 7], "C": [3, 6, 5, 4]},
+          "kor": {"A": [5, 5, 5, 5], "B": [8, 8, 8, 8], "C": [8, 8, 8, 8]}}
 OWN = dict(zip("ABCDE", ["3", "4", "2", "3, top", "3"]))  # each ranker's Bracket
-JUDGMENTS_RULE = "|---|---|---|---|---|"
+JUDGMENTS_RULE = "|---|---|---|---|---|---|---|"
+
+
+def flat(speed, resilience):
+    """a ranker's JUDGED values with all three axes at resilience"""
+    return [speed] + [resilience] * 3
 UNTAGGED = "1 | 0 answers, 0 instant; no/no/no | -"  # an untagged deck's Interaction Ledger cells past the criterion
 
 
@@ -324,7 +329,7 @@ def decks(salts={"Zara, Tide Caller": 0.525, "Kor Skyfisher": 0.45}):
 
 def ledger(slug, x):
     """ranker x's Ledger rows for one deck, each naming the ranker"""
-    return [f"| {slug} | Resilience | 5 | count {x} | cards {x} |"]
+    return [f"| {slug} | {a} | 5 | - | cards {x} |" for a in merge_rankings.AXES]
 
 
 def rankers(judged=JUDGED, letters="ABC", order=None):
@@ -360,8 +365,9 @@ def merges(*stderr):
 def test_merge_rankings_takes_the_mean_of_three_rankers_and_computes_the_rest():
     rankers()
     merges("zara: split Speed 6/7/3")
-    # zara's criteria 5.3, 5.3, Interaction 1 and Salt 4, their mean 3.9, its Score 36.3; its own Scores 37.5, 43.8 and
-    # 28.1 make A the median; kor's 7.0 twice, 1 and Salt 3, 43.8, its own 31.3, 50.0 and 50.0 make B the median
+    # zara's Speed 5.3 and axes 5.0, 5.3 and 5.7, Resilience their mean 5.3; with Interaction 1 and Salt 4 the mean is
+    # 3.9, its Score 36.3; its own Scores 37.5, 43.8 and 28.1 make A the median; kor's 7.0 everywhere, 1 and Salt 3,
+    # 43.8, its own 31.3, 50.0 and 50.0 make B the median
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
@@ -371,19 +377,23 @@ def test_merge_rankings_takes_the_mean_of_three_rankers_and_computes_the_rest():
 
 ## Criteria
 
-{merge_rankings.CRITERIA}
-|---|---|---|---|---|---|
-| 1 | Kor Skyfisher | 7.0 | 7.0 | 1.0 | 3.0 |
-| 2 | Zara, Tide Caller | 5.3 | 5.3 | 1.0 | 4.0 |
+| # | Commander | Speed | Resilience | Interaction | Salt | Setup | Rebuild | Flow |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Kor Skyfisher | 7.0 | 7.0 | 1.0 | 3.0 | 7.0 | 7.0 | 7.0 |
+| 2 | Zara, Tide Caller | 5.3 | 5.3 | 1.0 | 4.0 | 5.0 | 5.3 | 5.7 |
 
 ## Ledger
 
 {merge_rankings.LEDGER}
 |---|---|---|---|---|
-| Kor Skyfisher | Resilience | 5 | count B | cards B |
+| Kor Skyfisher | Setup | 5 | - | cards B |
+| Kor Skyfisher | Rebuild | 5 | - | cards B |
+| Kor Skyfisher | Flow | 5 | - | cards B |
 | Kor Skyfisher | Interaction | {UNTAGGED} |
 | Kor Skyfisher | Salt | 3 | mean 0.45 over 1 cards | - |
-| Zara, Tide Caller | Resilience | 5 | count A | cards A |
+| Zara, Tide Caller | Setup | 5 | - | cards A |
+| Zara, Tide Caller | Rebuild | 5 | - | cards A |
+| Zara, Tide Caller | Flow | 5 | - | cards A |
 | Zara, Tide Caller | Interaction | {UNTAGGED} |
 | Zara, Tide Caller | Salt | 4 | mean 0.53 over 1 cards | - |
 """
@@ -435,33 +445,41 @@ def test_merge_rankings_stops_on_a_counts_file_without_a_row_it_reads():
 
 
 def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_cells():
-    # Speed 1 5 6 7 9 keeps 5 6 7, Resilience 3 3 4 9 9 keeps 3 4 9; own Scores 15.6 59.4 28.1 34.4 53.1 make D the median
-    five = {"zara": {"A": [1, 3], "B": [9, 9], "C": [5, 3], "D": [6, 4], "E": [7, 9]},
-            "kor": {x: [5, 5] for x in "ABCDE"}}
+    # Speed 1 5 6 7 9 keeps 5 6 7, each axis 3 3 4 9 9 keeps 3 4 9; own Scores 15.6 59.4 28.1 34.4 53.1 make D the median
+    five = {"zara": {"A": flat(1, 3), "B": flat(9, 9), "C": flat(5, 3), "D": flat(6, 4), "E": flat(7, 9)},
+            "kor": {x: flat(5, 5) for x in "ABCDE"}}
     rankers(five, "ABCDE")
-    got = merges("zara: split Speed 1/9/5/6/7, Resilience 3/9/3/4/9")["zara"]
+    got = merges("zara: split Speed 1/9/5/6/7, Setup 3/9/3/4/9, Rebuild 3/9/3/4/9, Flow 3/9/3/4/9")["zara"]
     # (6.0 + 5.3 + 1 + 4) / 4 = 4.075, its Score 38.4
     assert [got[c] for c in ("Speed", "Resilience", "Interaction", "Salt", "Score", "Bracket", "Why")] == \
         ["6.0", "5.3", "1.0", "4.0", "38.4", "3, top", "why D"]
-    assert "| Zara, Tide Caller | Resilience | 5 | count D | cards D |" in read("run/rankings.md")
+    assert "| Zara, Tide Caller | Setup | 5 | - | cards D |" in read("run/rankings.md")
 
 
 def test_merge_rankings_rounds_a_mean_of_two_or_four_half_up():
-    rankers({"zara": {"A": [5, 4], "B": [6, 5]}, "kor": {x: [5, 5] for x in "AB"}}, "AB")
-    assert [merges()["zara"][c] for c in ("Speed", "Resilience")] == ["5.5", "4.5"]
-    rankers({"zara": {"A": [5, 5], "B": [5, 5], "C": [5, 5], "D": [6, 5]},
-             "kor": {x: [5, 5] for x in "ABCD"}}, "ABCD")
+    rankers({"zara": {"A": flat(5, 4), "B": flat(6, 5)}, "kor": {x: flat(5, 5) for x in "AB"}}, "AB")
+    assert [merges()["zara"][c] for c in ("Speed", "Setup", "Resilience")] == ["5.5", "4.5", "4.5"]
+    rankers({"zara": {"A": flat(5, 5), "B": flat(5, 5), "C": flat(5, 5), "D": flat(6, 5)},
+             "kor": {x: flat(5, 5) for x in "ABCD"}}, "ABCD")
     assert merges()["zara"]["Speed"] == "5.3"  # 21 / 4 = 5.25
 
 
+def test_resilience_is_the_mean_of_the_merged_axes_and_the_score_the_mean_of_four_criteria():
+    rankers({"zara": {"A": [5, 9, 4, 2], "B": [5, 8, 4, 2]}, "kor": {x: flat(5, 5) for x in "AB"}}, "AB")
+    got = merges()["zara"]
+    # axes 8.5, 4.0 and 2.0: Resilience 14.5 / 3 = 4.83; (5 + 4.8 + Interaction 1 + Salt 4) / 4 = 3.7, its Score 33.75
+    assert [got[c] for c in ("Speed", "Resilience", "Interaction", "Salt", "Setup", "Rebuild", "Flow", "Score")] == \
+        ["5.0", "4.8", "1.0", "4.0", "8.5", "4.0", "2.0", "33.8"]
+
+
 def test_merge_rankings_rounds_a_score_ending_in_5_up():
-    # Speed and Resilience 5 6 6, 5.7 each, Interaction 1 and Salt 4: (16.4 / 4 - 1) / 8 * 100 = 38.75
-    rankers({"zara": {"A": [5, 5], "B": [6, 6], "C": [6, 6]}, "kor": {x: [5, 5] for x in "ABC"}})
+    # Speed and every axis 5 6 6, 5.7 each, Interaction 1 and Salt 4: (16.4 / 4 - 1) / 8 * 100 = 38.75
+    rankers({"zara": {"A": flat(5, 5), "B": flat(6, 6), "C": flat(6, 6)}, "kor": {x: flat(5, 5) for x in "ABC"}})
     assert merges()["zara"]["Score"] == "38.8"
 
 
 def test_merge_rankings_breaks_a_tie_by_mean_place_then_by_slug():
-    same = {"zara": {x: [5, 5] for x in "ABC"}, "kor": {x: [5, 5] for x in "ABC"}}
+    same = {"zara": {x: flat(5, 5) for x in "ABC"}, "kor": {x: flat(5, 5) for x in "ABC"}}
     decks({"Zara, Tide Caller": 0.45, "Kor Skyfisher": 0.45})
     rankers(same, order={"A": ["zara", "kor"], "B": ["zara", "kor"], "C": ["kor", "zara"]})
     assert list(merges()) == ["zara", "kor"]
@@ -473,14 +491,14 @@ def test_merge_rankings_breaks_a_tie_by_mean_place_then_by_slug():
 def test_one_ranker_goes_through_the_merge():
     rankers(letters="B")
     got = merges()
-    # kor 8, 8, 1 and Salt 3: 50.0; zara 7, 6, 1 and Salt 4: 43.8
+    # kor 8, 8, 1 and Salt 3: 50.0; zara 7, Resilience 6, 1 and Salt 4: 43.8
     assert [(d, got[d]["Score"], got[d]["Speed"], got[d]["Why"]) for d in got] == \
         [("kor", "50.0", "8.0", "why B"), ("zara", "43.8", "7.0", "why B")]
 
 
 @pytest.mark.parametrize("change, faults", [
     (lambda t: t.replace("| kor |", "| ghost |"), ["kor: missing", "ghost: not a deck of the run"]),
-    (lambda t: t + "| ghost | 5 | 5 | 3 | why |\n", ["ghost: not a deck of the run"]),
+    (lambda t: t + "| ghost | 5 | 5 | 5 | 5 | 3 | why |\n", ["ghost: not a deck of the run"]),
     (lambda t: t.replace("| zara | 6 |", "| zara | 10 |"), ["zara: Speed 10 is not a whole number from 1 to 9"]),
     (lambda t: t.replace("| 3 | why A |", "| 3 top | why A |", 1),
      ["zara: Bracket 3 top is not 1 to 5 with ', top' or ', low'"]),
@@ -540,6 +558,15 @@ def test_recompute_after_a_salt_change_moves_only_that_decks_salt_score_and_plac
     assert after["kor"] == before["kor"] | {"#": "2"}
     assert after["zara"] == before["zara"] | {"#": "1", "Salt": "9.0", "Score": "51.9"}
     assert "| Zara, Tide Caller | Salt | 9 | mean 0.90 over 1 cards | - |" in read("run/rankings.md")
+
+
+def test_recompute_reads_the_axes_and_computes_resilience_from_them():
+    assert recomputed().returncode == 0
+    Path("rankings.md").write_text(read("rankings.md").replace("| 4.0 | 5.0 | 5.3 | 5.7 |", "| 4.0 | 8.0 | 5.3 | 5.7 |"))
+    assert run("skills/score/merge_rankings.py", "--recompute", "run").returncode == 0
+    # axes 8.0, 5.3 and 5.7: Resilience 19 / 3 = 6.33; (5.3 + 6.3 + 1 + 4) / 4 = 4.15, its Score 39.375
+    got = ranked()["zara"]
+    assert [got[c] for c in ("Setup", "Resilience", "Score")] == ["8.0", "6.3", "39.4"]
 
 
 def test_recompute_stops_on_a_deck_rankings_md_lacks():

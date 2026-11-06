@@ -6,11 +6,12 @@ followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter
 and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria and Ledger tables, where
 - each JUDGED criterion is the mean of the rankers' values sorted with the lowest and highest dropped while five or more
   remain (the middle three of five, all of four or fewer);
+- Resilience is the mean of the merged AXES; the Criteria table shows SCORED, then the AXES;
 - each COMPUTED criterion is read from the deck's counts file: Salt the Count of its Salt row, its Cards the Ledger
   row's Count (up to the first "; ") and Cards; Interaction the level of the Interaction table below, its Ledger row's
   Count "<n> answers, <m> instant; <counters>/<creature>/<noncreature>", each coverage yes or no, its Cards the
   Answers row's Cards;
-- the Score is (mean of the criteria as written - 1) / 8 * 100; every mean and Score is an exact fraction rounded half
+- the Score is (mean of SCORED as written - 1) / 8 * 100; every mean and Score is an exact fraction rounded half
   up to one decimal;
 - each ranker's own Score, computed the same way from its own values, picks the median ranker (the lower middle when
   even), whose Bracket, Why and Ledger rows the deck takes;
@@ -22,8 +23,8 @@ and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria and Led
 Prints to stderr, per deck, the JUDGED criteria the rankers put SPLIT or more apart, each with its values in letter
 order. With --recompute, rankings.md beside output/ is the only judged source and no ranker file is read: each deck's
 JUDGED criteria as written, its Bracket, Why and JUDGED Ledger rows, and its row there as its place; a deck of the
-run it lacks exits 1 with "<slug>: not in rankings.md, rank the decks". It reads only the shape this script writes,
-whose Rankings table has no Kill turn column: an older rankings.md is misread, so rank the decks again instead.
+run it lacks exits 1 with "<slug>: not in rankings.md, rank the decks", and a Criteria table without a JUDGED column
+exits 1 with "rankings.md has no <criterion> column, rank the decks".
 
 Interaction, what the deck stops. An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece.
 Answers is the counts file's Answers row, instant its Instant-speed answers row, a wipe its Wipes row above 0, and the
@@ -43,13 +44,15 @@ from project import decklist, named
 from tables import split, cells, table
 import facts
 
-JUDGED = ("Speed", "Resilience")  # read from the ranker files
+AXES = ("Setup", "Rebuild", "Flow")  # Resilience is their mean
+JUDGED = ("Speed",) + AXES  # read from the ranker files
 COMPUTED = ("Interaction", "Salt")  # read from the counts files, from these rows
+SCORED = ("Speed", "Resilience") + COMPUTED  # the Score's criteria
 COUNTED = ("Answers", "Instant-speed answers", "Wipes", "Counters", "Creature removal", "Noncreature removal", "Salt")
 SPLIT = 4  # a criterion the rankers put this far apart is printed
 JUDGMENTS = "| Deck | " + " | ".join(JUDGED) + " | Bracket | Why |"
 RANKINGS = "| # | Commander | Colours | Bracket | Score | Game Changers | Why | |"
-CRITERIA = "| # | Commander | " + " | ".join(JUDGED + COMPUTED) + " |"
+CRITERIA = "| # | Commander | " + " | ".join(SCORED + AXES) + " |"
 LEDGER = "| Commander | Criterion | Value | Count | Cards |"
 BRACKET = re.compile(r"[1-5](, (top|low))?")
 MOXFIELD, RANKED = Path("moxfield.json"), Path("rankings.md")
@@ -69,6 +72,10 @@ def middle(values):
     return tenths(mean(v))
 
 def score(values): return tenths((mean(values) - 1) / 8 * 100)
+
+def scored(values, levels):
+    """the SCORED criteria of JUDGED values and the COMPUTED levels, Resilience the mean of the AXES to one decimal"""
+    return [values[0], tenths(mean(values[1:]))] + list(levels)
 
 def rows(lines, head):
     """the data rows of lines' table, as lists of cells, its header row left out"""
@@ -125,7 +132,7 @@ def merged(run, decks, comp):
     for d in decks:
         got, own = [r[d] for r in rankers], [comp[d][c][0] for c in COMPUTED]
         each = list(zip(*(g[1] for g in got)))
-        median = sorted(range(len(got)), key=lambda i: score(got[i][1] + own))[(len(got) - 1) // 2]
+        median = sorted(range(len(got)), key=lambda i: score(scored(got[i][1], own)))[(len(got) - 1) // 2]
         _, _, bracket, why = got[median]
         found[d] = (mean([g[0] for g in got]), [middle(v) for v in each], bracket, why,
                     sorted(ledgers[median].get(d, []), key=lambda r: JUDGED.index(r[0])))
@@ -159,14 +166,14 @@ def write(run, judged, comp):
     ids = {slug: i for i, slug in json.loads(MOXFIELD.read_text()).get("decks", {}).items()} if MOXFIELD.exists() else {}
     decks = []
     for d, (place, values, bracket, why, ledger) in judged.items():
-        criteria = values + [Fraction(comp[d][c][0]) for c in COMPUTED]
+        criteria = scored(values, [Fraction(comp[d][c][0]) for c in COMPUTED])
         commanders = [n for _, n in decklist(d)[0]]
         name = " / ".join(n.split(" // ")[0] for n in commanders)
         colours = {c for n in commanders for c in (oracle.get(n.casefold()) or {}).get("color_identity", [])}
         link = f"[Moxfield](https://moxfield.com/decks/{ids[d]})" if d in ids else "-"
         row = [f"[{name}](output/decks/{d}/)", "".join(c for c in "WUBRG" if c in colours) or "C", bracket,
                shown(score(criteria)), ", ".join(facts.game_changers(d)) or "none", why, link]
-        decks.append((-score(criteria), place, d, row, [name] + [shown(v) for v in criteria],
+        decks.append((-score(criteria), place, d, row, [name] + [shown(v) for v in criteria + values[1:]],
                       [[name] + r for r in ledger + [comp[d][c][1] for c in COMPUTED]]))
     decks.sort(key=lambda r: r[:3])
     Path(run, "rankings.md").write_text(
