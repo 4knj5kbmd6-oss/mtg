@@ -44,8 +44,8 @@ first use and looks up on Scryfall any card it has not seen.
 
 1. `/sync <moxfield username>` adds your public Commander decks to
    `moxfield.json` and writes each deck's `list.txt`.
-2. Write each deck's `output/decks/<slug>/plan.md`, under 120 words, every
-   card it names in `list.txt`:
+2. `/plan <slug ...>` drafts each deck's `output/decks/<slug>/plan.md` for
+   your review, or write it yourself:
 
    ```
    # <Commander>: plan
@@ -59,7 +59,9 @@ first use and looks up on Scryfall any card it has not seen.
    Win bullets are the plan. A line joins its roles with `+`; a role is one
    card, or a role name with the cards that fill it in brackets, separated
    by `;` since card names hold commas. A combo is a line whose every role
-   has one card; a fair deck has several cards per role:
+   has one card; a fair deck has several cards per role. A plan is a few Win
+   lines, each one sentence beside its roles; names in brackets are free, and
+   every card it names is in `list.txt`:
 
    ```
    - **Win:** Drain: Arabella, Abandoned Doll + amplifier (Delney, Streetwise Lookout; Windcrag Siege; Furnace of Rath) + token board (Krenko, Tin Street Kingpin; Legion Warboss). Each attack drains per small creature, amplified.
@@ -72,8 +74,9 @@ first use and looks up on Scryfall any card it has not seen.
 **Cost.** Every deck in a `/score` run is read by `scorers` scorers on their
 `models` entry (defaults in [`settings.py`](lib/settings.py)), each taking a
 group of decks that share colours, and a run of more than one deck ends with
-`rankers` rankers merged by median, as a run starts with them when a deck has
-no bracket yet. `scorers`, `rankers` and `models` in `settings.json` lower it.
+`rankers` rankers merged on each criterion by the mean of the middle three, as
+a run starts with them when a deck has no bracket yet. `scorers`, `rankers`
+and `models` in `settings.json` lower it.
 
 ## Settings
 
@@ -86,7 +89,7 @@ the command line overrides one for that run (`/score budget=50 quota.adds=15`).
 |---|---|
 | `scorers` | Scorers per deck |
 | `rankers` | Rankers per ranking |
-| `models` | The model each agent runs on: `scorer`, `ranker`, `researcher`, `judge`, `librarian`, `shopper` |
+| `models` | The model each agent runs on: `scorer`, `ranker`, `researcher`, `judge`, `librarian`, `shopper`, `planner` |
 | `budget` | The highest TCGplayer price in dollars an add may carry |
 | `quota` | The adds, land adds and cuts each deck's research lists |
 | `universes_beyond` | true: research searches Universes Beyond sets |
@@ -130,7 +133,7 @@ Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score` and `/upgrades`) |
+| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `notes.md` (the plan `/plan` replaced), `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score` and `/upgrades`) |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags` and EDHREC `salt`), `tokens.md` and `images/` (each card's image, fetched once) |
 | `data/variants.json.gz` | Commander Spellbook's combos, cut to the fields `/score` reads, fetched again once a day old |
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |

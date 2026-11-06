@@ -7,7 +7,8 @@ import json, sys
 from pathlib import Path
 DEFAULTS = {"scorers": 3, "rankers": 3,
             "models": {"scorer": "claude-sonnet-5-5", "ranker": "claude-sonnet-5-5", "researcher": "claude-opus-5-5",
-                       "judge": "claude-sonnet-5-5", "librarian": "claude-sonnet-5-5", "shopper": "claude-sonnet-5-5"},
+                       "judge": "claude-sonnet-5-5", "librarian": "claude-sonnet-5-5", "shopper": "claude-sonnet-5-5",
+                       "planner": "claude-opus-5-5"},
             "budget": None,
             "quota": {"adds": 20, "lands": 5, "cuts": [10, 15]}, "universes_beyond": True, "new_sets": False, "images": True,
             "cart": {"condition": "MP", "language": "English", "finish": None, "premium": None}}

@@ -382,3 +382,16 @@ def test_plan_check_prints_the_plan_cards_not_in_the_list():
     assert out.returncode == 0, out.stderr
     assert out.stdout == ("zara: Mr. Missing is not in list.txt\nzara: Lost Fish is not in list.txt\n"
                           "zara: Ghost Signet is not in list.txt\nzara: Nowhere Card is not in list.txt\n")
+
+
+def test_plan_check_checks_a_draft_outside_output_against_the_slugs_list(tmp_path):
+    draft = tmp_path / "zara-plan.md"
+    draft.write_text("# Zara, Tide Caller: plan\n\n"
+                     "- **Win:** Out-card: Zara, Tide Caller + spells (Tidal Insight; Lost Fish). Draws the table out.\n"
+                     "- **Not cast:** Nowhere Card\n")
+    before = snapshot()
+    out = run("skills/sync/plan_check.py", "--plan", str(draft), "zara")
+    assert out.returncode == 0, out.stderr
+    assert out.stdout == "zara: Lost Fish is not in list.txt\nzara: Nowhere Card is not in list.txt\n"
+    assert run("skills/sync/plan_check.py", "zara").stdout == "" and snapshot() == before
+    assert run("skills/sync/plan_check.py", "--plan", str(draft)).returncode == 1

@@ -3,7 +3,9 @@ list.txt". The names are every card of its Win bullets' roles, joined by +, each
 cards in brackets separated by ;, and its Not cast cards, separated by ;. A list written with commas is read too: the
 longest run of comma-separated parts that names a listed card is taken, a card name holding commas. A deck with no
 plan.md prints nothing.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> [slug ...]"""
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> [slug ...]
+       python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py --plan <path> <slug>  checks the plan at path, a draft
+       outside output/, against the slug's list.txt"""
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
@@ -38,9 +40,9 @@ def win(text, known):
         out += names(role, known)
     return out
 
-def check(slug):
-    """the plan's card names not in the deck's list, in the plan's order"""
-    plan = DECKS / slug / "plan.md"
+def check(slug, plan=None):
+    """the card names of plan, by default the deck's plan.md, not in the deck's list, in the plan's order"""
+    plan = Path(plan) if plan else DECKS / slug / "plan.md"
     if not plan.exists(): return []
     commanders, rest = decklist(slug)
     known = {f.casefold() for _, n in commanders + rest for f in [n, *n.split(" // ")]}
@@ -50,8 +52,12 @@ def check(slug):
     return [n for n in dict.fromkeys(cards) if n.casefold() not in known]
 
 def main():
-    if len(sys.argv) < 2: sys.exit(__doc__)
-    for slug in sys.argv[1:]:
-        for name in check(slug): print(f"{slug}: {name} is not in list.txt")
+    args, plan = sys.argv[1:], None
+    if args[:1] == ["--plan"]:
+        if len(args) != 3: sys.exit(__doc__)
+        plan, args = args[1], args[2:]
+    if not args: sys.exit(__doc__)
+    for slug in args:
+        for name in check(slug, plan): print(f"{slug}: {name} is not in list.txt")
 
 if __name__ == "__main__": main()

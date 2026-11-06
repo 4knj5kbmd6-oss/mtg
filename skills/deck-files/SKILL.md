@@ -1,6 +1,6 @@
 ---
 name: deck-files
-description: The deck files the scorer, ranker, researcher and judge agents read, and the scripts that settle a rules question. Preloaded into those agents.
+description: The deck files the scorer, ranker, researcher, judge and planner agents read, and the scripts that settle a rules question. Preloaded into those agents.
 user-invocable: false
 ---
 
@@ -11,6 +11,7 @@ Paths are relative to the working directory, the folder that holds `output/`.
 | File | What |
 |---|---|
 | `output/decks/<slug>/plan.md` | The owner's plan, in the [shape below](#plan), authoritative: it overrides any plan inferred from the list or from `rankings.md` |
+| `output/decks/<slug>/notes.md` | The plan `/plan` replaced, read by the planner only |
 | `output/decks/<slug>/list.txt` | The deck as the owner intends it, pending swaps applied: commander first, then the 99, an optional SIDEBOARD block |
 | `output/decks/<slug>/nonlands.md`, `lands.md` | Each card's fit score, Role and note, the Adds and Cuts tables and a Shape line; `nonlands.md` ends with a Roles line tallying both files' cards by role |
 | `output/data/oracle.json` | Scryfall data for every card in every deck: rules text, cost, type, colour identity, the `game_changer` flag, rulings, `tags` (Scryfall's functional tags), `salt` (EDHREC saltiness, absent when unknown). Read it instead of fetching card by card; Scryfall only for a card missing from it |
@@ -35,7 +36,8 @@ card, or a role name with the cards that fill it in brackets, separated by
 `;` since card names hold commas. A combo is a line whose every role has one
 card; a fair deck has several cards per role, a twin being a second card in
 a role. Not cast names the cards the deck cheats into play rather than
-casts. Under 120 words; every card named must be in `list.txt`, which
+casts. A plan is a few Win lines, each one sentence beside its roles; names
+in brackets are free. Every card named must be in `list.txt`, which
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...` checks.
 
 ```
