@@ -1,7 +1,7 @@
 ---
 name: ranker
 description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as two tables. Dispatched by the score and upgrades skills: before a run whose deck rankings.md lacks, and after a rescore.
-tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
+tools: Read, Grep, Glob, Bash, Write
 skills: mtg-toolbox:deck-files
 ---
 
@@ -55,13 +55,14 @@ An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piec
 Beside Speed, judge each deck's kill turn: the turn it wins or locks the
 table in that typical game, as two adjacent turns (`6-7`) or one turn.
 
-Brackets follow Wizards of the Coast's official Commander Brackets
-guidelines, not a Game Changer count: fetch the current text (the beta
-announcement and every update on magic.wizards.com), and apply the full
-criteria (bracket intent, how early and reliably the deck wins, two-card
-infinites and when they come online, tutor density, mass land denial,
-chained extra turns, Game Changers, optimization level), the deck's Game
-Changers being the counts file's `Game Changers` row.
+Brackets follow `output/data/brackets.md`, Wizards of the Coast's
+Commander Brackets announcement and its updates, the latest update
+governing where the articles differ; not a Game Changer count. Apply the
+full criteria (bracket intent, how early and reliably the deck wins,
+two-card infinites and when they come online, tutor density, mass land
+denial, chained extra turns, Game Changers, optimization level), the deck's
+Game Changers from the counts file's `Game Changers` row and its combos,
+mass land denial and extra turns from its combos file. Fetch nothing.
 
 Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 

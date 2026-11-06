@@ -1,8 +1,9 @@
 import copy, json
+from urllib.error import HTTPError
 from pathlib import Path
 import pytest
 from conftest import run, read
-import facts, merge, merge_rankings, project, settings, tables
+import facts, fetch_brackets, fetch_syntax, merge, merge_rankings, project, settings, tables
 
 # each card's score from scorers A, B and C
 SCORES = {
@@ -499,3 +500,57 @@ def test_recompute_stops_on_a_deck_rankings_md_lacks():
     Path("run/ghost-counts.md").write_text(read("run/zara-counts.md"))
     out = run("skills/score/merge_rankings.py", "--recompute", "run")
     assert (out.returncode, out.stderr) == (1, "ghost: not in rankings.md, rank the decks\n")
+
+
+def article(url):
+    """a Wizards article page: its heading and text, then the related articles and footer every page carries"""
+    name = url.rsplit("/", 1)[1]
+    return (f"<html><nav>menu</nav><article><h1><span>{name}</span></h1><p>About {name}.</p><h3>Brackets</h3>"
+            f"<ul><li>Bracket 1</li></ul></article><aside><h3>Related</h3></aside><footer>legal</footer></html>").encode()
+
+
+@pytest.fixture
+def wizards(monkeypatch):
+    """Wizards answering each article URL with its page, the URLs asked kept in order"""
+    asked = []
+    def get(url): asked.append(url); return article(url)
+    monkeypatch.setattr(fetch_syntax, "get", get)
+    return asked
+
+
+def test_fetch_brackets_writes_one_section_per_article_and_fetches_once(wizards, capsys):
+    fetch_brackets.main()
+    assert wizards == fetch_brackets.PAGES
+    text = read("output/data/brackets.md")
+    assert text.startswith("## introducing-commander-brackets-beta\n\n"
+                           f"Source: {fetch_brackets.PAGES[0]}\n\nAbout introducing-commander-brackets-beta.\n\n"
+                           "#### Brackets\n\n- Bracket 1\n\n## commander-brackets-beta-update-april-22-2025\n")
+    assert text.count("\n## ") == 3 and "Related" not in text and "legal" not in text
+    first = fetch_brackets.sections(text)[fetch_brackets.PAGES[0]]
+    assert capsys.readouterr().out.splitlines()[0] == f"## introducing-commander-brackets-beta  ({len(first)} characters)"
+    fetch_brackets.main()
+    assert wizards == fetch_brackets.PAGES and read("output/data/brackets.md") == text
+
+
+def test_fetch_brackets_fetches_only_an_added_article(wizards, monkeypatch):
+    fetch_brackets.main()
+    later = fetch_brackets.NEWS + "commander-brackets-update-later"
+    monkeypatch.setattr(fetch_brackets, "PAGES", fetch_brackets.PAGES + [later])
+    wizards.clear()
+    fetch_brackets.main()
+    assert wizards == [later]
+    assert read("output/data/brackets.md").endswith(f"## commander-brackets-update-later\n\nSource: {later}\n\n"
+                                                    "About commander-brackets-update-later.\n\n#### Brackets\n\n- Bracket 1\n")
+
+
+@pytest.mark.parametrize("answer, why", [(HTTPError("u", 403, "Forbidden", {}, None), "HTTP 403"),
+                                         (b"<title>Just a moment...</title>", "Cloudflare challenge")],
+                         ids=["403", "challenge"])
+def test_fetch_brackets_stops_naming_a_refused_url(monkeypatch, answer, why):
+    def get(url):
+        if isinstance(answer, BaseException): raise answer
+        return answer
+    monkeypatch.setattr(fetch_syntax, "get", get)
+    with pytest.raises(SystemExit, match=f"^{fetch_brackets.PAGES[0]}: {why}$"):
+        fetch_brackets.main()
+    assert not Path("output/data/brackets.md").exists()

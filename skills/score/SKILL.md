@@ -13,7 +13,9 @@ fix the metric or the deck's `plan.md` and rescore.
 
 Settings and dispatch as the deck-files skill's Dispatch section says.
 
-To rank the decks, first write every deck's two fact files,
+To rank the decks, first fetch the bracket articles the project lacks,
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/fetch_brackets.py`, and write
+every deck's two fact files,
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...` given
 every slug under `output/decks/` that has a `list.txt`. Then dispatch
 `rankers` `mtg-toolbox:ranker` agents, lettered A, B, C and on, each prompt

@@ -117,4 +117,5 @@ Your output, all under `output/` (gitignored):
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |
 | `data/rules.txt` | The Comprehensive Rules, for `/judge` |
 | `data/scryfall-syntax.md` | Scryfall's search reference, one section per docs page, for `/scryfall` |
+| `data/brackets.md` | Wizards' Commander Brackets announcement and its updates, one section per article, for the rankers |
 | `carts/` | One report per cart |
