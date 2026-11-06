@@ -564,4 +564,34 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 | Counters | 1 | Tidal Insight |
 | Removal | 1 | Wave Breaker |
 | Wipes | 1 | Brine Elemental |
+| Salt | 1 | mean 0.00 over 0 cards; - |
 """
+
+
+def salted(values):
+    """oracle.json with these salt values"""
+    oracle = json.loads(read("output/data/oracle.json"))
+    for name, value in values.items(): oracle["cards"][name]["salt"] = value
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+
+
+def test_salt_is_the_mean_over_every_copy_without_plain_lands_or_unknown_salt():
+    salted({"Zara, Tide Caller": 0.3, "Brine Elemental": 0.1, "Coral Signet": 0.1, "Sol Ring": 2.1, "Tidal Insight": 0.2,
+            "Wave Breaker": 0.1, "Sunken Grotto": 0.5,  # a land at 0.5 counts
+            "Island": 0.05, "Misty Cove": 0.49})  # a basic and a land under 0.5 do not; Kelp Weaver has no value
+    list_ = Path("output/decks/zara/list.txt")
+    list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring") + "\nSIDEBOARD:\n1 Pearl Diver\n")
+    salted({"Pearl Diver": 3.0})  # the SIDEBOARD block is not the deck
+    mean, n, level, salty = facts.salt("zara")
+    # (0.3 + 0.1 + 0.1 + 2 * 2.1 + 0.2 + 0.1 + 0.5) / 8 = 0.6875, level 1 + 8 * 0.3875 / 0.6 = 6.2
+    assert (round(mean, 4), n, level, salty) == (0.6875, 8, 6, [("Sol Ring", 2.1)])
+    Path("run").mkdir()
+    facts.counts("run", "zara")
+    assert read("run/zara-counts.md").endswith("| Salt | 6 | mean 0.69 over 8 cards; Sol Ring 2.1 |\n")
+
+
+@pytest.mark.parametrize("value, level", [(0.3, 1), (0.6, 5), (0.9, 9), (0.1, 1), (1.4, 9), (0.65, 6)])
+def test_salt_level_runs_from_1_at_a_mean_of_030_to_9_at_090(value, level):
+    salted({"Zara, Tide Caller": value})
+    Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n")
+    assert facts.salt("zara")[2] == level

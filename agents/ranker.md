@@ -23,7 +23,7 @@ with the cards that fill it in brackets, separated by `;`. A combo is a line
 whose every role has one card; a fair deck has several cards per role. A line
 may close by lethal or by a lock.
 
-Score each deck's strength in a four-player game on three criteria, each 1 to 9. A deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
+Score each deck's strength in a four-player game on four criteria, each 1 to 9: Speed, Resilience and Interaction you judge, Salt you copy. On a judged criterion a deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
 
 **Speed: the turn it wins or locks the table in a typical four-player game, where opponents trade damage too**
 | | |
@@ -52,12 +52,16 @@ Score each deck's strength in a four-player game on three criteria, each 1 to 9.
 | 3 | 3-6 |
 | 1 | 0-2 |
 
+**Salt: how much the table dislikes facing it**
+
+The counts file's Salt level, copied and never judged: the mean of each card's EDHREC `salt` over every copy in the list, commanders in, cards with no value and lands under 0.5 left out, as `1 + 8 * (mean - 0.3) / 0.6` rounded and held to 1 to 9.
+
 An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece. Protection saves the deck's own and counts for Resilience. The counts file lists each category's cards by their oracle.json tags; a card the tags miss is absent from it, and you may add it in the Ledger by name.
 
 Beside Speed, judge each deck's kill turn: the turn it wins or locks the
 table in that typical game, as two adjacent turns (`6-7`) or one turn.
 
-The deck's score is the mean of its three criteria, normalised to 0 to 100, `round((mean - 1) / 8 * 100, 1)`, one decimal; merged across rankers, each criterion is the mean of the middle three rankers' values (all of them when four or fewer). Rank by score, strongest first; equal scores are ordered by judgment.
+The deck's score is the mean of its four criteria, normalised to 0 to 100, `round((mean - 1) / 8 * 100, 1)`, one decimal; merged across rankers, each criterion is the mean of the middle three rankers' values (all of them when four or fewer). Rank by score, strongest first; equal scores are ordered by judgment.
 
 Brackets follow Wizards of the Coast's official Commander Brackets
 guidelines, not a Game Changer count: fetch the current text (the beta
@@ -79,9 +83,9 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 ## Criteria
 
-| # | Commander | Speed | Resilience | Interaction |
-|---|---|---|---|---|
-| 1 | <commander> | <speed> | <resilience> | <interaction> |
+| # | Commander | Speed | Resilience | Interaction | Salt |
+|---|---|---|---|---|---|
+| 1 | <commander> | <speed> | <resilience> | <interaction> | <salt> |
 ...one row per deck, in the same order...
 
 ## Ledger
@@ -89,7 +93,8 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 | Commander | Criterion | Value | Count | Cards |
 |---|---|---|---|---|
 | <commander> | Resilience | <1-9> | <n recursion, n protection> | <names> |
-...one row per deck for Resilience and Interaction...
+| <commander> | Salt | <level> | mean <0.00> | <the cards at 2.0 or more, "Name 2.8"> |
+...one row per deck for Resilience, Interaction and Salt...
 ```
 
 - Commander: the commander's name, partners joined by " / ", linking to the deck's folder.
@@ -100,8 +105,9 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 - Kill turn: the deck's kill turn (`6-7`, `5`).
 - Game Changers: the deck's own, by name, comma-separated, or `none`.
 - Why: one line.
-- Speed, Resilience, Interaction: each criterion's raw value, 1 to 9 (`7`, `6`).
-- Ledger: per deck, in the Rankings order, its Resilience and Interaction
-  rows; Cards separated by `; `.
+- Speed, Resilience, Interaction, Salt: each criterion's raw value, 1 to 9 (`7`, `6`).
+- Ledger: per deck, in the Rankings order, its Resilience, Interaction and
+  Salt rows; Cards separated by `; `, `-` when none. The Salt row copies the
+  counts file's Salt row: its level, its mean and its cards at 2.0 or more.
 
 Final message: the three tables.
