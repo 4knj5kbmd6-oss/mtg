@@ -19,7 +19,7 @@ prose. Earlier rankings are not read.
 
 A line may close by lethal or by a lock.
 
-Score each deck's strength in a four-player game on these criteria: you judge Win and Development each from 1 to 9, and Speed is their mean; you judge Setup, Rebuild and Flow each from 1 to 5, and Resilience is their mean on 1 to 5; Interaction and Salt are computed, each 1 to 9, and you do not write them. On a judged criterion a deck gets the highest defined level whose line it meets in full; on Win and Development it gets the even value between two levels when it sits between them, and Setup, Rebuild and Flow have no value between their levels.
+Score each deck's strength in a four-player game on these criteria: you judge Win and Development each from 1 to 9, and Speed is their mean; Interaction and Card quality are computed, each 1 to 9, and you do not write them. On Win and Development a deck gets the highest defined level whose line it meets in full, or the even value between two levels when it sits between them.
 
 **Win: the turn it wins or locks the table in a typical four-player game**
 | | |
@@ -39,36 +39,7 @@ Score each deck's strength in a four-player game on these criteria: you judge Wi
 | 3 | Behind the table |
 | 1 | Almost nothing on board |
 
-**Setup: how much board the win needs, how far ahead opponents see it**
-| | |
-|---|---|
-| 5 | Wins from hand and mana in one turn; nothing has to survive a turn cycle |
-| 4 | One permanent or the commander must survive a turn |
-| 3 | Two or three pieces in play, or a modest board, before the winning turn |
-| 2 | A built board over several turns that the table sees coming |
-| 1 | A large telegraphed board that invites a wipe before it wins |
-
-**Rebuild: recovery after disruption**
-| | |
-|---|---|
-| 5 | Loses the board and presents the win again next turn from hand, graveyard or command zone |
-| 4 | Rebuilds within two turns through recursion or redundancy |
-| 3 | Rebuilds in a few turns, slower than the first time |
-| 2 | One disruption sets it back to the mid-game |
-| 1 | One wipe or exile ends its game |
-
-**Flow: how the deck keeps finding its pieces**
-| | |
-|---|---|
-| 5 | A repeatable draw engine most games plus tutors or cantrips; never out of cards |
-| 4 | Several draw engines or a dense cantrip suite; rarely out of gas |
-| 3 | Some card advantage; a few dead turns in a long game |
-| 2 | Topdecking after the opening hand, with a draw spell or two |
-| 1 | No card advantage; plays what it drew |
-
-**Salt: how much the table dislikes facing it**
-
-Win and Development are judged from the curve, ramp, token makers and engines in the list and the plan's roles. Setup, Rebuild and Flow are judged from the plan's lines and roles, the list, the combos file and the counts file; its Recursion and Protection rows are evidence for Rebuild, not a formula. The counts file lists each category's cards by their oracle.json tags; the counts are final.
+Win and Development are judged from the curve, ramp, token makers and engines in the list and the plan's roles. The counts file lists each category's cards by their oracle.json tags; the counts are final.
 
 Brackets follow `output/data/brackets.md`, Wizards of the Coast's
 Commander Brackets announcement and its updates, the latest update
@@ -88,9 +59,9 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 ```
 # Judgments (<letter>)
 
-| Deck | Win | Development | Setup | Rebuild | Flow | Bracket | Why |
-|---|---|---|---|---|---|---|---|
-| <slug> | <win> | <development> | <setup> | <rebuild> | <flow> | <bracket> | <why> |
+| Deck | Win | Development | Bracket | Why |
+|---|---|---|---|---|
+| <slug> | <win> | <development> | <bracket> | <why> |
 ...one row per slug of the prompt, strongest first by your judgment...
 
 ## Ledger
@@ -99,19 +70,15 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 |---|---|---|---|---|
 | <slug> | Win | <1-9> | - | <names> |
 | <slug> | Development | <1-9> | - | <names> |
-| <slug> | Setup | <1-5> | - | <names> |
-| <slug> | Rebuild | <1-5> | - | <names> |
-| <slug> | Flow | <1-5> | - | <names> |
 ...one row per deck per axis...
 ```
 
 - Deck: the slug as the prompt gives it.
-- Win, Development: each a whole number from 1 to 9 (`7`, `6`); Setup, Rebuild, Flow: each a whole
-  number from 1 to 5 (`4`, `2`).
+- Win, Development: each a whole number from 1 to 9 (`7`, `6`).
 - Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
   (`4`, `3, top`, `3`, `3, low`).
 - Why: one line.
-- Ledger: per deck, in your order, its Win, Development, Setup, Rebuild and Flow rows; Cards
+- Ledger: per deck, in your order, its Win and Development rows; Cards
   the pieces the judgment rests on, separated by `; `, `-` when none.
 
 Final message: the file's path.

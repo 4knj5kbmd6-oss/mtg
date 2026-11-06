@@ -247,7 +247,10 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 | Noncreature removal | 0 | - |
 | Wipes | 1 | Brine Elemental |
 | Game Changers | 0 | - |
-| Salt | 1 | mean 0.00 over 0 cards; - |
+| Commander salt | 1 | sum 0.00; - |
+| Commander price | 1 | sum $0.00; - |
+| 99 salt | 1 | mean 0.00 over 0 cards; - |
+| 99 price | 1 | sum $0.00 over 0 cards; - |
 """
 
 
@@ -282,33 +285,75 @@ def test_counts_name_the_game_changers_of_the_list_without_its_sideboard():
     assert facts.game_changers("zara") == ["Drowned Scholar", "Sol Ring", "Zara, Tide Caller"]
     Path("run").mkdir()
     facts.counts("run", "zara")
-    assert "\n| Game Changers | 3 | Drowned Scholar; Sol Ring; Zara, Tide Caller |\n| Salt |" in read("run/zara-counts.md")
+    assert "\n| Game Changers | 3 | Drowned Scholar; Sol Ring; Zara, Tide Caller |\n| Commander salt |" in read("run/zara-counts.md")
 
 
-def salted(values):
-    """oracle.json with these salt values"""
+def valued(field, values):
+    """oracle.json with these values of field, salt or price"""
     oracle = json.loads(read("output/data/oracle.json"))
-    for name, value in values.items(): oracle["cards"][name]["salt"] = value
+    for name, value in values.items(): oracle["cards"][name][field] = value
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
 
 
-def test_salt_is_the_mean_over_every_copy_without_plain_lands_or_unknown_salt():
-    salted({"Zara, Tide Caller": 0.3, "Brine Elemental": 0.1, "Coral Signet": 0.1, "Sol Ring": 2.1, "Tidal Insight": 0.2,
-            "Wave Breaker": 0.1, "Sunken Grotto": 0.5,  # a land at 0.5 counts
-            "Island": 0.05, "Misty Cove": 0.49})  # a basic and a land under 0.5 do not; Kelp Weaver has no value
+def quality(slug="zara"):
+    """the deck's Card quality rows, {Category: (level, Cards)}"""
+    return {r[0]: (int(r[1]), r[2]) for r in facts.quality(slug)}
+
+
+def test_99_salt_is_the_mean_over_the_99s_copies_without_plain_lands_or_unknown_salt():
+    valued("salt", {"Zara, Tide Caller": 0.3, "Brine Elemental": 0.1, "Coral Signet": 0.1, "Sol Ring": 2.1,
+                    "Tidal Insight": 0.2, "Wave Breaker": 0.1, "Sunken Grotto": 0.5,  # a land at 0.5 counts
+                    "Island": 0.05, "Misty Cove": 0.49,  # a basic and a land under 0.5 do not; Kelp Weaver has no value
+                    "Pearl Diver": 3.0})  # the SIDEBOARD block is not the deck
     list_ = Path("output/decks/zara/list.txt")
     list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring") + "\nSIDEBOARD:\n1 Pearl Diver\n")
-    salted({"Pearl Diver": 3.0})  # the SIDEBOARD block is not the deck
-    mean, n, level, salty = facts.salt("zara")
-    # (0.3 + 0.1 + 0.1 + 2 * 2.1 + 0.2 + 0.1 + 0.5) / 8 = 0.6875, level 1 + 8 * 0.3875 / 0.6 = 6.2
-    assert (round(mean, 4), n, level, salty) == (0.6875, 8, 6, [("Sol Ring", 2.1)])
+    # (0.1 + 0.1 + 2 * 2.1 + 0.2 + 0.1 + 0.5) / 7 = 0.743, level 1 + 8 * 0.443 / 0.6 = 6.9; the commander's 0.3 apart
+    got = quality()
+    assert got["99 salt"] == (7, "mean 0.74 over 7 cards; Sol Ring 2.10")
+    assert got["Commander salt"] == (1, "sum 0.30; Zara, Tide Caller 0.30")
+
+
+def test_commander_salt_and_price_add_the_partners():
+    Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n1 Pearl Diver\n\n1 Sol Ring\n")
+    valued("salt", {"Zara, Tide Caller": 0.4, "Pearl Diver": 0.35, "Sol Ring": 2.0})
+    valued("price", {"Zara, Tide Caller": 6.0, "Pearl Diver": 4.0, "Sol Ring": 1.0})
+    got = quality()
+    # salt 0.75: 1 + 8 * 0.45 / 0.6 = 7; price 10 dollars: 1 + 8 * log10(10) / 2 = 5
+    assert got["Commander salt"] == (7, "sum 0.75; Zara, Tide Caller 0.40; Pearl Diver 0.35")
+    assert got["Commander price"] == (5, "sum $10.00; Zara, Tide Caller $6.00; Pearl Diver $4.00")
+
+
+def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more():
+    valued("price", {"Zara, Tide Caller": 4.0, "Sol Ring": 1.5, "Kelp Weaver": 30.0, "Island": 0.25,
+                     "Wave Breaker": 20.0, "Pearl Diver": 500.0})  # the rest have no price
+    list_ = Path("output/decks/zara/list.txt")
+    list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring") + "\nSIDEBOARD:\n1 Pearl Diver\n")
     Path("run").mkdir()
     facts.counts("run", "zara")
-    assert read("run/zara-counts.md").endswith("| Salt | 6 | mean 0.69 over 8 cards; Sol Ring 2.1 |\n")
+    # 2 * 1.5 + 30 + 4 * 0.25 + 20 = 54 dollars over 8 copies, under 125 level 1; the commander's 4 dollars
+    # 1 + 8 * log10(4) / 2 = 3.4
+    assert read("run/zara-counts.md").endswith(
+        "| Commander salt | 1 | sum 0.00; - |\n"
+        "| Commander price | 3 | sum $4.00; Zara, Tide Caller $4.00 |\n"
+        "| 99 salt | 1 | mean 0.00 over 0 cards; - |\n"
+        "| 99 price | 1 | sum $54.00 over 8 cards; Kelp Weaver $30.00; Wave Breaker $20.00 |\n")
 
 
 @pytest.mark.parametrize("value, level", [(0.3, 1), (0.6, 5), (0.9, 9), (0.1, 1), (1.4, 9), (0.65, 6)])
-def test_salt_level_runs_from_1_at_a_mean_of_030_to_9_at_090(value, level):
-    salted({"Zara, Tide Caller": value})
-    Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n")
-    assert facts.salt("zara")[2] == level
+def test_salt_levels_run_from_1_at_030_to_9_at_090(value, level):
+    Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n\n1 Sol Ring\n")
+    valued("salt", {"Zara, Tide Caller": value, "Sol Ring": value})
+    got = quality()
+    assert (got["Commander salt"][0], got["99 salt"][0]) == (level, level)
+
+
+@pytest.mark.parametrize("row, usd, level", [
+    ("99 price", 0, 1), ("99 price", 100, 1), ("99 price", 125, 1), ("99 price", 250, 3), ("99 price", 500, 4),
+    ("99 price", 1000, 6), ("99 price", 4000, 9), ("99 price", 10000, 9),
+    ("Commander price", 0, 1), ("Commander price", 0.5, 1), ("Commander price", 1, 1), ("Commander price", 2, 2),
+    ("Commander price", 10, 5), ("Commander price", 50, 8), ("Commander price", 100, 9), ("Commander price", 250, 9)])
+def test_price_levels_run_on_a_log_scale_from_125_to_4000_dollars_for_the_99_and_1_to_100_for_the_commanders(
+        row, usd, level):
+    Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n\n1 Sol Ring\n")
+    valued("price", {"Zara, Tide Caller" if row == "Commander price" else "Sol Ring": usd})
+    assert quality()[row][0] == level

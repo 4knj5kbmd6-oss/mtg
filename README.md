@@ -105,14 +105,14 @@ Your project-wide files, beside `output/` (gitignored):
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
-| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Resilience 1 to 5 and the rest 1 to 9, the Score the mean of each normalised from its own range to 100; then a `Speed` table of the two judged axes, Win and Development, each 1 to 9, whose mean is Speed; then a `Resilience` table of the three judged axes, each 1 to 5, whose mean is Resilience; then a `Ledger` table of the cards behind each score |
+| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, each 1 to 9, the Score the mean of each normalised from 1 to 9 to 100; then a `Speed` table of the two judged axes, Win and Development, each 1 to 9, whose mean is Speed; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price, whose mean is Card quality, and USD, the deck's summed price in whole dollars; then a `Ledger` table of the cards behind each score |
 
 Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
 | `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `notes.md` (the plan `/plan` replaced), `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score-cards` and `/upgrades`) |
-| `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags` and EDHREC `salt`), `tokens.md` and `images/` (each card's image, fetched once) |
+| `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags`, EDHREC `salt` and USD `price`), `tokens.md` and `images/` (each card's image, fetched once) |
 | `data/variants.json.gz` | Commander Spellbook's combos, cut to the fields `/score-cards` and `/score-deck` read, fetched again once a day old |
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |
 | `data/rules.txt` | The Comprehensive Rules, for `/judge` |

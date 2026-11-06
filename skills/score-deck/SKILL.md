@@ -32,5 +32,5 @@ After a change to a computed criterion alone (merge_rankings.py's
 then copy `<run>/rankings.md` over `rankings.md`; no ranker runs. A change
 to a judged criterion or its levels still ranks the decks.
 
-Report: per deck its score from `rankings.md`, its Interaction and Salt
-named as computed.
+Report: per deck its score from `rankings.md`, its Interaction and Card
+quality named as computed.

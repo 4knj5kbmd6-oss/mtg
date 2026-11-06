@@ -4,10 +4,11 @@ texts, oldest first) from Scryfall's bulk rulings file and its tags: the labels 
 tag above them in the tag tree, from Scryfall's bulk oracle tags file, cached as output/data/oracle-tags.jsonl.gz and
 downloaded again only when Scryfall's bulk index shows a newer one, and its salt, its EDHREC saltiness, from MTGJSON's
 AtomicCards.json.gz, cached in output/data/ and downloaded again only when MTGJSON's Meta.json version changes (no salt
-when MTGJSON has none). When the tags or salt source does not answer, its cached copy is used and one line says so;
-the rulings have no cache, and without them the run stops, oracle.json as it was. Given card names, instead fetch each
-one oracle.json lacks singly from Scryfall into it, with its rulings, and its tags and salt from the cached files,
-every other entry as it was.
+when MTGJSON has none), and its price, the USD of the fetched printing from Scryfall's prices: usd, else usd_foil, else
+usd_etched (no price when Scryfall has none). When the tags or salt source does not answer, its cached copy is used and
+one line says so; the rulings have no cache, and without them the run stops, oracle.json as it was. Given card names,
+instead fetch each one oracle.json lacks singly from Scryfall into it, with its rulings and price, and its tags and salt
+from the cached files, every other entry as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py ["Card Name" ...]"""
 import gzip, json, os, sys, time
 from datetime import datetime
@@ -89,6 +90,8 @@ def entry(c):
     e = {k: c[k] for k in KEEP if k in c}
     e["legalities"] = {"commander": c["legalities"].get("commander")}
     if c.get("game_changer"): e["game_changer"] = True
+    prices = c.get("prices") or {}
+    if usd := next(filter(None, map(prices.get, ("usd", "usd_foil", "usd_etched"))), None): e["price"] = float(usd)
     if "card_faces" in c: e["card_faces"] = [{k: f[k] for k in FACE if k in f} for f in c["card_faces"]]
     e["related_tokens"] = sorted({p["name"] for p in c.get("all_parts", []) if p["component"] == "token"})
     return e

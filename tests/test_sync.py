@@ -255,6 +255,10 @@ TIDE = {"name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": 
         "all_parts": [{"component": "token", "name": "Fish"}, {"component": "combo_piece", "name": "Rising Tide"}]}
 
 
+PRICES = {"Sol Ring": {"usd": None, "usd_foil": "2.50", "usd_etched": "9.00"},  # Scryfall's prices, the rest's none
+          "Coral Signet": {"usd": None, "usd_foil": None, "usd_etched": "3.10"}}
+
+
 TREE = [  # Scryfall's oracle tags bulk: each tag's direct taggings only, its parents by id
     {"id": "r", "label": "ramp", "type": "oracle", "parent_ids": [], "taggings": []},
     {"id": "p", "label": "mana producer", "type": "oracle", "parent_ids": ["r"], "taggings": []},
@@ -288,7 +292,8 @@ def scryfall(posts):
             names = [i["name"] for i in body["identifiers"]]
             posts.append(names)
             card = lambda n: TIDE if n == "Rising Tide" else {"name": n, "oracle_id": n, "type_line": "Instant",
-                                                               "legalities": {"commander": "legal"}}
+                                                               "legalities": {"commander": "legal"},
+                                                               "prices": PRICES.get(n, {"usd": None})}
             data = [card(n) for n in names if n in PLAIN + ["Rising Tide"] or names == ["Sign in Blood"]]
             lost = [{"name": n} for n in names if n not in PLAIN + ["Rising Tide", "Sign in Blood"]]
             return json.dumps({"data": data, "not_found": lost}).encode()
@@ -315,12 +320,13 @@ def test_rebuild_retries_double_faced_cards_by_front_face_and_lone_names_alone(m
     assert cards["Rising Tide // Tidal Flats"] == {
         "name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
         "legalities": {"commander": "legal"}, "related_tokens": ["Fish"], "rulings": ["First.", "Second."],
-        "tags": ["removal", "removal-creature", "spot removal"], "salt": 0.5, "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
+        "tags": ["removal", "removal-creature", "spot removal"], "salt": 0.5, "price": 1.0, "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
                        {"name": "Tidal Flats", "type_line": "Land"}]}
     assert cards["Sol Ring"]["rulings"] == []
     assert cards["Sol Ring"]["tags"] == ["mana producer", "mana rock", "ramp"]
-    assert cards["Island"]["tags"] == [] and "salt" not in cards["Island"]
+    assert cards["Island"]["tags"] == [] and "salt" not in cards["Island"] and "price" not in cards["Island"]
     assert cards["Sol Ring"]["salt"] == 1.59
+    assert (cards["Sol Ring"]["price"], cards["Coral Signet"]["price"]) == (2.5, 3.1)  # without usd, foil, else etched
 
 
 def test_tags_download_again_only_when_the_index_shows_a_newer_file(monkeypatch):
@@ -409,7 +415,7 @@ def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     fetch_oracle.TAGS.write_bytes(TAGS)
     fetch_oracle.ATOMIC.write_bytes(mtgjson()[f"{net.MTGJSON}/AtomicCards.json.gz"])
     wave = {"name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
-            "rulings_uri": "wave-rulings"}
+            "rulings_uri": "wave-rulings", "prices": {"usd": "0.25", "usd_foil": "4.00"}}
     asked = []
     def found(url):
         asked.append(url)
@@ -420,7 +426,8 @@ def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     assert asked == [project.NAMED + "Tidal%20Wave", project.NAMED + "Nothing%20Card"]
     assert json.loads(read("output/data/oracle.json"))["cards"] == {**before, "Tidal Wave": {
         "name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
-        "related_tokens": [], "rulings": ["It waves."], "tags": ["removal", "spot removal"], "salt": 0.2}}
+        "related_tokens": [], "rulings": ["It waves."], "tags": ["removal", "spot removal"], "salt": 0.2,
+        "price": 0.25}}
 
 
 def test_plan_check_prints_the_plan_cards_not_in_the_list():
