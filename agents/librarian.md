@@ -1,7 +1,6 @@
 ---
 name: librarian
 description: Builds a Scryfall search query for the owner's request from Scryfall's search reference and proves it against the live search. Dispatched by the scryfall skill.
-model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash
 ---
 

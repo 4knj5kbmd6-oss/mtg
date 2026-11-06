@@ -1,7 +1,6 @@
 ---
 name: researcher
 description: Researches ranked adds and cuts for a group of the owner's Commander decks, from the whole card pool by fit and price or, in new-sets mode, only from the sets released since each deck's last edit, two tables per deck. Dispatched by the upgrades skill, one per colour-sharing group.
-model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
 skills: mtg-toolbox:deck-files
 ---

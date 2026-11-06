@@ -1,7 +1,6 @@
 ---
 name: ranker
 description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as two tables. Dispatched by the score and upgrades skills: before a run whose deck rankings.md lacks, and after a rescore.
-model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
 skills: mtg-toolbox:deck-files
 ---
@@ -9,7 +8,7 @@ skills: mtg-toolbox:deck-files
 You recompute the strength ranking of the owner's Commander decks, from the
 deck files your preloaded deck-files skill describes.
 
-Your prompt gives you: the run folder `<run>`.
+Your prompt gives you: the run folder `<run>` and your letter.
 
 Inputs: every deck's list.txt and plan.md, output/decks/*/nonlands.md and
 lands.md (per-card fit scores and notes, evidence about card quality),
@@ -99,7 +98,7 @@ reliably the deck wins, two-card infinites and when they come online, tutor
 density, mass land denial, chained extra turns, Game Changers, optimization
 level).
 
-Output to `<run>/rankings.md`, exactly this shape, nothing else:
+Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 ```
 # Rankings

@@ -49,22 +49,24 @@ first use and looks up on Scryfall any card it has not seen.
    into play rather than casts; `/mana` leaves them out of its land count.
 3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
 
-**Cost.** Every deck in a `/score` run is read by `scorers` scorers on `model`
-(defaults in [`settings.py`](lib/settings.py)), each taking a group of
-decks that share colours, and a run of more than one deck ends with one
-ranker, as a run starts with one when a deck has no bracket yet. `scorers` and `model` in `settings.json` lower it.
+**Cost.** Every deck in a `/score` run is read by `scorers` scorers on their
+`models` entry (defaults in [`settings.py`](lib/settings.py)), each taking a
+group of decks that share colours, and a run of more than one deck ends with
+`rankers` rankers merged by median, as a run starts with them when a deck has
+no bracket yet. `scorers`, `rankers` and `models` in `settings.json` lower it.
 
 ## Settings
 
 `settings.json`, beside `output/`, holds any of these keys. An absent file
 or key takes its default from [`settings.py`](lib/settings.py), and
-a partial `quota` or `cart` keeps the rest of its default. A `key=value` on
+a partial `models`, `quota` or `cart` keeps the rest of its default. A `key=value` on
 the command line overrides one for that run (`/score budget=50 quota.adds=15`).
 
 | Key | What |
 |---|---|
 | `scorers` | Scorers per deck |
-| `model` | The model every dispatched agent runs on; null: each agent's own |
+| `rankers` | Rankers per ranking |
+| `models` | The model each agent runs on: `scorer`, `ranker`, `researcher`, `judge`, `librarian`, `shopper` |
 | `budget` | The highest TCGplayer price in dollars an add may carry |
 | `quota` | The adds, land adds and cuts each deck's research lists |
 | `universes_beyond` | true: research searches Universes Beyond sets |

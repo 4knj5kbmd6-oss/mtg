@@ -1,7 +1,7 @@
 {
   "name": "mtg-toolbox",
   "description": "Tooling for your Commander decks, run by Claude Code skills: a 0 to 10 fit score for every card in a deck, ranked adds and cuts, a strength ranking of your decks with their brackets, a TCGplayer cart builder, a rules judge that answers with the Comprehensive Rules and official card rulings, and a Scryfall librarian that builds and checks search queries.",
-  "version": "0.1.54",
+  "version": "0.1.55",
   "author": { "name": "4knj5kbmd6-oss" },
   "license": "MIT"
 }

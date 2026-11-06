@@ -13,9 +13,16 @@ fix the metric or the deck's `plan.md` and rescore.
 
 Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
-`run_in_background` in the folder that holds `output/`, with `model` only
-when it differs from the agent's own; its prompt carries only the per-run
+`run_in_background` in the folder that holds `output/`, with `model` the
+agent's entry in `models`; its prompt carries only the per-run
 inputs named below.
+
+To rank the decks, dispatch `rankers` `mtg-toolbox:ranker` agents, lettered
+A, B, C and on, each prompt giving `<run>` and the letter; when all are
+back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
+merges their `<run>/rankings-<letter>.md` by median into
+`<run>/rankings.md` and prints each deck's criteria the rankers put 4 or
+more apart. Copy `<run>/rankings.md` over `rankings.md`.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
@@ -24,8 +31,7 @@ inputs named below.
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
    When Spellbook is unreachable the run goes on without the combos files.
    If `rankings.md` is missing or has no row for one of the run's decks,
-   first rank every deck with one `mtg-toolbox:ranker`, its prompt giving
-   `<run>`, and copy `<run>/rankings.md` over `rankings.md`. Group decks by shared colours (two or three per group). Dispatch
+   first rank the decks. Group decks by shared colours (two or three per group). Dispatch
    `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and
    on, each prompt giving `<run>`, the letter, the scorer's own
    `<run>/work-<group>-<letter>/` subfolder, where its finished files land,
@@ -43,9 +49,7 @@ inputs named below.
    deck with neither prints "no adds or cuts" and gets no image. With
    `images` false the report says in a line that changes.png was skipped.
 5. If more than one deck was rescored, or the owner asks, run `facts.py`
-   on `<run>` with every deck not rescored this run, then recompute the
-   rankings with one `mtg-toolbox:ranker`, its prompt giving `<run>`; copy
-   `<run>/rankings.md` over `rankings.md`.
+   on `<run>` with every deck not rescored this run, then rank the decks.
 
 Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
 score only those cards for that deck, usually a card just added through
@@ -57,7 +61,7 @@ deck alone as a group of one, each scorer's prompt also naming the cards,
 and merge.py given them after the slug, `merge.py <run> <slug> "<card name>" ...`; it
 patches those rows into the deck's `nonlands.md` and `lands.md` (a
 candidate's into Adds) instead of rewriting them; a later `/upgrades`
-drops a candidate its research does not list. The ranker does not run.
+drops a candidate its research does not list. The rankers do not run.
 
 Report: per deck its score from `rankings.md`, the shape line, the 10s and
 the split cards in one line ("split: X, Y"), a sign the plan is unclear on

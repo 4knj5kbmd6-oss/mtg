@@ -8,8 +8,8 @@ argument-hint: "[slug ...] [key=value ...]"
 
 Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
-`run_in_background` in the folder that holds `output/`, with `model` only
-when it differs from the agent's own; its prompt carries only the per-run
+`run_in_background` in the folder that holds `output/`, with `model` the
+agent's entry in `models`; its prompt carries only the per-run
 inputs named below.
 
 1. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
@@ -19,8 +19,8 @@ inputs named below.
    `moxfield.json`; report each deck with no dates there, its research
    runs with the dates unknown. Get each deck's bracket from
    `rankings.md`; if it is missing or has no row for one of the run's
-   decks, first rank every deck with one `mtg-toolbox:ranker`, its prompt
-   giving `<run>`, and copy `<run>/rankings.md` over `rankings.md`.
+   decks, first rank the decks as
+   `${CLAUDE_PLUGIN_ROOT}/skills/score/SKILL.md` ranks them.
 2. Dispatch one `mtg-toolbox:researcher` per colour-sharing group of two
    or three decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),

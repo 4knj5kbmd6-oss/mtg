@@ -1,7 +1,6 @@
 ---
 name: shopper
 description: Builds and optimizes a TCGplayer guest cart from a canonical card list in the browser pane, balancing delivered price against package count, audits it against the list and writes the cart report. Dispatched by the cart skill.
-model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash, Write, mcp__Claude_Browser__navigate, mcp__Claude_Browser__computer, mcp__Claude_Browser__find, mcp__Claude_Browser__form_input, mcp__Claude_Browser__get_page_text, mcp__Claude_Browser__read_page, mcp__Claude_Browser__javascript_tool, mcp__Claude_Browser__read_network_requests, mcp__Claude_Browser__tabs_context, mcp__Claude_Browser__tabs_create, mcp__Claude_Browser__tabs_select, mcp__Claude_Browser__browser_batch
 ---
 

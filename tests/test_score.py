@@ -1,7 +1,7 @@
 import copy
 from pathlib import Path
 from conftest import run, read
-import merge, project, settings
+import merge, merge_rankings, project, settings
 
 # each card's score from scorers A, B and C
 SCORES = {
@@ -231,19 +231,73 @@ def test_settings_defaults():
     Path("settings.json").unlink()
     defaults = copy.deepcopy(settings.DEFAULTS)
     assert settings.settings() == defaults
-    Path("settings.json").write_text('{"scorers": 1, "quota": {"adds": 15}, "cart": {"finish": "nonfoil"}}')
+    assert defaults["scorers"] == 3 and defaults["rankers"] == 3
+    sonnet = "claude-sonnet-5-5"
+    assert defaults["models"] == {"scorer": sonnet, "ranker": sonnet, "researcher": "claude-opus-5-5", "judge": sonnet,
+                                  "librarian": sonnet, "shopper": sonnet}
+    Path("settings.json").write_text('{"scorers": 1, "quota": {"adds": 15}, "cart": {"finish": "nonfoil"}, '
+                                     '"models": {"researcher": "claude-sonnet-5-5"}}')
     assert settings.settings() == {**defaults, "scorers": 1, "quota": {**defaults["quota"], "adds": 15},
-                                   "cart": {**defaults["cart"], "finish": "nonfoil"}}
+                                   "cart": {**defaults["cart"], "finish": "nonfoil"},
+                                   "models": {**defaults["models"], "researcher": sonnet}}
     assert settings.DEFAULTS == defaults
 
 
 def test_settings_overrides():
     base, given, defaults = settings.settings(), read("settings.json"), copy.deepcopy(settings.DEFAULTS)
     got = settings.settings(["scorers=1", "quota.adds=15", "quota.cuts=[8, 12]", "cart.finish=nonfoil",
-                             "model=claude-sonnet-5"])
-    assert got == {**base, "scorers": 1, "model": "claude-sonnet-5", "quota": {**base["quota"], "adds": 15, "cuts": [8, 12]},
-                   "cart": {**base["cart"], "finish": "nonfoil"}}
+                             "models.scorer=claude-opus-5-5", "rankers=1"])
+    assert got == {**base, "scorers": 1, "rankers": 1, "models": {**base["models"], "scorer": "claude-opus-5-5"},
+                   "quota": {**base["quota"], "adds": 15, "cuts": [8, 12]}, "cart": {**base["cart"], "finish": "nonfoil"}}
     assert settings.settings() == base and read("settings.json") == given and settings.DEFAULTS == defaults
     out = run("lib/settings.py", "budget=50", "universes_beyond=false", "new_sets=true")
     assert out.returncode == 0 and '"budget": 50' in out.stdout and '"universes_beyond": false' in out.stdout
     assert '"new_sets": true' in out.stdout
+
+
+# each deck's Score and seven criteria from rankers A, B and C, and each ranker's own Bracket and Kill turn
+RANKS = {"zara": {"A": (60, [7, 5, 5, 5, 5, 5, 5]), "B": (50, [6, 5, 4, 5, 5, 5, 5]), "C": (70, [3, 6, 5, 5, 9, 5, 5])},
+         "kor": {"A": (50, [5] * 7), "B": (88, [8] * 7), "C": (75, [7] * 7)}}
+NAMES = {"zara": ("Zara, Tide Caller", "U"), "kor": ("Kor Skyfisher", "W")}
+OWN = {"A": ("3", "6-7"), "B": ("4", "5"), "C": ("2", "8")}
+RULE = "|---|---|---|---|---|---|---|---|---|"
+
+
+def rankers(letters="ABC"):
+    """one run/rankings-<letter>.md per letter, as the ranker agent shapes it, its rows by its own Score"""
+    Path("run").mkdir()
+    for x in letters:
+        decks = sorted(RANKS, key=lambda d: -RANKS[d][x][0])
+        rows = "".join(f"| {i} | [{NAMES[d][0]}](output/decks/{d}/) | {NAMES[d][1]} | {OWN[x][0]} | {RANKS[d][x][0]} | "
+                       f"{OWN[x][1]} | none | why {x} | [Moxfield](https://moxfield.com/decks/{d}) |\n"
+                       for i, d in enumerate(decks, 1))
+        crit = "".join(f"| {i} | {NAMES[d][0]} | {' | '.join(map(str, RANKS[d][x][1]))} |\n" for i, d in enumerate(decks, 1))
+        Path(f"run/rankings-{x}.md").write_text(f"# Rankings\n\n{merge_rankings.RANKINGS}\n{RULE}\n{rows}\n"
+                                                f"## Criteria\n\n{merge_rankings.CRITERIA}\n{RULE}\n{crit}")
+
+
+def test_merge_rankings_takes_the_median_of_three_rankers():
+    rankers()
+    out = run("skills/score/merge_rankings.py", "run")
+    assert out.returncode == 0
+    assert out.stderr == "zara: split Speed 7/6/3, Explosiveness 5/5/9\n"
+    assert read("run/rankings.md") == f"""# Rankings
+
+{merge_rankings.RANKINGS}
+{RULE}
+| 1 | [Kor Skyfisher](output/decks/kor/) | W | 2 | 75 | 8 | none | why C | [Moxfield](https://moxfield.com/decks/kor) |
+| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 52 | 6-7 | none | why A | [Moxfield](https://moxfield.com/decks/zara) |
+
+## Criteria
+
+{merge_rankings.CRITERIA}
+{RULE}
+| 1 | Kor Skyfisher | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
+| 2 | Zara, Tide Caller | 6 | 5 | 5 | 5 | 5 | 5 | 5 |
+"""
+
+
+def test_one_ranker_is_copied_as_it_is():
+    rankers("B")
+    assert run("skills/score/merge_rankings.py", "run").returncode == 0
+    assert read("run/rankings.md") == read("run/rankings-B.md")

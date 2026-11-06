@@ -13,8 +13,8 @@ the folder that holds `output/`, as
 
 Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
 arguments' `key=value` words for this run's settings. Dispatch every agent
-`run_in_background` in the folder that holds `output/`, with `model` only
-when it differs from the agent's own; its prompt carries only the per-run
+`run_in_background` in the folder that holds `output/`, with `model` the
+agent's entry in `models`; its prompt carries only the per-run
 inputs named below.
 
 For `/judge <question>`:
