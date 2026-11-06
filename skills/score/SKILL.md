@@ -76,7 +76,7 @@ patches those rows into the deck's `nonlands.md` and `lands.md` (a
 candidate's into Adds) instead of rewriting them; a later `/upgrades`
 drops a candidate its research does not list. The rankers do not run.
 
-Report: per deck its score from `rankings.md`, the shape line, the 10s and
-the split cards in one line ("split: X, Y"), a sign the plan is unclear on
-them; anything that moved by 3 or more since the last scoring; the lines
+Report: per deck its score from `rankings.md`, its Interaction and Salt
+named as computed, the shape line, the 10s and the split cards in one line
+("split: X, Y"), a sign the plan is unclear on them; anything that moved by 3 or more since the last scoring; the lines
 `plan_check.py` printed.

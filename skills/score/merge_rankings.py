@@ -6,8 +6,10 @@ followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter
 and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria and Ledger tables, where
 - each JUDGED criterion is the mean of the rankers' values sorted with the lowest and highest dropped while five or more
   remain (the middle three of five, all of four or fewer);
-- each COMPUTED criterion is the Count of the counts file's row of that name, its Cards the Ledger row's Count (up to
-  the first "; ") and Cards;
+- each COMPUTED criterion is read from the deck's counts file: Salt the Count of its Salt row, its Cards the Ledger
+  row's Count (up to the first "; ") and Cards; Interaction the level of the Interaction table below, its Ledger row's
+  Count "<n> answers, <m> instant; <counters>/<creature>/<noncreature>", each coverage yes or no, its Cards the
+  Answers row's Cards;
 - the Score is (mean of the criteria as written - 1) / 8 * 100; every mean and Score is an exact fraction rounded half
   up to one decimal;
 - each ranker's own Score, computed the same way from its own values, picks the median ranker (the lower middle when
@@ -21,7 +23,17 @@ Prints to stderr, per deck, the JUDGED criteria the rankers put SPLIT or more ap
 order. With --recompute, rankings.md beside output/ is the only judged source and no ranker file is read: each deck's
 JUDGED criteria as written, its Bracket, Why and JUDGED Ledger rows, and its row there as its place; a deck of the
 run it lacks exits 1 with "<slug>: not in rankings.md, rank the decks". It reads only the shape this script writes,
-whose Rankings table has no Kill turn column: an older rankings.md is misread, so rank the decks again instead."""
+whose Rankings table has no Kill turn column: an older rankings.md is misread, so rank the decks again instead.
+
+Interaction, what the deck stops. An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece.
+Answers is the counts file's Answers row, instant its Instant-speed answers row, a wipe its Wipes row above 0, and the
+three coverages its Counters, Creature removal and Noncreature removal rows above 0; the counts are final. The level is
+the highest row the deck meets:
+| 9 | 15+ answers, 10+ instant, all three of counters, creature removal and noncreature removal present |
+| 7 | 11+ answers, 7+ instant, creature and noncreature removal present, a wipe |
+| 5 | 7+ answers, or 11+ answers with fewer than half instant or one of the three coverages missing |
+| 3 | 3+ answers |
+| 1 | 0-2 answers |"""
 import json, math, re, sys
 from collections import Counter
 from fractions import Fraction
@@ -31,8 +43,9 @@ from project import decklist, named
 from tables import split, cells, table
 import facts
 
-JUDGED = ("Speed", "Resilience", "Interaction")  # read from the ranker files
-COMPUTED = ("Salt",)  # read from the counts files
+JUDGED = ("Speed", "Resilience")  # read from the ranker files
+COMPUTED = ("Interaction", "Salt")  # read from the counts files, from these rows
+COUNTED = ("Answers", "Instant-speed answers", "Wipes", "Counters", "Creature removal", "Noncreature removal", "Salt")
 SPLIT = 4  # a criterion the rankers put this far apart is printed
 JUDGMENTS = "| Deck | " + " | ".join(JUDGED) + " | Bracket | Why |"
 RANKINGS = "| # | Commander | Colours | Bracket | Score | Game Changers | Why | |"
@@ -84,12 +97,22 @@ def judgments(path, decks):
         if r[1:2] and r[1] in JUDGED: ledger.setdefault(r[0], []).append(r[1:])
     return out, ledger, [f"{path.name}: {f}" for f in faults]
 
-def computed(run, slug):
-    """{criterion: (level, its Ledger row past the deck's name)} of each COMPUTED criterion the deck's counts file has a
-    row for"""
-    got = {r[0]: r for r in cells(Path(run, f"{slug}-counts.md").read_text().splitlines())}
-    return {c: (int(got[c][1]), [c, got[c][1], count, cards or "-"])
-            for c in COMPUTED if c in got for count, _, cards in [got[c][2].partition("; ")]}
+def interaction(counts):
+    """(level, Ledger Count) of the Interaction table on {category: Count} of a counts file"""
+    a, i, wipe = counts["Answers"], counts["Instant-speed answers"], counts["Wipes"] > 0
+    cover = [counts[c] > 0 for c in ("Counters", "Creature removal", "Noncreature removal")]
+    level = next(l for l, met in [(9, a >= 15 and i >= 10 and all(cover)),
+                                  (7, a >= 11 and i >= 7 and all(cover[1:]) and wipe),
+                                  (5, a >= 7), (3, a >= 3), (1, True)] if met)
+    return level, f"{a} answers, {i} instant; " + "/".join("yes" if c else "no" for c in cover)
+
+def computed(got):
+    """{criterion: (level, its Ledger row past the deck's name)} of each COMPUTED criterion from a counts file's rows
+    {category: (Count, Cards)}"""
+    level, count = interaction({c: int(got[c][0]) for c in COUNTED})
+    salt, _, salty = got["Salt"][1].partition("; ")
+    return {"Interaction": (level, ["Interaction", str(level), count, got["Answers"][1]]),
+            "Salt": (int(got["Salt"][0]), ["Salt", got["Salt"][0], salt, salty or "-"])}
 
 def merged(run, decks, comp):
     """({slug: (mean place, [JUDGED values], bracket, why, Ledger rows)}, faults) from the ranker files and each
@@ -155,10 +178,10 @@ def facts_of(run):
     """(the run's decks, {slug: computed()}) from <run>/*-counts.md; exits naming a counts file that lacks a row"""
     decks = sorted(p.name.removesuffix("-counts.md") for p in run.glob("*-counts.md"))
     if not decks: sys.exit(f"no fact files {run}/<slug>-counts.md, run facts.py")
-    comp = {d: computed(run, d) for d in decks}
-    if faults := [f"{d}-counts.md: no {c} row, rerun facts.py" for d in decks for c in COMPUTED if c not in comp[d]]:
+    got = {d: {r[0]: r[1:] for r in cells(Path(run, f"{d}-counts.md").read_text().splitlines())} for d in decks}
+    if faults := [f"{d}-counts.md: no {c} row, rerun facts.py" for d in decks for c in COUNTED if c not in got[d]]:
         sys.exit("\n".join(faults))
-    return decks, comp
+    return decks, {d: computed(got[d]) for d in decks}
 
 def main():
     args = sys.argv[1:]

@@ -225,8 +225,8 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
     oracle = json.loads(read("output/data/oracle.json"))
     tags = {"Coral Signet": ["protection", "recursion"],
             "Tidal Insight": ["counterspell", "draw"],  # an instant
-            "Wave Breaker": ["removal", "spot removal"],  # with flash, below
-            "Brine Elemental": ["removal", "removal-creature", "sweeper"],  # a sweeper is a wipe, not removal
+            "Wave Breaker": ["removal", "removal-creature", "spot removal"],  # with flash, below
+            "Brine Elemental": ["removal", "removal-creature", "sweeper"],  # a wipe, not removal, but creature removal
             "Sunken Grotto": ["hate", "hate-graveyard"]}
     for name, t in tags.items(): oracle["cards"][name]["tags"] = t
     oracle["cards"]["Wave Breaker"]["oracle_text"] = "Flash, haste"
@@ -243,10 +243,32 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 | Instant-speed answers | 2 | Tidal Insight; Wave Breaker |
 | Counters | 1 | Tidal Insight |
 | Removal | 1 | Wave Breaker |
+| Creature removal | 2 | Brine Elemental; Wave Breaker |
+| Noncreature removal | 0 | - |
 | Wipes | 1 | Brine Elemental |
 | Game Changers | 0 | - |
 | Salt | 1 | mean 0.00 over 0 cards; - |
 """
+
+
+def test_creature_and_noncreature_removal_count_removal_and_wipes_by_target_tags_or_else_by_text():
+    oracle = json.loads(read("output/data/oracle.json"))
+    tags = {"Wave Breaker": ["removal", "removal-burn", "removal-creature"],
+            "Kelp Weaver": ["removal", "removal-aura", "removal-enchantment"],  # an aura's parent tag is enchantment
+            "Sol Ring": ["removal", "removal-sacrifice"],  # no target tag: its text names a permanent, both
+            "Coral Signet": ["removal"],  # no target tag: its text names an artifact
+            "Brine Elemental": ["removal"],  # no target tag and its text names no target
+            "Tidal Insight": ["removal", "removal-creature", "sweeper"]}  # a wipe, not removal, counts for the kind it hits
+    for name, t in tags.items(): oracle["cards"][name]["tags"] = t
+    oracle["cards"]["Sol Ring"]["oracle_text"] = "Each opponent sacrifices a nonland permanent."
+    oracle["cards"]["Coral Signet"]["oracle_text"] = "Exile target artifact."
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    Path("run").mkdir()
+    facts.counts("run", "zara")
+    got = read("run/zara-counts.md")
+    assert "\n| Removal | 5 | Brine Elemental; Coral Signet; Kelp Weaver; Sol Ring; Wave Breaker |\n" \
+           "| Creature removal | 3 | Sol Ring; Tidal Insight; Wave Breaker |\n" \
+           "| Noncreature removal | 3 | Coral Signet; Kelp Weaver; Sol Ring |\n| Wipes | 1 | Tidal Insight |\n" in got
 
 
 def test_counts_name_the_game_changers_of_the_list_without_its_sideboard():

@@ -16,15 +16,26 @@ import combos
 
 # The tag-to-category map. A card's oracle.json tags are Scryfall's functional tags, each with every tag above it in
 # the tag tree, so a parent tag stands for all its children. A card is in a category when its tags hold one of the
-# category's tags and none of its excluded ones: a sweeper is a wipe, not removal. Answers are the counters, removal
-# and wipes with the redirects and stax or hate pieces of ANSWERS; an instant-speed answer is an instant or has flash.
+# category's tags and none of its excluded ones: a sweeper is a wipe, not removal. Creature and noncreature removal
+# are the cards tagged removal, sweepers in, since a wipe answers the kinds it hits, by their target tags:
+# removal-creature, or removal-artifact, -enchantment, -planeswalker or -land, a narrower target (removal-aura,
+# -equipment, -vehicle) carrying its parent's tag; a removal card with neither is split by its front face's text
+# instead, by TEXT: it names creatures, or artifacts, enchantments, planeswalkers or lands, a permanent being both.
+# Answers are the counters, removal and wipes with the redirects and stax or hate pieces of ANSWERS; an instant-speed
+# answer is an instant or has flash.
 CATEGORIES = {"Recursion": ({"recursion"}, set()),
               "Protection": ({"protection"}, set()),
               "Counters": ({"counterspell"}, set()),
               "Removal": ({"removal"}, {"sweeper"}),
+              "Creature removal": ({"removal-creature"}, set()),
+              "Noncreature removal": ({"removal-artifact", "removal-enchantment", "removal-planeswalker", "removal-land"},
+                                      set()),
               "Wipes": ({"sweeper"}, set())}
+TEXT = {"Creature removal": re.compile(r"\b(creature|permanent)s?\b", re.I),
+        "Noncreature removal": re.compile(r"\b(artifact|enchantment|planeswalker|land|permanent)s?\b", re.I)}
 ANSWERS = {"change target", "hatebear", "silence", "prevent cast", "prevent activation", "hate-graveyard", "hate-tutor"}
-ROWS = ["Recursion", "Protection", "Answers", "Instant-speed answers", "Counters", "Removal", "Wipes"]
+ROWS = ["Recursion", "Protection", "Answers", "Instant-speed answers", "Counters", "Removal", "Creature removal",
+        "Noncreature removal", "Wipes"]
 FLASH = re.compile(r"^(?:\w[\w ]*, )*flash(?:,|$)", re.I | re.M)
 # Salt is each card's EDHREC saltiness in oracle.json. A land under PLAIN is left out of the deck's mean (basics, plain
 # duals); a mean of 0.30 is level 1, each 0.075 above it one level more, 0.90 level 9. A card at SALTY or more is named.
@@ -62,10 +73,11 @@ def counts(run, slug):
     for copies, name in commanders + rest:
         if (e := oracle.get(name.casefold())) is None: continue
         tags = set(e.get("tags", []))
-        into = [c for c, (want, not_) in CATEGORIES.items() if tags & want and not tags & not_]
+        into, face = [c for c, (want, not_) in CATEGORIES.items() if tags & want and not tags & not_], front(e)
+        if "removal" in tags and not TEXT.keys() & set(into):
+            into += [c for c, text in TEXT.items() if text.search(face.get("oracle_text", ""))]
         if {"Counters", "Removal", "Wipes"} & set(into) or tags & ANSWERS:
             into.append("Answers")
-            face = front(e)
             if "Instant" in face.get("type_line", "").split() or FLASH.search(face.get("oracle_text", "")):
                 into.append("Instant-speed answers")
         for c in into: found[c][name] = found[c].get(name, 0) + copies

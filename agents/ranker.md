@@ -19,7 +19,7 @@ prose. Earlier rankings are not read.
 
 A line may close by lethal or by a lock.
 
-Score each deck's strength in a four-player game on these criteria, each 1 to 9: Speed, Resilience and Interaction you judge; Salt is computed, and you do not write it. On a judged criterion a deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
+Score each deck's strength in a four-player game on these criteria, each 1 to 9: Speed and Resilience you judge; Interaction and Salt are computed, and you do not write them. On a judged criterion a deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
 
 **Speed: the turn it wins or locks the table in a typical four-player game, where opponents trade damage too**
 | | |
@@ -39,18 +39,9 @@ Score each deck's strength in a four-player game on these criteria, each 1 to 9:
 | 3 | 1-3 |
 | 1 | None |
 
-**Interaction: what it stops**
-| | |
-|---|---|
-| 9 | 15+ answers, 10+ at instant speed, covering the stack, creatures and noncreature permanents |
-| 7 | 11-14, 7+ instant, creatures and noncreature permanents, a wipe |
-| 5 | 7-10, or more but mostly sorcery speed or with a common gap |
-| 3 | 3-6 |
-| 1 | 0-2 |
-
 **Salt: how much the table dislikes facing it**
 
-An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece. Protection saves the deck's own and counts for Resilience. The counts file lists each category's cards by their oracle.json tags; a card the tags miss is absent from it, and you may add it in the Ledger by name.
+Protection saves the deck's own and counts for Resilience. The counts file lists each category's cards by their oracle.json tags; the counts are final.
 
 Brackets follow `output/data/brackets.md`, Wizards of the Coast's
 Commander Brackets announcement and its updates, the latest update
@@ -66,9 +57,9 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 ```
 # Judgments (<letter>)
 
-| Deck | Speed | Resilience | Interaction | Bracket | Why |
-|---|---|---|---|---|---|
-| <slug> | <speed> | <resilience> | <interaction> | <bracket> | <why> |
+| Deck | Speed | Resilience | Bracket | Why |
+|---|---|---|---|---|
+| <slug> | <speed> | <resilience> | <bracket> | <why> |
 ...one row per slug of the prompt, strongest first by your judgment...
 
 ## Ledger
@@ -76,15 +67,15 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 | Deck | Criterion | Value | Count | Cards |
 |---|---|---|---|---|
 | <slug> | Resilience | <1-9> | <n recursion, n protection> | <names> |
-...one row per deck for Resilience and for Interaction...
+...one row per deck for Resilience...
 ```
 
 - Deck: the slug as the prompt gives it.
-- Speed, Resilience, Interaction: each criterion's value, a whole number from 1 to 9 (`7`, `6`).
+- Speed, Resilience: each criterion's value, a whole number from 1 to 9 (`7`, `6`).
 - Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
   (`4`, `3, top`, `3`, `3, low`).
 - Why: one line.
-- Ledger: per deck, in your order, its Resilience and Interaction rows; Cards
+- Ledger: per deck, in your order, its Resilience row; Cards
   separated by `; `, `-` when none.
 
 Final message: the file's path.
