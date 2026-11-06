@@ -26,7 +26,8 @@ owner's: keep it.
    exactly as list.txt writes them; then one sentence on how it closes.
 4. The Commander bullet says the commander's job in those lines. Not cast
    lists the cards the deck cheats into play rather than casts. Write a
-   Restriction only when the current plan or notes carry one.
+   Restriction only when the current plan or notes carry one, and the
+   `- **cEDH:** yes` line, verbatim, only when they carry it.
 
 Write the draft to `<run>/<slug>-plan.md` and check it,
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py --plan <run>/<slug>-plan.md <slug>`,
