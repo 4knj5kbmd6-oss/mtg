@@ -35,6 +35,9 @@ Every script here runs from the folder that holds `output/`.
    refreshed.
 3. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py` rebuilds
    `output/data/oracle.json` from Scryfall, each card with its rulings.
+4. `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...`,
+   given every deck's slug, prints each plan card name not in that deck's
+   `list.txt`, one line each.
 
 For each `added:` deck write an empty `output/decks/<slug>/plan.md`.
 
@@ -48,6 +51,7 @@ prints the card count and every line it could not parse, then
 and the Moxfield pass leaves it alone.
 
 Report in a line per changed deck: cards in, cards out; then the added
-decks, the landed changes and any blocked deck `sync.py` printed. A
+decks, the landed changes and any blocked deck `sync.py` printed, and the
+lines `plan_check.py` printed. A
 `rescore:` deck needs rescoring (`/score`); say so, do not start it
 unasked.

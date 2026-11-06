@@ -10,13 +10,37 @@ Paths are relative to the working directory, the folder that holds `output/`.
 
 | File | What |
 |---|---|
-| `output/decks/<slug>/plan.md` | The owner's intended lines, authoritative: it overrides any plan inferred from the list or from `rankings.md` |
+| `output/decks/<slug>/plan.md` | The owner's plan, in the [shape below](#plan), authoritative: it overrides any plan inferred from the list or from `rankings.md` |
 | `output/decks/<slug>/list.txt` | The deck as the owner intends it, pending swaps applied: commander first, then the 99, an optional SIDEBOARD block |
 | `output/decks/<slug>/nonlands.md`, `lands.md` | Each card's fit score, Role and note, the Adds and Cuts tables and a Shape line; `nonlands.md` ends with a Roles line tallying both files' cards by role |
 | `output/data/oracle.json` | Scryfall data for every card in every deck: rules text, cost, type, colour identity, the `game_changer` flag, rulings, `tags` (Scryfall's functional tags), `salt` (EDHREC saltiness, absent when unknown). Read it instead of fetching card by card; Scryfall only for a card missing from it |
-| `rankings.md` | Beside `output/`: the decks in strength order, each with its bracket, strength score (0 to 100, the mean of the seven criteria normalised, each criterion 1 to 9) and kill turn, then their seven criteria scores in a `Criteria` table: speed, consistency, resilience, interaction, explosiveness, peak, independence |
+| `rankings.md` | Beside `output/`: the decks in strength order, each with its bracket, strength score (0 to 100 to one decimal, the mean of the seven criteria normalised, each criterion 1 to 9) and kill turn, then their seven criteria scores in a `Criteria` table: speed, compactness, consistency, resilience, interaction, independence, mana; then a `Ledger` table naming the cards behind each deck's Consistency, Resilience, Interaction and Independence and the numbers behind its Mana |
 | `<run>/<slug>-combos.md` | Commander Spellbook's combos, its Included and Almost included tables with each combo's bracket tag and salt, and the cards it flags as mass land denial or extra turns. Spellbook knows only catalogued combos, so a plan's own kill may show nothing there |
-| `<run>/<slug>-mana.md` | Land count, curve, the chance of 2, 3 and 4 lands by turns 2, 3 and 4, colour sources against pips and each colour's land sources beside the sources needed to cast its most demanding card on curve 90% of the times the deck has drawn its lands, and the recommended land count with each colour's share of those lands |
+| `<run>/<slug>-mana.md` | Land count, curve, the chance of 2, 3 and 4 lands by turns 2, 3 and 4, colour sources against pips and each colour's land sources beside the sources needed to cast its most demanding card on curve 90% of the times the deck has drawn its lands, and the recommended land count with each colour's share of those lands; written by `facts.py`, it ends with a `Mana level: <1-9>` line |
+| `<run>/<slug>-counts.md` | Per category (tutors, draw engines, recursion, protection, answers and of those the instant-speed ones, counters, removal, wipes) the count of the list's cards that `oracle.json`'s tags put in it, and their names; a card the tags miss is absent |
+
+## Plan
+
+```
+# <Commander>: plan
+
+- **Win:** <name>: <role> + <role> (+ <role>). <One sentence: how it closes.>
+- **Commander:** <one sentence: its job in the lines above>
+- **Not cast:** Card; Card
+- **Restriction:** <for research only; the ranker does not read it>
+```
+
+Win bullets are the plan. A line joins its roles with `+`; a role is one
+card, or a role name with the cards that fill it in brackets, separated by
+`;` since card names hold commas. A combo is a line whose every role has one
+card; a fair deck has several cards per role, a twin being a second card in
+a role. Not cast names the cards the deck cheats into play rather than
+casts. Under 120 words; every card named must be in `list.txt`, which
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...` checks.
+
+```
+- **Win:** Drain: Arabella, Abandoned Doll + amplifier (Delney, Streetwise Lookout; Windcrag Siege; Furnace of Rath) + token board (Krenko, Tin Street Kingpin; Legion Warboss). Each attack drains per small creature, amplified.
+```
 
 ## Rules questions
 

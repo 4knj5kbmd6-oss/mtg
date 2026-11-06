@@ -62,9 +62,10 @@ earns nothing for its reputation.
    how cheaply. A strong card that ignores the plan still does something; a
    weak card that fits the theme gets no credit for fitting. Neither has a
    fixed number: judge each on what it does here.
-3. **The owner's plan comes first.** Read the deck's plan.md before scoring.
-   A card the plan names as part of a line is scored on that line, not on
-   its face value. The combos file is evidence for a card's part in a line
+3. **The owner's plan comes first.** Read the deck's plan.md before scoring:
+   its Win, Commander and Not cast lines. A card a Win line names, as a role
+   or among the cards filling one, is scored on that line, not on its face
+   value. The combos file is evidence for a card's part in a line
    the plan states.
 4. **Saturation.** The 12th ramp piece in a deck that wants 10 loses a point
    or two; the 4th board wipe in a go-wide deck loses more.

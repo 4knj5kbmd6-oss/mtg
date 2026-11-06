@@ -19,7 +19,7 @@ left out.
 | Due turn, t | max(1, mv, the card's pips summed over the colours) |
 | Land drop | A card whose front face is a Land, or whose second face is a Land and whose front does not transform; a modal double-faced land is a land drop and its spell side is not counted |
 | Ramp | A card that is not a land drop, read from its front face's text without reminder text: a permanent with a `{T}: Add` ability whose cost sacrifices nothing, or one that adds an additional mana, or a card that puts land cards from your library onto the battlefield without sacrificing a land. Each piece makes one mana a turn, from the turn after both its mv and the turn it was drawn |
-| Not cast, X | The cards the plan's `- **Not cast:** Card, Card` line names, by name or either face. Each stays in the deck as a draw that occupies its slot, is neither land nor ramp and weighs 0 |
+| Not cast, X | The cards the plan's `- **Not cast:** Card; Card` line names, by name or either face. Each stays in the deck as a draw that occupies its slot, is neither land nor ramp and weighs 0 |
 | Weight, w | The card's Score in the `## Cards` table of the deck's `nonlands.md`; the mean of the deck's scores for a card with none; 1 for every card when the deck has no scores |
 | Land source of a colour | A land whose `produced_mana` holds it; a fetch land also makes the colours of the basic land types it searches for, and every colour of the identity when it searches for a basic land card of no type |
 

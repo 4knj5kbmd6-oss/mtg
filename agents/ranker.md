@@ -1,6 +1,6 @@
 ---
 name: ranker
-description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as two tables. Dispatched by the score and upgrades skills: before a run whose deck rankings.md lacks, and after a rescore.
+description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as three tables. Dispatched by the score and upgrades skills: before a run whose deck rankings.md lacks, and after a rescore.
 tools: Read, Grep, Glob, Bash, Write, WebFetch, WebSearch
 skills: mtg-toolbox:deck-files
 ---
@@ -10,17 +10,22 @@ deck files your preloaded deck-files skill describes.
 
 Your prompt gives you: the run folder `<run>` and your letter.
 
-Inputs: every deck's list.txt and plan.md, output/decks/*/nonlands.md and
-lands.md (per-card fit scores and notes, evidence about card quality),
-oracle.json, moxfield.json beside output/ (each deck's Moxfield id, keyed to its slug), the
-current rankings.md (prior opinion, not binding) and each deck's fact files:
-evidence for the two-card-infinite, extra-turn and mass-land-denial criteria
-and for speed. A deck with no nonlands.md or lands.md yet is ranked from its
-list, plan and fact files.
+Inputs, the same kinds for every deck: its list.txt, its plan.md (its Win,
+Commander and Not cast lines only; Restriction is for research and is not
+read), oracle.json, moxfield.json beside output/ (each deck's Moxfield
+id, keyed to its slug) and its three fact files in `<run>`: combos, mana and
+counts. Strength is counted from the list and the counts file, never from
+plan prose. Earlier rankings are not read; the Commander cell and Moxfield
+link come from the list's commander lines and moxfield.json.
 
-Deck power does not correspond to the fit scores. Score each deck's strength in a four-player game on seven criteria, each 1 to 9. A deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
+A Win bullet is a line: roles joined by +, each role one card or a role name
+with the cards that fill it in brackets, separated by `;`. A combo is a line
+whose every role has one card; a fair deck has several cards per role. A line
+may close by lethal or by a lock.
 
-**Speed: the turn it wins or locks the table in a typical unopposed game**
+Score each deck's strength in a four-player game on seven criteria, each 1 to 9. A deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
+
+**Speed: the turn it wins or locks the table in a typical four-player game, where opponents trade damage too**
 | | |
 |---|---|
 | 9 | By turn 5 |
@@ -29,66 +34,66 @@ Deck power does not correspond to the fit scores. Score each deck's strength in 
 | 3 | Turn 9 or 10 |
 | 1 | After turn 10, or it has no kill turn |
 
-**Consistency: how often it plays its plan**
+**Compactness: opponent main phases between the win being assembled and the table being dead or locked**
 | | |
 |---|---|
-| 9 | Finds its plan nearly every game: redundant pieces, tutors and card flow all point at it |
-| 7 | Finds it most games; the misses are the draws with neither tutor nor engine |
-| 5 | Finds it about half the time; the other half is a fair deck playing its colours |
-| 3 | Finds it in the minority of games; most games it plays a weaker, different game |
-| 1 | Finds it only on a specific draw |
+| 9 | None, and a perfect draw assembles it by turn 4 |
+| 7 | None |
+| 5 | One |
+| 3 | Two or three |
+| 1 | Four or more, or no win it assembles |
+
+**Consistency: how often it finds its win**
+| | |
+|---|---|
+| 9 | 8+ tutors and twins for win pieces, 6+ repeatable draw engines |
+| 7 | 5-7 tutors and twins, 4+ draw engines |
+| 5 | 3-4 tutors and twins, or 7+ draw engines and none |
+| 3 | 1-2 tutors or twins, under 4 draw engines |
+| 1 | None; it finds its win only on a specific draw |
 
 **Resilience: recovery from removal and wipes**
 | | |
 |---|---|
-| 9 | Rebuilds within a turn of losing its board or engine, through recursion, redundancy or threats held back |
-| 7 | Rebuilds in two turns; one wipe is a setback, not a loss |
-| 5 | Rebuilds slowly; a wipe costs it the game only when it comes with pressure |
-| 3 | Each piece of removal or wipe sets it back more than it can recover; two in a game end it |
-| 1 | Its first loss of board or engine ends its game |
+| 9 | 10+ recursion and protection pieces, and its win needs no board |
+| 7 | 7-9 |
+| 5 | 4-6 |
+| 3 | 1-3 |
+| 1 | None |
 
-**Interaction: what it can stop, and when**
+**Interaction: what it stops**
 | | |
 |---|---|
-| 9 | Stops a win on the stack, kills a creature and answers a noncreature permanent, each at instant speed and more than once a game |
-| 7 | Instant-speed coverage of everything its colours can touch, with a wipe for a wide board; it lacks only what its colours cannot do |
-| 5 | Answers creatures and permanents reliably, but mostly at sorcery speed, or it has a gap one common threat walks through |
-| 3 | Answers come up occasionally and rarely at the moment they are needed; it relies on wipes or on racing |
-| 1 | It does not interact; opponents' plans resolve |
+| 9 | 15+ answers, 10+ at instant speed, covering the stack, creatures and noncreature permanents |
+| 7 | 11-14, 7+ instant, creatures and noncreature permanents, a wipe |
+| 5 | 7-10, or more but mostly sorcery speed or with a common gap |
+| 3 | 3-6 |
+| 1 | 0-2 |
 
-**Explosiveness: how good its best turn is**
+**Independence: Win lines surviving one exile, read from the tightest role of each line**
 | | |
 |---|---|
-| 9 | From an empty board and a full grip it wins the table in one turn, routinely |
-| 7 | From a modest board it wins the table in one turn; from nothing, it kills one opponent or locks the table |
-| 5 | Its best turn kills one opponent or locks the table, from a board it has built over turns |
-| 3 | Its best turn puts it well ahead; the win is still turns away |
-| 1 | Its best turn looks like its ordinary turn |
+| 9 | Every role of a line has three or more cards, or three lines share no card |
+| 7 | The tightest role has two cards, or two lines share only the commander |
+| 5 | One role is one card with a twin elsewhere in the deck named by a second line |
+| 3 | The tightest role is the commander alone |
+| 1 | The tightest role is one non-commander card |
 
-**Peak: the win on a perfect draw**
+**Mana: computed from the mana fact file, never judged; the ranker copies the level the file states**
 | | |
 |---|---|
-| 9 | A perfect draw wins or locks the table by turn 3 |
-| 7 | By turn 4 |
-| 5 | By turn 5 or 6 |
-| 3 | By turn 7 or 8 |
-| 1 | Later; the best draw only brings the typical game forward a turn |
+| 9 | Mean mana value 2.5 or less, four lands by turn 4 at 65% or more, no colour short |
+| 7 | 3.0 or less, 60% or more, no colour short by more than 3 |
+| 5 | 3.5 or less, or a colour short by 4 or more |
+| 3 | 3.5 to 4.0, or four lands by turn 4 under 50% |
+| 1 | Over 4.0 |
 
-**Independence: whether one card leaving for good ends it**
-| | |
-|---|---|
-| 9 | Several lines of equal weight; any one card exiled, the plan is unchanged |
-| 7 | One main line and a real second way to win, slower but whole, sharing no key card with the first |
-| 5 | One line through one card, but a second card does that card's job (a clone, a copy effect, a functional twin), so an exile costs a tutor, not the game |
-| 3 | One line through its commander alone: exiled, it returns to the command zone, so the deck is never out, only taxed |
-| 1 | One line through one card that is not the commander; exiled, the deck has nothing to do |
-
-An answer is a counter, a removal spell, a wipe, a redirect, a stax or hate piece that stops an opponent's plan, or protection that saves its own; ramp, draw and threats are not answers. Tutors and recursion count for Consistency and Resilience, not for Independence: they find or return a card, they do not replace one that is exiled.
+An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece. Protection saves the deck's own and counts for Resilience. Consistency counts tutors plus the cards filling each role beyond the first, its twins. A tutor finds a card for the zone the deck uses it from. A draw engine draws more than once. Tutors and recursion never count for Independence. The counts file lists each category's cards by their oracle.json tags; a card the tags miss is absent from it, and you may add it in the Ledger by name.
 
 Beside Speed, judge each deck's kill turn: the turn it wins or locks the
-table in a typical unopposed game, as two adjacent turns (`6-7`) or one turn.
+table in that typical game, as two adjacent turns (`6-7`) or one turn.
 
-The deck's score is the seven's mean normalised to 0 to 100, `round((mean - 1) / 8 * 100)`, a whole number. Rank by score, strongest first; equal scores are ordered by judgment.
+The deck's score is the seven's mean normalised to 0 to 100, `round((mean - 1) / 8 * 100, 1)`, one decimal; merged across rankers, each criterion is the mean of the middle three rankers' values (all of them when four or fewer). Rank by score, strongest first; equal scores are ordered by judgment.
 
 Brackets follow Wizards of the Coast's official Commander Brackets
 guidelines, not a Game Changer count: fetch the current text (the beta
@@ -110,20 +115,29 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 ## Criteria
 
-| # | Commander | Speed | Consistency | Resilience | Interaction | Explosiveness | Peak | Independence |
+| # | Commander | Speed | Compactness | Consistency | Resilience | Interaction | Independence | Mana |
 |---|---|---|---|---|---|---|---|---|
-| 1 | <commander> | <speed> | <consistency> | <resilience> | <interaction> | <explosiveness> | <peak> | <independence> |
+| 1 | <commander> | <speed> | <compactness> | <consistency> | <resilience> | <interaction> | <independence> | <mana> |
 ...one row per deck, in the same order...
+
+## Ledger
+
+| Commander | Criterion | Value | Count | Cards |
+|---|---|---|---|---|
+| <commander> | Consistency | <1-9> | <n tutors, n twins, n engines> | <names> |
+...one row per deck for Consistency, Resilience, Interaction and Independence (its Win lines named); Mana's row gives the file's numbers...
 ```
 
 - Commander: the commander's name, partners joined by " / ", linking to the deck's folder.
 - Colours: the commanders' colour identity in WUBRG order (`BRG`, `WR`).
 - Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
   (`4`, `3, top`, `3`, `3, low`).
-- Score: the deck's score (`68`).
+- Score: the deck's score (`68.8`).
 - Kill turn: the deck's kill turn (`6-7`, `5`).
 - Game Changers: the deck's own, by name, comma-separated, or `none`.
 - Why: one line.
-- Speed to Independence: each criterion's raw value, 1 to 9 (`7`, `6`).
+- Speed to Mana: each criterion's raw value, 1 to 9 (`7`, `6`).
+- Ledger: per deck, in the Rankings order, its Consistency, Resilience,
+  Interaction, Independence and Mana rows; Cards separated by `; `.
 
-Final message: the two tables.
+Final message: the three tables.

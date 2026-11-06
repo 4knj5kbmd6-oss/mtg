@@ -18,17 +18,22 @@ agent's entry in `models`; its prompt carries only the per-run
 inputs named below.
 
 To rank the decks, dispatch `rankers` `mtg-toolbox:ranker` agents, lettered
-A, B, C and on, each prompt giving `<run>` and the letter; when all are
+A, B, C and on, each prompt giving `<run>` and the letter; they read every
+deck's three fact files in `<run>`: combos, mana and counts. When all are
 back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
-merges their `<run>/rankings-<letter>.md` by median into
-`<run>/rankings.md` and prints each deck's criteria the rankers put 4 or
-more apart. Copy `<run>/rankings.md` over `rankings.md`.
+merges their `<run>/rankings-<letter>.md`, each criterion the mean of the
+middle three rankers (all of four or fewer), into `<run>/rankings.md` and prints each deck's
+criteria the rankers put 4 or more apart. Copy `<run>/rankings.md` over
+`rankings.md`.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
-2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
+2. Make a fresh scratchpad folder `<run>/` and write each deck's three fact
    files into it,
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`,
+   and check each deck's plan,
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...`,
+   which prints each plan card name not in the deck's list.
    When Spellbook is unreachable the run goes on without the combos files.
    If `rankings.md` is missing or has no row for one of the run's decks,
    first rank the decks. Group decks by shared colours (two or three per group). Dispatch
@@ -36,7 +41,7 @@ more apart. Copy `<run>/rankings.md` over `rankings.md`.
    on, each prompt giving `<run>`, the letter, the scorer's own
    `<run>/work-<group>-<letter>/` subfolder, where its finished files land,
    and the group's slugs, each with its bracket from `rankings.md` and its
-   two fact files.
+   combos and mana files.
 3. When all of a group are back, per deck
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`. It
    prints the deck's shape line and, with two or more scorers, the count of
@@ -65,4 +70,5 @@ drops a candidate its research does not list. The rankers do not run.
 
 Report: per deck its score from `rankings.md`, the shape line, the 10s and
 the split cards in one line ("split: X, Y"), a sign the plan is unclear on
-them; anything that moved by 3 or more since the last scoring.
+them; anything that moved by 3 or more since the last scoring; the lines
+`plan_check.py` printed.

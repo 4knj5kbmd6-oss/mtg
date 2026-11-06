@@ -422,9 +422,11 @@ def test_mana_holds_the_cards_not_cast_as_draws_that_count_for_nothing():
     assert "## Recommendation\n| Lands | Lands now | U | B | Split now |\n|---|---|---|---|---|\n| 3 | 7 | 0% (0) | 100% (3) | U 55% (4), B 45% (3) |\n" in text
 
 
-def test_a_not_cast_name_off_the_list_is_printed_and_ignored(capsys):
-    # a name may hold a comma; Mystery Card is not in the list
-    text = ixi("- **Not cast:** Sprite, Mystery Card, Ixi, Tide Caller\n")
+@pytest.mark.parametrize("line", ["Sprite; Mystery Card; Ixi, Tide Caller", "Sprite, Mystery Card, Ixi, Tide Caller"])
+def test_a_not_cast_name_off_the_list_is_printed_and_ignored(capsys, line):
+    # names separated by ; or, in a line written with commas, by commas, a name holding a comma; Mystery Card is not
+    # in the list
+    text = ixi(f"- **Not cast:** {line}\n")
     assert capsys.readouterr().out == "ixi: Not cast, not in list.txt: Mystery Card\n"
     assert "\n| 7 | 14 | 10 | 1.0 |" in text
 
@@ -530,10 +532,71 @@ def test_ramp_and_land_drops_read_from_oracle_text():
     assert [(mana.land_drop(e), mana.ramp(e)) for e in faced.values()] == [(True, False), (False, False)]
 
 
-def test_facts_writes_both_files_per_deck(combos, monkeypatch):
+def test_facts_writes_three_files_per_deck_the_mana_file_ending_with_its_level(combos, monkeypatch):
     deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1, "Island": 7})
     deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1, "Island": 7})
     monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown", "braids"])
     facts.main()
-    assert sorted(p.name for p in Path("run").iterdir()) == ["beamtown-combos.md", "beamtown-mana.md",
-                                                             "braids-combos.md", "braids-mana.md"]
+    assert sorted(p.name for p in Path("run").iterdir()) == [f"{d}-{f}.md" for d in ("beamtown", "braids")
+                                                             for f in ("combos", "counts", "mana")]
+    # 9 cards: no mana value in the saved oracle, and too few cards to know four lands by turn 4
+    assert read("run/braids-mana.md").endswith("|\n\nMana level: 5\n")
+
+
+def test_mana_returns_the_mana_levels_numbers_the_cards_not_cast_left_out_of_the_mean():
+    cost = lambda name, value, cost: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": cost}
+    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{2}"), "color_identity": ["U"]},
+              "Cryptic": cost("Cryptic", 3, "{U}{U}{U}"), "Kraken": cost("Kraken", 9, "{7}{U}{U}"),
+              "Filler": cost("Filler", 2, "{2}"),
+              "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]},
+              "Wastes": {"name": "Wastes", "type_line": "Basic Land", "cmc": 0, "produced_mana": ["C"]}}
+    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
+    deck("short", "Zara, Tide Caller", {"Island": 4, "Wastes": 32, "Filler": 61, "Cryptic": 1, "Kraken": 1})
+    Path("output/decks/short/plan.md").write_text("- **Not cast:** Kraken\n")
+    Path("run").mkdir()
+    numbers = mana.write("run", "short")
+    # Zara, 61 Fillers and Cryptic cast, Kraken not: (2 + 122 + 3) / 63; Cryptic's sources needed less the 4 Islands
+    row = next(l for l in read("run/short-mana.md").splitlines() if l.startswith("| U |")).split(" | ")
+    assert numbers == {"mean": 127 / 63, "four": odds.at_least(4, 36, 99, 11), "short": int(row[2]) - 4}
+    assert numbers["short"] >= 4
+
+
+def test_mana_level_follows_the_rankers_mana_table():
+    level = facts.level
+    assert [level(2.5, 0.65, 0), level(2.54, 0.652, 0), level(2.5, 0.65, 1), level(3.0, 0.6, 3)] == [9, 9, 7, 7]
+    # a colour short by 4 or more, or four lands under 60%, holds it at 5; four lands under 50% at 3
+    assert [level(2.0, 0.9, 4), level(2.0, 0.55, 0), level(3.5, 0.5, 0), level(2.0, 0.45, 0)] == [5, 5, 5, 3]
+    assert [level(3.6, 0.9, 0), level(4.0, 0.9, 0), level(4.1, 0.9, 0), level(4.1, 0.4, 0)] == [3, 3, 1, 1]
+    # unknown odds meet no bar of 60% or more, and none under 50%
+    assert [level(2.0, None, 0), level(3.8, None, 0)] == [5, 3]
+
+
+def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
+    oracle = json.loads(read("output/data/oracle.json"))
+    tags = {"Zara, Tide Caller": ["card advantage", "draw", "draw engine", "repeatable draw"],
+            "Kelp Weaver": ["draw", "repeatable draw"],  # a looter: draws more than once but is no engine
+            "Sol Ring": ["ramp", "tutor", "tutor-land"],  # a land tutor is ramp
+            "Coral Signet": ["protection", "recursion", "tutor", "tutor-card"],
+            "Tidal Insight": ["counterspell", "draw"],  # an instant
+            "Wave Breaker": ["removal", "spot removal"],  # with flash, below
+            "Brine Elemental": ["removal", "removal-creature", "sweeper"],  # a sweeper is a wipe, not removal
+            "Sunken Grotto": ["hate", "hate-graveyard"]}
+    for name, t in tags.items(): oracle["cards"][name]["tags"] = t
+    oracle["cards"]["Wave Breaker"]["oracle_text"] = "Flash, haste"
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    Path("run").mkdir()
+    facts.counts("run", "zara")
+    assert read("run/zara-counts.md") == """# zara: counts
+
+| Category | Count | Cards |
+|---|---|---|
+| Tutors | 1 | Coral Signet |
+| Draw engines | 1 | Zara, Tide Caller |
+| Recursion | 1 | Coral Signet |
+| Protection | 1 | Coral Signet |
+| Answers | 4 | Brine Elemental; Sunken Grotto; Tidal Insight; Wave Breaker |
+| Instant-speed answers | 2 | Tidal Insight; Wave Breaker |
+| Counters | 1 | Tidal Insight |
+| Removal | 1 | Wave Breaker |
+| Wipes | 1 | Brine Elemental |
+"""

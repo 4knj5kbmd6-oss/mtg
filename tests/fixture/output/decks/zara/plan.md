@@ -1,5 +1,4 @@
 # Zara, Tide Caller: plan
 
-- **Win:** draw a card on every instant and sorcery, then out-card the table.
-- **Engines:** Zara and Deep Current turn each spell into a card.
-- **Weak to:** fast aggro before the engine is online.
+- **Win:** Out-card: Zara, Tide Caller + spells (Tidal Insight). Every instant and sorcery draws a card until opponents run out of answers.
+- **Commander:** Zara is the engine, a card on every instant and sorcery.

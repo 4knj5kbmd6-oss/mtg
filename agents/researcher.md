@@ -24,7 +24,8 @@ The deck files your preloaded deck-files skill describes, and:
 - output/data/tokens.md: tokens the decks make (occasionally relevant).
 
 ## What to do, per deck
-1. Read the plan, then the list.
+1. Read the plan, its Win, Commander, Not cast and Restriction lines, then
+   the list. Every add keeps to the Restriction.
 2. Find the cards in the deck's colour identity that improve it, in the one mode
    `<new_sets>` names; the two never mix in a run.
    - false: from the whole card pool, each judged on its fit to the plan and its

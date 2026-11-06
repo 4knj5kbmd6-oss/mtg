@@ -367,3 +367,18 @@ def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):
     assert json.loads(read("output/data/oracle.json"))["cards"] == {**before, "Tidal Wave": {
         "name": "Tidal Wave", "oracle_id": "wave", "type_line": "Sorcery", "legalities": {"commander": "legal"},
         "related_tokens": [], "rulings": ["It waves."], "tags": ["removal", "spot removal"], "salt": 0.2}}
+
+
+def test_plan_check_prints_the_plan_cards_not_in_the_list():
+    assert run("skills/sync/plan_check.py", "zara").stdout == ""
+    Path("output/decks/zara/plan.md").write_text(
+        "# Zara, Tide Caller: plan\n\n"
+        "- **Win:** Loop: Zara, Tide Caller + Mr. Missing + Kelp Weaver. Draws the table out.\n"
+        "- **Win:** Beats: Zara, Tide Caller + big fish (Brine Elemental; Wave Breaker; Lost Fish) + mana (Sol Ring;"
+        " Ghost Signet). Swings for lethal (twice).\n"
+        "- **Commander:** draws a card on every spell.\n"
+        "- **Not cast:** Brine Elemental; Nowhere Card\n")
+    out = run("skills/sync/plan_check.py", "zara", "nodeck")
+    assert out.returncode == 0, out.stderr
+    assert out.stdout == ("zara: Mr. Missing is not in list.txt\nzara: Lost Fish is not in list.txt\n"
+                          "zara: Ghost Signet is not in list.txt\nzara: Nowhere Card is not in list.txt\n")

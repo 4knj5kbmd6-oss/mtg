@@ -44,9 +44,29 @@ first use and looks up on Scryfall any card it has not seen.
 
 1. `/sync <moxfield username>` adds your public Commander decks to
    `moxfield.json` and writes each deck's `list.txt`.
-2. Write each deck's `output/decks/<slug>/plan.md`: the lines the deck means
-   to play. A bullet `- **Not cast:** Card, Card` names the cards it cheats
-   into play rather than casts; `/mana` leaves them out of its land count.
+2. Write each deck's `output/decks/<slug>/plan.md`, under 120 words, every
+   card it names in `list.txt`:
+
+   ```
+   # <Commander>: plan
+
+   - **Win:** <name>: <role> + <role> (+ <role>). <One sentence: how it closes.>
+   - **Commander:** <one sentence: its job in the lines above>
+   - **Not cast:** Card; Card
+   - **Restriction:** <for research only; the ranker does not read it>
+   ```
+
+   Win bullets are the plan. A line joins its roles with `+`; a role is one
+   card, or a role name with the cards that fill it in brackets, separated
+   by `;` since card names hold commas. A combo is a line whose every role
+   has one card; a fair deck has several cards per role:
+
+   ```
+   - **Win:** Drain: Arabella, Abandoned Doll + amplifier (Delney, Streetwise Lookout; Windcrag Siege; Furnace of Rath) + token board (Krenko, Tin Street Kingpin; Legion Warboss). Each attack drains per small creature, amplified.
+   ```
+
+   Not cast names the cards the deck cheats into play rather than casts;
+   `/mana` leaves them out of its land count.
 3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
 
 **Cost.** Every deck in a `/score` run is read by `scorers` scorers on their
@@ -104,7 +124,7 @@ Your project-wide files, beside `output/` (gitignored):
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
-| `rankings.md` | Your decks in strength order: commander, colours, bracket, score (0 to 100, the mean of the seven criteria below it normalised, each criterion 1 to 9), kill turn, Game Changers, why, Moxfield link; then a `Criteria` table of each deck's seven scores: speed, consistency, resilience, interaction, explosiveness, peak, independence |
+| `rankings.md` | Your decks in strength order: commander, colours, bracket, score (0 to 100 to one decimal, the mean of the seven criteria below it normalised, each criterion 1 to 9), kill turn, Game Changers, why, Moxfield link; then a `Criteria` table of each deck's seven scores: speed, compactness, consistency, resilience, interaction, independence, mana; then a `Ledger` table of the cards behind each score |
 
 Your output, all under `output/` (gitignored):
 

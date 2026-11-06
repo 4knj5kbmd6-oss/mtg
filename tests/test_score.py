@@ -257,47 +257,76 @@ def test_settings_overrides():
 
 # each deck's Score and seven criteria from rankers A, B and C, and each ranker's own Bracket and Kill turn
 RANKS = {"zara": {"A": (60, [7, 5, 5, 5, 5, 5, 5]), "B": (50, [6, 5, 4, 5, 5, 5, 5]), "C": (70, [3, 6, 5, 5, 9, 5, 5])},
-         "kor": {"A": (50, [5] * 7), "B": (88, [8] * 7), "C": (75, [7] * 7)}}
+         "kor": {"A": (50, [5] * 7), "B": (88, [8] * 7), "C": (75, [8] * 7)}}
 NAMES = {"zara": ("Zara, Tide Caller", "U"), "kor": ("Kor Skyfisher", "W")}
-OWN = {"A": ("3", "6-7"), "B": ("4", "5"), "C": ("2", "8")}
+OWN = {x: (b, k) for x, b, k in zip("ABCDE", "34233", ["6-7", "5", "8", "7", "6"])}
 RULE = "|---|---|---|---|---|---|---|---|---|"
 
 
-def rankers(letters="ABC"):
+def ledger(name, x):
+    """ranker x's Ledger rows for one deck, each naming the ranker"""
+    return [f"| {name} | {c} | 5 | count {x} | cards {x} |"
+            for c in ("Consistency", "Resilience", "Interaction", "Independence", "Mana")]
+
+
+def rankers(ranks=RANKS, letters="ABC"):
     """one run/rankings-<letter>.md per letter, as the ranker agent shapes it, its rows by its own Score"""
     Path("run").mkdir()
     for x in letters:
-        decks = sorted(RANKS, key=lambda d: -RANKS[d][x][0])
-        rows = "".join(f"| {i} | [{NAMES[d][0]}](output/decks/{d}/) | {NAMES[d][1]} | {OWN[x][0]} | {RANKS[d][x][0]} | "
+        decks = sorted(ranks, key=lambda d: -ranks[d][x][0])
+        rows = "".join(f"| {i} | [{NAMES[d][0]}](output/decks/{d}/) | {NAMES[d][1]} | {OWN[x][0]} | {ranks[d][x][0]} | "
                        f"{OWN[x][1]} | none | why {x} | [Moxfield](https://moxfield.com/decks/{d}) |\n"
                        for i, d in enumerate(decks, 1))
-        crit = "".join(f"| {i} | {NAMES[d][0]} | {' | '.join(map(str, RANKS[d][x][1]))} |\n" for i, d in enumerate(decks, 1))
+        crit = "".join(f"| {i} | {NAMES[d][0]} | {' | '.join(map(str, ranks[d][x][1]))} |\n" for i, d in enumerate(decks, 1))
+        books = "".join(f"{l}\n" for d in decks for l in ledger(NAMES[d][0], x))
         Path(f"run/rankings-{x}.md").write_text(f"# Rankings\n\n{merge_rankings.RANKINGS}\n{RULE}\n{rows}\n"
-                                                f"## Criteria\n\n{merge_rankings.CRITERIA}\n{RULE}\n{crit}")
+                                                f"## Criteria\n\n{merge_rankings.CRITERIA}\n{RULE}\n{crit}\n"
+                                                f"## Ledger\n\n{merge_rankings.LEDGER}\n|---|---|---|---|---|\n{books}")
 
 
-def test_merge_rankings_takes_the_median_of_three_rankers():
+def test_merge_rankings_takes_the_mean_of_three_rankers():
     rankers()
     out = run("skills/score/merge_rankings.py", "run")
     assert out.returncode == 0
-    assert out.stderr == "zara: split Speed 7/6/3, Explosiveness 5/5/9\n"
+    assert out.stderr == "zara: split Speed 7/6/3, Interaction 5/5/9\n"
+    # zara's criteria 5.3, 5.3, 4.7, 5.0, 6.3, 5.0 and 5.0, their mean 5.23, its Score 52.9; kor's each 7.0
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
 {RULE}
-| 1 | [Kor Skyfisher](output/decks/kor/) | W | 2 | 75 | 8 | none | why C | [Moxfield](https://moxfield.com/decks/kor) |
-| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 52 | 6-7 | none | why A | [Moxfield](https://moxfield.com/decks/zara) |
+| 1 | [Kor Skyfisher](output/decks/kor/) | W | 2 | 75.0 | 8 | none | why C | [Moxfield](https://moxfield.com/decks/kor) |
+| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 52.9 | 6-7 | none | why A | [Moxfield](https://moxfield.com/decks/zara) |
 
 ## Criteria
 
 {merge_rankings.CRITERIA}
 {RULE}
-| 1 | Kor Skyfisher | 7 | 7 | 7 | 7 | 7 | 7 | 7 |
-| 2 | Zara, Tide Caller | 6 | 5 | 5 | 5 | 5 | 5 | 5 |
-"""
+| 1 | Kor Skyfisher | 7.0 | 7.0 | 7.0 | 7.0 | 7.0 | 7.0 | 7.0 |
+| 2 | Zara, Tide Caller | 5.3 | 5.3 | 4.7 | 5.0 | 6.3 | 5.0 | 5.0 |
+
+## Ledger
+
+{merge_rankings.LEDGER}
+|---|---|---|---|---|
+""" + "".join(f"{l}\n" for l in ledger("Kor Skyfisher", "C") + ledger("Zara, Tide Caller", "A"))
+
+
+def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_ledger():
+    # Speed 1 5 6 7 9 keeps 5 6 7, Compactness 3 3 4 9 9 keeps 3 4 9; Scores 70 60 30 50 40 make D the median
+    five = {"zara": {"A": (70, [1, 3, 5, 5, 5, 5, 5]), "B": (60, [9, 9, 5, 5, 5, 5, 5]), "C": (30, [5, 3, 5, 5, 5, 5, 5]),
+                     "D": (50, [6, 4, 5, 5, 5, 5, 5]), "E": (40, [7, 9, 5, 5, 5, 5, 5])}}
+    rankers(five, "ABCDE")
+    out = run("skills/score/merge_rankings.py", "run")
+    assert out.returncode == 0
+    assert out.stderr == "zara: split Speed 1/9/5/6/7, Compactness 3/9/3/4/9\n"
+    text = read("run/rankings.md")
+    # (6.0 + 5.3 + 5 * 5.0) / 7 = 5.19, its Score 52.3
+    assert "| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 52.3 | 7 | none | why D |" in text
+    assert "| 1 | Zara, Tide Caller | 6.0 | 5.3 | 5.0 | 5.0 | 5.0 | 5.0 | 5.0 |" in text
+    assert text.endswith("|---|---|---|---|---|\n" + "".join(f"{l}\n" for l in ledger("Zara, Tide Caller", "D")))
 
 
 def test_one_ranker_is_copied_as_it_is():
-    rankers("B")
+    rankers(letters="B")
     assert run("skills/score/merge_rankings.py", "run").returncode == 0
     assert read("run/rankings.md") == read("run/rankings-B.md")

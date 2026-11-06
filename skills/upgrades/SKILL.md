@@ -12,7 +12,7 @@ arguments' `key=value` words for this run's settings. Dispatch every agent
 agent's entry in `models`; its prompt carries only the per-run
 inputs named below.
 
-1. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
+1. Make a fresh scratchpad folder `<run>/` and write each deck's three fact
    files into it,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`.
    Get each deck's `created` and `updated` from `dates` in
@@ -27,7 +27,7 @@ inputs named below.
    `<quota>`, `<universes_beyond>` and `<new_sets>` as `settings.py` prints
    them, and the
    group's decks, each slug with its commander, created and updated dates,
-   bracket and two fact files.
+   bracket, combos and mana files.
 3. Per deck, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/apply.py <run> <slug>`,
    which prints the adds it drops; then
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py` and `apply.py`
@@ -37,7 +37,7 @@ inputs named below.
    `${CLAUDE_PLUGIN_ROOT}/skills/score/SKILL.md` scores candidates, its steps
    2 to 4 in this `<run>`: `scorers` `mtg-toolbox:scorer` agents per deck,
    each with its own `<run>/work-<slug>-<letter>/` subfolder, the deck's
-   bracket and two fact files and those names; then `merge.py <run> <slug>`
+   bracket, combos and mana files and those names; then `merge.py <run> <slug>`
    given the names, which patches each Adds row's Score, the merged pair
    copied in and changes.png drawn after, so every add on it carries its
    score.
