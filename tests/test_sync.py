@@ -395,3 +395,30 @@ def test_plan_check_checks_a_draft_outside_output_against_the_slugs_list(tmp_pat
     assert out.stdout == "zara: Lost Fish is not in list.txt\nzara: Nowhere Card is not in list.txt\n"
     assert run("skills/sync/plan_check.py", "zara").stdout == "" and snapshot() == before
     assert run("skills/sync/plan_check.py", "--plan", str(draft)).returncode == 1
+
+
+def test_plan_check_stops_on_a_draft_path_that_is_not_a_file(tmp_path):
+    out = run("skills/sync/plan_check.py", "--plan", str(tmp_path / "nothing.md"), "zara")
+    assert (out.returncode, out.stdout, out.stderr) == (1, "", f"no plan at {tmp_path / 'nothing.md'}\n")
+
+
+def plan_check(*wins):
+    """plan_check.py's output on zara with these Win bullets, oracle.json knowing two cards the list lacks"""
+    oracle = json.loads(read("output/data/oracle.json"))
+    for name in ("Dr. Missing Card", "Delney, Streetwise Lookout"): oracle["cards"][name] = {"name": name}
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    Path("output/decks/zara/plan.md").write_text("# Zara, Tide Caller: plan\n\n" + "".join(f"- **Win:** {w}\n" for w in wins))
+    return run("skills/sync/plan_check.py", "zara").stdout
+
+
+def test_plan_check_reads_the_roles_apart_from_a_sentence_holding_a_plus():
+    assert plan_check("Loop: Zara, Tide Caller + Kelp Weaver. Draws + drains the table.") == ""
+
+
+def test_plan_check_reads_a_win_bullet_with_no_name():
+    assert plan_check("Zara, Tide Caller + Lost Fish. Draws the table out.") == "zara: Lost Fish is not in list.txt\n"
+
+
+@pytest.mark.parametrize("name", ["Dr. Missing Card", "Delney, Streetwise Lookout"])
+def test_plan_check_reads_a_last_role_holding_a_full_stop_or_comma_whole(name):
+    assert plan_check(f"Loop: Zara, Tide Caller + {name}. Draws the table out.") == f"zara: {name} is not in list.txt\n"
