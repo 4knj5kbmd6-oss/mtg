@@ -300,8 +300,8 @@ def test_an_unknown_settings_key_is_named_and_ignored():
 # each deck's Speed, Resilience and Interaction from rankers A to E; zara's Salt is 4, kor's 3
 JUDGED = {"zara": {"A": [7, 5, 5], "B": [6, 4, 5], "C": [3, 5, 9]},
           "kor": {"A": [5, 5, 5], "B": [8, 8, 8], "C": [8, 8, 8]}}
-OWN = {x: (b, k) for x, b, k in zip("ABCDE", ["3", "4", "2", "3, top", "3"], ["6-7", "5", "8", "7", "6"])}
-JUDGMENTS_RULE = "|---|---|---|---|---|---|---|"
+OWN = dict(zip("ABCDE", ["3", "4", "2", "3, top", "3"]))  # each ranker's Bracket
+JUDGMENTS_RULE = "|---|---|---|---|---|---|"
 
 
 def decks(salts={"Zara, Tide Caller": 0.525, "Kor Skyfisher": 0.45}):
@@ -331,7 +331,7 @@ def rankers(judged=JUDGED, letters="ABC", order=None):
     if not Path("run").exists(): decks()
     for x in letters:
         slugs = (order or {}).get(x) or sorted(judged, key=lambda d: -sum(judged[d][x]))
-        rows = "".join(f"| {d} | {' | '.join(map(str, judged[d][x]))} | {OWN[x][1]} | {OWN[x][0]} | why {x} |\n"
+        rows = "".join(f"| {d} | {' | '.join(map(str, judged[d][x]))} | {OWN[x]} | why {x} |\n"
                        for d in slugs)
         books = "".join(f"{l}\n" for d in slugs for l in ledger(d, x))
         Path(f"run/rankings-{x}.md").write_text(f"# Judgments ({x})\n\n{merge_rankings.JUDGMENTS}\n{JUDGMENTS_RULE}\n"
@@ -363,9 +363,9 @@ def test_merge_rankings_takes_the_mean_of_three_rankers_and_computes_the_rest():
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
-|---|---|---|---|---|---|---|---|---|
-| 1 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 62.5 | 5 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
-| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 50.9 | 6-7 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
+|---|---|---|---|---|---|---|---|
+| 1 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 62.5 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
+| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 50.9 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
 
 ## Criteria
 
@@ -394,8 +394,8 @@ def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_ce
     rankers(five, "ABCDE")
     got = merges("zara: split Speed 1/9/5/6/7, Resilience 3/9/3/4/9")["zara"]
     # (6.0 + 5.3 + 5.0 + 4) / 4 = 5.075, its Score 50.9
-    assert [got[c] for c in ("Speed", "Resilience", "Interaction", "Salt", "Score", "Bracket", "Kill turn", "Why")] == \
-        ["6.0", "5.3", "5.0", "4.0", "50.9", "3, top", "7", "why D"]
+    assert [got[c] for c in ("Speed", "Resilience", "Interaction", "Salt", "Score", "Bracket", "Why")] == \
+        ["6.0", "5.3", "5.0", "4.0", "50.9", "3, top", "why D"]
     assert "| Zara, Tide Caller | Resilience | 5 | count D | cards D |" in read("run/rankings.md")
 
 
@@ -433,9 +433,9 @@ def test_one_ranker_goes_through_the_merge():
 
 @pytest.mark.parametrize("change, faults", [
     (lambda t: t.replace("| kor |", "| ghost |"), ["kor: missing", "ghost: not a deck of the run"]),
-    (lambda t: t + "| ghost | 5 | 5 | 5 | 6 | 3 | why |\n", ["ghost: not a deck of the run"]),
+    (lambda t: t + "| ghost | 5 | 5 | 5 | 3 | why |\n", ["ghost: not a deck of the run"]),
     (lambda t: t.replace("| zara | 7 |", "| zara | 10 |"), ["zara: Speed 10 is not a whole number from 1 to 9"]),
-    (lambda t: t.replace("| 6-7 | 3 |", "| 6-7 | 3 top |", 1),
+    (lambda t: t.replace("| 3 | why A |", "| 3 top | why A |", 1),
      ["zara: Bracket 3 top is not 1 to 5 with ', top' or ', low'"]),
 ])
 def test_merge_rankings_rejects_a_faulty_ranker_file(change, faults):

@@ -28,7 +28,7 @@ Score each deck's strength in a four-player game on these criteria, each 1 to 9:
 | 7 | Turn 6 |
 | 5 | Turn 7 or 8 |
 | 3 | Turn 9 or 10 |
-| 1 | After turn 10, or it has no kill turn |
+| 1 | After turn 10, or it never wins |
 
 **Resilience: recovery from removal and wipes**
 | | |
@@ -52,9 +52,6 @@ Score each deck's strength in a four-player game on these criteria, each 1 to 9:
 
 An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece. Protection saves the deck's own and counts for Resilience. The counts file lists each category's cards by their oracle.json tags; a card the tags miss is absent from it, and you may add it in the Ledger by name.
 
-Beside Speed, judge each deck's kill turn: the turn it wins or locks the
-table in that typical game, as two adjacent turns (`6-7`) or one turn.
-
 Brackets follow `output/data/brackets.md`, Wizards of the Coast's
 Commander Brackets announcement and its updates, the latest update
 governing where the articles differ; not a Game Changer count. Apply the
@@ -69,9 +66,9 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 ```
 # Judgments (<letter>)
 
-| Deck | Speed | Resilience | Interaction | Kill turn | Bracket | Why |
-|---|---|---|---|---|---|---|
-| <slug> | <speed> | <resilience> | <interaction> | <kill turn> | <bracket> | <why> |
+| Deck | Speed | Resilience | Interaction | Bracket | Why |
+|---|---|---|---|---|---|
+| <slug> | <speed> | <resilience> | <interaction> | <bracket> | <why> |
 ...one row per slug of the prompt, strongest first by your judgment...
 
 ## Ledger
@@ -84,7 +81,6 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 - Deck: the slug as the prompt gives it.
 - Speed, Resilience, Interaction: each criterion's value, a whole number from 1 to 9 (`7`, `6`).
-- Kill turn: the deck's kill turn (`6-7`, `5`).
 - Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
   (`4`, `3, top`, `3`, `3, low`).
 - Why: one line.
