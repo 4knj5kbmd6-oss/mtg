@@ -4,7 +4,8 @@ usage: python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run_dir>
 reads every <run_dir>/rankings-<letter>.md, one per ranker, in letter order, each in the ranker agent's shape, a deck
 known by the folder its Commander links to; writes <run_dir>/rankings.md in that shape: per deck each criterion the
 mean, to one decimal, of the rankers' values sorted with the lowest and highest dropped while five or more remain
-(the middle three of five, all of four or fewer), the Score round((mean - 1) / 8 * 100, 1) of those, every other cell
+(the middle three of five, all of four or fewer), `-` values left out and a criterion every ranker gives `-` carried
+as `-`, the Score round((mean - 1) / 8 * 100, 1) of the criteria present, every other cell
 and the deck's Ledger rows from the ranker whose Score for the deck is the median one (the lower middle when even),
 rows by Score, strongest first, ties in the order of those rankers' tables; prints to stderr, per deck, the criteria
 the rankers put SPLIT or more apart, each with its values in letter order. One ranker's file is copied as it is."""
@@ -31,13 +32,19 @@ def deck(cell):
     m = re.search(r"decks/([^/)]+)", cell)
     return m.group(1) if m else cell
 
+def numbers(values): return [float(x) for x in values if x != "-"]
+
 def middle(values):
-    """the mean of values sorted, the lowest and highest dropped while five or more remain, to one decimal"""
-    v = sorted(values)
+    """the mean of values, `-` left out, sorted, the lowest and highest dropped while five or more remain, to one
+    decimal; None when every value is `-`"""
+    v = sorted(numbers(values))
+    if not v: return None
     while len(v) >= 5: v = v[1:-1]
     return round(statistics.mean(v), 1)
 
-def score(values): return round((statistics.mean(values) - 1) / 8 * 100, 1)
+def score(values):
+    """the Score of the criteria present, None the criteria left out"""
+    return round((statistics.mean(v for v in values if v is not None) - 1) / 8 * 100, 1)
 
 def main():
     if len(sys.argv) != 2: sys.exit(__doc__)
@@ -50,11 +57,12 @@ def main():
     for d in dict.fromkeys(d for r in rankers for d in r):
         got = [r[d] for r in rankers if d in r]
         place, row, crit, ledger = sorted(got, key=lambda g: float(g[1][4]))[(len(got) - 1) // 2]
-        each = list(zip(*([float(v) for v in g[2][2:]] for g in got)))
+        each = list(zip(*(g[2][2:] for g in got)))
         values = [middle(v) for v in each]
         rows.append((-score(values), place, row[:4] + [f"{score(values):.1f}"] + row[5:],
-                     crit[:2] + [f"{v:.1f}" for v in values], ledger))
-        apart = [f"{n} {'/'.join(f'{x:g}' for x in v)}" for n, v in zip(NAMES, each) if max(v) - min(v) >= SPLIT]
+                     crit[:2] + ["-" if v is None else f"{v:.1f}" for v in values], ledger))
+        apart = [f"{n} {'/'.join(f'{x:g}' for x in v)}" for n, v in zip(NAMES, map(numbers, each))
+                 if v and max(v) - min(v) >= SPLIT]
         if apart: print(f"{d}: split {', '.join(apart)}", file=sys.stderr)
     rows.sort(key=lambda r: r[:2])
     number = lambda r, i: [str(i)] + r[1:]

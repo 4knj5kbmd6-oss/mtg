@@ -1,7 +1,7 @@
 """Write each deck's three fact files into <run_dir>: <slug>-combos.md, its combos from Commander Spellbook
 (combos.py); <slug>-mana.md, its mana from its list and oracle.json (skills/mana/mana.py), ending with its Mana level,
-the ranker's Mana table applied to mana.py's numbers; and <slug>-counts.md, per category the list's cards that
-oracle.json's tags put in it, by CATEGORIES below.
+the ranker's Mana table applied to mana.py's numbers, or `-` when the deck's plan.md excludes Mana; and
+<slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run_dir> <slug> [slug ...]
 Prints the cards of each deck Spellbook or oracle.json does not know. When Spellbook is unreachable it prints one
 line naming the URL, and the deck gets no combos file."""
@@ -9,7 +9,7 @@ import json, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mana"))
-from project import ORACLE, decklist, front
+from project import DECKS, ORACLE, decklist, front
 from tables import table
 import combos, mana
 
@@ -29,6 +29,7 @@ ANSWERS = {"change target", "hatebear", "silence", "prevent cast", "prevent acti
 ROWS = ["Tutors", "Draw engines", "Recursion", "Protection", "Answers", "Instant-speed answers", "Counters", "Removal",
         "Wipes"]
 FLASH = re.compile(r"^(?:\w[\w ]*, )*flash(?:,|$)", re.I | re.M)
+EXCLUDED = re.compile(r"^- \*\*Mana:\*\*\s*excluded\s*$", re.M)
 
 def counts(run, slug):
     """write <run>/<slug>-counts.md: per category of ROWS the list's card copies in it and their names, commanders in
@@ -50,15 +51,21 @@ def counts(run, slug):
     rows = [[r, str(sum(found[r].values())), "; ".join(sorted(found[r])) or "-"] for r in ROWS]
     Path(run, f"{slug}-counts.md").write_text(f"# {slug}: counts\n\n" + table("| Category | Count | Cards |", rows) + "\n")
 
-def level(mean, four, short):
-    """the Mana criterion's level, 1 to 9, by the ranker's Mana table, from mana.py's numbers: the mean mana value
-    (to one decimal), the chance of four lands by turn 4 (as a whole percent; None, unknown, meets no bar) and the
-    largest colour shortfall. A shortfall of 4 or more caps it at 5, four lands under 50% at 3"""
-    mean, four = round(mean, 1), None if four is None else round(four * 100)
-    if mean <= 2.5 and four is not None and four >= 65 and short <= 0: return 9
-    if mean <= 3.0 and four is not None and four >= 60 and short <= 3: return 7
-    if mean <= 3.5 and not (four is not None and four < 50): return 5
-    return 3 if mean <= 4.0 else 1
+def level(castable, ramp, short):
+    """the Mana criterion's level, 1 to 9, by the ranker's Mana table, from mana.py's numbers: Castable and Ramp as
+    whole percents and Short; a number None, the deck too small to know it, meets no bar"""
+    castable, ramp = (None if x is None else round(x * 100) for x in (castable, ramp))
+    if castable is None or castable < 75: return 1
+    fast = lambda least: ramp is not None and ramp >= least
+    fine = lambda most: short is not None and short <= most
+    if castable >= 90 and fast(35) and fine(0): return 9
+    if castable >= 87 and fast(25) and fine(2): return 7
+    return 5 if castable >= 84 and fine(4) else 3
+
+def excluded(slug):
+    """whether the deck's plan.md excludes Mana by a `- **Mana:** excluded` bullet"""
+    path = DECKS / slug / "plan.md"
+    return path.exists() and bool(EXCLUDED.search(path.read_text()))
 
 def main():
     if len(sys.argv) < 3: sys.exit(__doc__)
@@ -67,7 +74,7 @@ def main():
         combos.write(run, slug)
         numbers = mana.write(run, slug)
         path = Path(run, f"{slug}-mana.md")
-        path.write_text(path.read_text() + f"\nMana level: {level(**numbers)}\n")
+        path.write_text(path.read_text() + f"\nMana level: {'-' if excluded(slug) else level(**numbers)}\n")
         counts(run, slug)
 
 if __name__ == "__main__": main()

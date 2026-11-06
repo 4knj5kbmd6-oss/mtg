@@ -326,6 +326,18 @@ def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_le
     assert text.endswith("|---|---|---|---|---|\n" + "".join(f"{l}\n" for l in ledger("Zara, Tide Caller", "D")))
 
 
+def test_merge_rankings_carries_an_excluded_mana_and_scores_the_criteria_present():
+    rankers({"zara": {x: (s, c[:6] + ["-"]) for x, (s, c) in RANKS["zara"].items()}, "kor": RANKS["kor"]})
+    out = run("skills/score/merge_rankings.py", "run")
+    assert out.returncode == 0
+    assert out.stderr == "zara: split Speed 7/6/3, Interaction 5/5/9\n"
+    text = read("run/rankings.md")
+    # zara's six 5.3, 5.3, 4.7, 5.0, 6.3 and 5.0, their mean 5.27, its Score 53.3; its Mana stays -
+    assert "| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 53.3 | 6-7 | none | why A |" in text
+    assert "| 2 | Zara, Tide Caller | 5.3 | 5.3 | 4.7 | 5.0 | 6.3 | 5.0 | - |" in text
+    assert "| 1 | Kor Skyfisher | 7.0 | 7.0 | 7.0 | 7.0 | 7.0 | 7.0 | 7.0 |" in text
+
+
 def test_one_ranker_is_copied_as_it_is():
     rankers(letters="B")
     assert run("skills/score/merge_rankings.py", "run").returncode == 0

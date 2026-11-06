@@ -1,11 +1,10 @@
 """A deck's mana file, <run_dir>/<slug>-mana.md, from its list.txt, its plan.md's Not cast line and oracle.json, for
-facts.py and the mana skill: the Curve, Lands, Colours and Recommendation tables, each number as METHOD.md defines it.
+facts.py and the mana skill: the Curve, Lands, Colours, Recommendation and Level tables, each number as METHOD.md
+defines it.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/mana/mana.py <run_dir> <slug> [slug ...]
 Prints any card oracle.json lacks, left out of the counts, and any Not cast name off the list. write() also returns the
-numbers facts.py's Mana level reads: the mean mana value of the nonlands not cast excluded, the chance of four lands by
-turn 4 (None when unknown) and the largest colour shortfall, Sources needed less Land sources, a colour no count of
-sources serves short by one more than every land."""
-import json, re, sys
+numbers facts.py's Mana level reads, Castable, Ramp and Short, each None when the deck is too small to know it."""
+import json, math, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 from project import DECKS, ORACLE, decklist, front, is_land, key
@@ -57,6 +56,13 @@ def ramp(e):
     permanent = not {"Instant", "Sorcery"} & set(front(e).get("type_line", "").split())
     taps = any("Sacrifice" not in m[0] for m in TAPS.finditer(text)) or EXTRA.search(text)
     return bool(permanent and taps or SEARCH.search(text) and not SPENDS.search(text))
+
+def lasting(e):
+    """whether e is a lasting cheap source: not a land drop, and of mana value 2 or less and ramp or tagged a mana rock
+    or mana dork, or of mana value 0 and tagged a mana egg"""
+    if land_drop(e): return False
+    tags, value = set(e.get("tags", [])), mv(e)
+    return value <= 2 and bool(ramp(e) or tags & {"mana rock", "mana dork"}) or value == 0 and "mana egg" in tags
 
 def due(e):
     """the turn e is due on curve: its mana value, or its pips when more, 1 at least"""
@@ -120,8 +126,40 @@ def advice(identity, commanders, rest, weight, skipped):
     share = recommend.shares(sources)
     return [cell, str(now), *(f"{share[c]}% ({sources[c]})" for c in identity)]
 
+def level(identity, commanders, rest, skipped):
+    """the Level table's row and the Mana level's numbers {castable, ramp, short}, each None when the deck is too small
+    to know it: Castable the share of the cast nonlands with their mana value in mana by turn 4 or by their mana
+    value's turn when later, Ramp the chance of 5 mana on turn 4, Short the largest gap over the colours between the
+    sources their 75th-percentile card needs and their land sources"""
+    count = lambda cards: sum(n for n, _ in cards)
+    size = count(rest)
+    known = lambda t: size >= odds.seen(t)
+    drops = count((n, e) for n, e in rest if land_drop(e))
+    sources = [int(mv(e)) for n, e in rest if e["name"] not in skipped and lasting(e) for _ in range(n)]
+    supply = {}
+    def chance(want, t):
+        """the chance of at least want mana on turn t"""
+        if t not in supply:
+            supply[t] = odds.supply(t, size, odds.seen(t), drops, sum(m <= t - 1 for m in sources), True)
+        return supply[t][want] if want < len(supply[t]) else 0.0
+    cast = [(n, e) for n, e in commanders + rest if not land_drop(e) and e["name"] not in skipped]
+    by = lambda e: max(4, int(mv(e)))
+    castable = (sum(n * chance(int(mv(e)), by(e)) for n, e in cast) / count(cast)
+                if cast and all(known(by(e)) for _, e in cast) else None)
+    short = 0
+    for c in identity:
+        wanting = [e for n, e in cast if pips(e, c) for _ in range(n)]
+        if not wanting: continue
+        if not all(known(turn(e)) for e in wanting): short = None; break
+        needs = sorted(needed(e, c, drops, size) or drops + 1 for e in wanting)
+        held = count((n, e) for n, e in rest if land_drop(e) and c in colours(e, identity))
+        short = max(short, needs[math.ceil(0.75 * len(needs)) - 1] - held)
+    numbers = {"castable": castable, "ramp": chance(5, 4) if known(4) else None, "short": short}
+    shown = lambda x: "unknown" if x is None else f"{x:.0%}"
+    return [str(len(sources)), shown(castable), shown(numbers["ramp"]), "unknown" if short is None else str(short)], numbers
+
 def page(slug, commanders, rest, weight, skipped):
-    """the mana file's text and the Mana level's numbers (mean, four, short) from [(copies, oracle entry)] of the
+    """the mana file's text and the Mana level's numbers {castable, ramp, short} from [(copies, oracle entry)] of the
     commanders and of the rest of the deck, name -> the card's weight, and the oracle names of the cards not cast"""
     deck = commanders + rest
     identity = [c for c in COLOURS if any(c in e.get("color_identity", []) for _, e in commanders)]
@@ -133,8 +171,7 @@ def page(slug, commanders, rest, weight, skipped):
     size, landed = count(rest), count((n, e) for n, e in rest if is_land(e))
     known = lambda t: size >= odds.seen(t)
     on_curve = [f"{odds.at_least(k, landed, size, odds.seen(k)):.0%}" if known(k) else "unknown" for k in (2, 3, 4)]
-    cast = [(n, e) for n, e in spells if e["name"] not in skipped]
-    rows, held, short = [], {}, 0
+    rows, held = [], {}
     for c in identity:
         sources = lambda cards: count((n, e) for n, e in cards if c in colours(e, identity))
         held[c] = sources(lands)
@@ -146,13 +183,11 @@ def page(slug, commanders, rest, weight, skipped):
         most = lambda e: needs[e["name"]] or landed + 1
         top = min(wanting, key=lambda e: (-most(e), mv(e), e["name"])) if told else None
         need = [str(needs[top["name"]] or "-"), top["name"]] if top else ["unknown" if wanting else "-", "-"]
-        if top: short = max(short, most(top) - held[c])
         rows.append([c, str(held[c]), *need,
                      *map(str, (sources(spells), sum(n * pips(e, c) for n, e in spells), count(heavy))), lowest])
     share = recommend.shares(held) if sum(held.values()) else {}
     split_now = ", ".join(f"{c} {share[c]}% ({held[c]})" for c in identity) if share else "-"
-    numbers = {"mean": sum(n * mv(e) for n, e in cast) / max(count(cast), 1),
-               "four": odds.at_least(4, landed, size, odds.seen(4)) if known(4) else None, "short": short}
+    row, numbers = level(identity, commanders, rest, skipped)
     return "\n".join([f"# {slug}: mana", "",
                       "## Curve", table("| Lands | Nonlands | Not cast | Mean mana value | " + " | ".join(CURVE) + " |",
                                         [[str(count(lands)), str(count(spells)),
@@ -162,7 +197,8 @@ def page(slug, commanders, rest, weight, skipped):
                       "## Colours", table("| Colour | Land sources | Sources needed | For | Nonland sources | Pips |"
                                           " Cards with 2+ pips | Lowest mana value of those |", rows), "",
                       "## Recommendation", table("| " + " | ".join(["Lands", "Lands now", *identity, "Split now"]) + " |",
-                                                 [[*advice(identity, commanders, rest, weight, skipped), split_now]]), ""]), numbers
+                                                 [[*advice(identity, commanders, rest, weight, skipped), split_now]]), "",
+                      "## Level", table("| Lasting cheap sources | Castable | Ramp | Short |", [row]), ""]), numbers
 
 def write(run, slug):
     cards = json.loads(ORACLE.read_text())["cards"]
