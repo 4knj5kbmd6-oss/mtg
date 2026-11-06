@@ -11,7 +11,7 @@ import facts, fetch_brackets, fetch_syntax, merge_rankings, tables
 JUDGED = {"zara": {"A": [6, 5], "B": [7, 6], "C": [3, 4]},
           "kor": {"A": [5, 6], "B": [8, 7], "C": [8, 7]}}
 OWN = dict(zip("ABCDE", ["3", "4", "2", "3, top", "3"]))  # each ranker's Bracket
-UNTAGGED = "1 | 0 answers, 0 instant; no/no/no | -"  # an untagged deck's Interaction Ledger cells past the criterion
+UNTAGGED = "1 | 0 answers, 0 instant, 0 weighted | -"  # an untagged deck's Interaction Ledger cells past the criterion
 # zara's commander salt 0.525 is level 4 and its 10 dollars 5; its 99's salt mean 3.0 / 4 = 0.75 is 7 and its 250
 # dollars 3: Card quality 19 / 4 = 4.75, 4.8, USD 260. kor's 0.45 is 3 and its 1 dollar 1; its 99's salt 0.6 is 5 and
 # its 4.25 dollars 1: Card quality 2.5, USD 5
@@ -136,30 +136,24 @@ def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest(
 """
 
 
-def counted(answers, instant, wipes=0, counters=0, creature=0, noncreature=0):
-    return {"Answers": answers, "Instant-speed answers": instant, "Wipes": wipes, "Counters": counters,
-            "Creature removal": creature, "Noncreature removal": noncreature}
-
-
-@pytest.mark.parametrize("counts, level, count", [
-    (counted(15, 10, 0, 1, 1, 1), 9, "15 answers, 10 instant; yes/yes/yes"),  # 9 needs no wipe
-    (counted(20, 9, 1, 1, 1, 1), 7, "20 answers, 9 instant; yes/yes/yes"),  # 9 needs 10 instant
-    (counted(15, 10, 1, 0, 1, 1), 7, "15 answers, 10 instant; no/yes/yes"),  # 9 needs counters, 7 does not
-    (counted(11, 7, 1, 0, 1, 1), 7, "11 answers, 7 instant; no/yes/yes"),
-    (counted(14, 10, 0, 1, 1, 1), 5, "14 answers, 10 instant; yes/yes/yes"),  # 7 needs a wipe
-    (counted(14, 10, 1, 1, 1, 0), 5, "14 answers, 10 instant; yes/yes/no"),  # 7 needs noncreature removal
-    (counted(11, 5, 1, 1, 1, 1), 5, "11 answers, 5 instant; yes/yes/yes"),  # fewer than half instant
-    (counted(7, 0), 5, "7 answers, 0 instant; no/no/no"),
-    (counted(6, 6, 1, 1, 1, 1), 3, "6 answers, 6 instant; yes/yes/yes"),
-    (counted(3, 0), 3, "3 answers, 0 instant; no/no/no"),
-    (counted(2, 2, 1, 1, 0, 0), 1, "2 answers, 2 instant; yes/no/no"),
-    (counted(0, 0), 1, "0 answers, 0 instant; no/no/no"),
+@pytest.mark.parametrize("answers, instant, level", [
+    (0, 0, 1),
+    (2, 0, 1),  # 1 + 2 / 5 = 1.4
+    (2, 1, 2),  # 1 + 3 / 5 = 1.6
+    (10, 5, 4),  # 1 + 15 / 5
+    (8, 4, 3),  # 1 + 12 / 5 = 3.4
+    (8, 5, 4),  # 1 + 13 / 5 = 3.6
+    (30, 7, 8),  # 1 + 37 / 5 = 8.4
+    (30, 8, 9),  # 1 + 38 / 5 = 8.6
+    (25, 15, 9),  # 1 + 40 / 5
+    (40, 30, 9),  # 1 + 70 / 5 held at 9
 ])
-def test_interaction_is_the_highest_row_of_its_table_the_counts_meet(counts, level, count):
-    assert merge_rankings.interaction(counts) == (level, count)
+def test_interaction_is_1_plus_the_weighted_answers_over_5_half_up_held_from_1_to_9(answers, instant, level):
+    assert merge_rankings.interaction({"Answers": answers, "Instant-speed answers": instant}) == \
+        (level, f"{answers} answers, {instant} instant, {answers + instant} weighted")
 
 
-def test_the_merged_ledgers_interaction_row_carries_the_answers_cards_and_the_coverage():
+def test_the_merged_ledgers_interaction_row_carries_the_answers_and_their_cards():
     decks()
     oracle = json.loads(read("output/data/oracle.json"))
     tags = {"Tidal Insight": ["counterspell"], "Wave Breaker": ["removal", "removal-creature"],
@@ -168,12 +162,12 @@ def test_the_merged_ledgers_interaction_row_carries_the_answers_cards_and_the_co
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
     facts.counts("run", "zara")
     rankers()
-    assert merges("zara: split Win 6/7/3")["zara"]["Interaction"] == "3.0"
-    assert "| Zara, Tide Caller | Interaction | 3 | 3 answers, 1 instant; yes/yes/no | " \
+    assert merges("zara: split Win 6/7/3")["zara"]["Interaction"] == "2.0"  # 1 + 4 / 5 = 1.8
+    assert "| Zara, Tide Caller | Interaction | 2 | 3 answers, 1 instant, 4 weighted | " \
            "Brine Elemental; Tidal Insight; Wave Breaker |\n" in read("run/rankings.md")
 
 
-@pytest.mark.parametrize("row", ["Creature removal", "99 price"])
+@pytest.mark.parametrize("row", ["Instant-speed answers", "99 price"])
 def test_merge_rankings_stops_on_a_counts_file_without_a_row_it_reads(row):
     rankers()
     counts = Path("run/zara-counts.md")

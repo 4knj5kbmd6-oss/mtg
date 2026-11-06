@@ -7,11 +7,11 @@ and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria, Speed,
 - each JUDGED criterion is the median of the rankers' values, the mean of the middle two when their count is even;
 - Speed is the mean of the merged JUDGED axes; the Criteria table shows SCORED and the Speed table the JUDGED axes,
   every criterion and axis on 1 to 9, their decks in the same order and numbering;
-- each COMPUTED criterion is read from the deck's counts file: Interaction the level of the Interaction table below,
-  its Ledger row's Count "<n> answers, <m> instant; <counters>/<creature>/<noncreature>", each coverage yes or no, its
-  Cards the Answers row's Cards; Card quality the mean of the Counts of the QUALITY rows, its Ledger row's Count
-  "cmdr salt <a>, cmdr price <b>, 99 salt <c>, 99 price <d>", its Cards the cards those rows name, and the Card
-  quality table those four levels and USD, the dollar sums of the Commander price and 99 price rows added;
+- each COMPUTED criterion is read from the deck's counts file: Interaction the level below, its Ledger row's Count
+  "<a> answers, <i> instant, <w> weighted", its Cards the Answers row's Cards; Card quality the mean of the Counts of
+  the QUALITY rows, its Ledger row's Count "cmdr salt <a>, cmdr price <b>, 99 salt <c>, 99 price <d>", its Cards the
+  cards those rows name, and the Card quality table those four levels and USD, the dollar sums of the Commander price
+  and 99 price rows added;
 - the Score is the mean over SCORED of (value as written - 1) / 8 * 100; every mean and Score is an exact fraction
   rounded half up to one decimal, USD half up to a whole dollar;
 - each ranker's own Score, computed the same way from its own values, picks the median ranker (the lower middle when
@@ -32,14 +32,9 @@ table exits 1 with "rankings.md has no Speed table, rank the decks", and one wit
 "rankings.md has no <column> column, rank the decks".
 
 Interaction, what the deck stops. An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piece.
-Answers is the counts file's Answers row, instant its Instant-speed answers row, a wipe its Wipes row above 0, and the
-three coverages its Counters, Creature removal and Noncreature removal rows above 0; the counts are final. The level is
-the highest row the deck meets:
-| 9 | 15+ answers, 10+ instant, all three of counters, creature removal and noncreature removal present |
-| 7 | 11+ answers, 7+ instant, creature and noncreature removal present, a wipe |
-| 5 | 7+ answers, or 11+ answers with fewer than half instant or one of the three coverages missing |
-| 3 | 3+ answers |
-| 1 | 0-2 answers |"""
+Answers is the counts file's Answers row and instant its Instant-speed answers row; the counts are final. The weighted
+count is answers plus instant, so an instant-speed answer counts twice, and the level is 1 + weighted / 5 rounded half
+up, held from 1 to 9: 0 weighted is 1, 40 or more 9."""
 import json, math, re, sys
 from collections import Counter
 from fractions import Fraction
@@ -53,7 +48,7 @@ JUDGED = ("Win", "Development")  # read from the ranker files; Speed is their me
 QUALITY = ("Commander salt", "Commander price", "99 salt", "99 price")  # Card quality is the mean of these levels
 COMPUTED = ("Interaction", "Card quality")  # read from the counts files
 SCORED = ("Speed",) + COMPUTED  # the Score's criteria, each 1 to 9
-ANSWERED = ("Answers", "Instant-speed answers", "Wipes", "Counters", "Creature removal", "Noncreature removal")
+ANSWERED = ("Answers", "Instant-speed answers")
 COUNTED = ANSWERED + QUALITY  # the counts file's rows read
 SPLIT = 4  # a criterion the rankers put this far apart is printed
 JUDGMENTS = "| Deck | " + " | ".join(JUDGED) + " | Bracket | Why |"
@@ -115,13 +110,11 @@ def judgments(path, decks):
     return out, ledger, [f"{path.name}: {f}" for f in faults]
 
 def interaction(counts):
-    """(level, Ledger Count) of the Interaction table on {category: Count} of a counts file"""
-    a, i, wipe = counts["Answers"], counts["Instant-speed answers"], counts["Wipes"] > 0
-    cover = [counts[c] > 0 for c in ("Counters", "Creature removal", "Noncreature removal")]
-    level = next(l for l, met in [(9, a >= 15 and i >= 10 and all(cover)),
-                                  (7, a >= 11 and i >= 7 and all(cover[1:]) and wipe),
-                                  (5, a >= 7), (3, a >= 3), (1, True)] if met)
-    return level, f"{a} answers, {i} instant; " + "/".join("yes" if c else "no" for c in cover)
+    """(level, Ledger Count) of Interaction on {category: Count} of a counts file"""
+    a, i = counts["Answers"], counts["Instant-speed answers"]
+    w = a + i
+    level = min(9, math.floor(1 + Fraction(w, 5) + Fraction(1, 2)))
+    return level, f"{a} answers, {i} instant, {w} weighted"
 
 def card_quality(got):
     """(level, Ledger row past the deck's name, the Card quality table's cells past it) of Card quality from a counts
