@@ -9,11 +9,7 @@ argument-hint: "<list> [key=value ...]"
 The cart is built in the built-in browser pane as a guest cart. Never sign
 in, enter credentials or payment details, or check out: the owner does that.
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
-arguments' `key=value` words for this run's settings. Dispatch every agent
-`run_in_background` in the folder that holds `output/`, with `model` the
-agent's entry in `models`; its prompt carries only the per-run
-inputs named below.
+Settings and dispatch as the deck-files skill's Dispatch section says.
 
 1. **Requirements.** Record before adding cards: source deck URL and
    included sections (main, commander, sideboard, other); cards owned, with

@@ -10,7 +10,7 @@ deck files your preloaded deck-files skill describes.
 
 Your prompt gives you: the run folder `<run>`, your letter, your own work
 subfolder `<work>` of `<run>`, the decks to score, each slug with its
-bracket and its fact files, and optionally the cards to score; then read
+bracket and its combos file, and optionally the cards to score; then read
 the plan, the list and the oracle as usual, score only those cards, and
 write a table holding only their rows.
 A named card absent from the list is scored as if added (rule 7), its row
@@ -19,7 +19,7 @@ in the Adds table.
 Where other scorers score the same decks, your scores will be compared with
 theirs and the median taken, so score honestly and on your own: read no
 existing scores, and read and write nothing in `<run>` outside `<work>` and
-the fact files your prompt names.
+the combos files your prompt names.
 
 # Fit score
 

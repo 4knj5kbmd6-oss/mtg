@@ -28,7 +28,7 @@ below keep a change easy to review and land.
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Layout, skills and rules for Claude Code |
 | [`agents/`](agents/) | `scorer` (the fit-score metric, yours to tune), `ranker`, `researcher`, `judge`, `librarian`, `shopper` and `planner` |
-| [`skills/`](skills/) | `sync`, `plan`, `score`, `upgrades`, `cart`, `judge`, `scryfall`, `collection`, `mana` (its method in [`METHOD.md`](skills/mana/METHOD.md)) |
+| [`skills/`](skills/) | `sync`, `plan`, `score`, `upgrades`, `cart`, `judge`, `scryfall`, `collection`, `mana` (its method in [`METHOD.md`](skills/mana/METHOD.md)), and `deck-files`, the shared, non-invocable skill |
 | [`lib/`](lib/) | The code the scripts share: `net` (Scryfall, Spellbook and Wizards over HTTP), `project` (paths, deck readers, file writes), `tables` (the Markdown tables) and `settings` |
 | [`.claude-plugin/`](.claude-plugin/) | Plugin and marketplace manifests |
 | [`tests/`](tests/) | The scripts' tests, run on a fixture project |

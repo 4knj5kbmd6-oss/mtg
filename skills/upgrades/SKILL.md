@@ -6,11 +6,7 @@ argument-hint: "[slug ...] [key=value ...]"
 
 # upgrades
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
-arguments' `key=value` words for this run's settings. Dispatch every agent
-`run_in_background` in the folder that holds `output/`, with `model` the
-agent's entry in `models`; its prompt carries only the per-run
-inputs named below.
+Settings and dispatch as the deck-files skill's Dispatch section says.
 
 1. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
    files into it,

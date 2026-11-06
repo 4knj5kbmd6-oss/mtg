@@ -1,8 +1,8 @@
 """Print each card name a deck's plan.md names that is not in its list.txt, one line each, "<slug>: <name> is not in
 list.txt". The names are every card of its Win bullets' roles, joined by +, each role one card or a role name with its
-cards in brackets separated by ;, and its Not cast cards, separated by ;; its other lines, Mana among them, name no
-card. A list written with commas is read too: the longest run of comma-separated parts that names a listed card is
-taken, a card name holding commas. A deck with no plan.md prints nothing.
+cards in brackets separated by ;, and its Not cast cards, separated by ;; its other lines name no card. A list
+written with commas is read too: the longest run of comma-separated parts that names a listed card is taken, a card
+name holding commas. A deck with no plan.md prints nothing.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> [slug ...]
        python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py --plan <path> <slug>  checks the plan at path, a draft
        outside output/, against the slug's list.txt"""

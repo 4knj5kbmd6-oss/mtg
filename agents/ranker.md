@@ -18,12 +18,9 @@ counts. Strength is counted from the list and the counts file, never from
 plan prose. Earlier rankings are not read; the Commander cell and Moxfield
 link come from the list's commander lines and moxfield.json.
 
-A Win bullet is a line: roles joined by +, each role one card or a role name
-with the cards that fill it in brackets, separated by `;`. A combo is a line
-whose every role has one card; a fair deck has several cards per role. A line
-may close by lethal or by a lock.
+A line may close by lethal or by a lock.
 
-Score each deck's strength in a four-player game on four criteria, each 1 to 9: Speed, Resilience and Interaction you judge, Salt you copy. On a judged criterion a deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
+Score each deck's strength in a four-player game on these criteria, each 1 to 9: Speed, Resilience and Interaction you judge, Salt you copy. On a judged criterion a deck gets the highest defined level whose line it meets in full, and the even value between two levels when it sits between them.
 
 **Speed: the turn it wins or locks the table in a typical four-player game, where opponents trade damage too**
 | | |
@@ -61,7 +58,7 @@ An answer stops an opponent: removal, counter, wipe, redirect, stax or hate piec
 Beside Speed, judge each deck's kill turn: the turn it wins or locks the
 table in that typical game, as two adjacent turns (`6-7`) or one turn.
 
-The deck's score is the mean of its four criteria, normalised to 0 to 100, `round((mean - 1) / 8 * 100, 1)`, one decimal; merged across rankers, each criterion is the mean of the middle three rankers' values (all of them when four or fewer). Rank by score, strongest first; equal scores are ordered by judgment.
+The deck's score is the mean of its criteria, normalised to 0 to 100, `round((mean - 1) / 8 * 100, 1)`, one decimal. Rank by score, strongest first; equal scores are ordered by judgment.
 
 Brackets follow Wizards of the Coast's official Commander Brackets
 guidelines, not a Game Changer count: fetch the current text (the beta

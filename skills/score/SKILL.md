@@ -11,20 +11,15 @@ The metric lives in the `mtg-toolbox:scorer` agent,
 skill only applies it. Scores are never hand-edited: when one looks wrong,
 fix the metric or the deck's `plan.md` and rescore.
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/lib/settings.py` with the
-arguments' `key=value` words for this run's settings. Dispatch every agent
-`run_in_background` in the folder that holds `output/`, with `model` the
-agent's entry in `models`; its prompt carries only the per-run
-inputs named below.
+Settings and dispatch as the deck-files skill's Dispatch section says.
 
 To rank the decks, dispatch `rankers` `mtg-toolbox:ranker` agents, lettered
 A, B, C and on, each prompt giving `<run>` and the letter; they read every
 deck's two fact files in `<run>`: combos and counts. When all are
 back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
-merges their `<run>/rankings-<letter>.md`, each criterion the mean of the
-middle three rankers (all of four or fewer), into `<run>/rankings.md` and prints each deck's
-criteria the rankers put 4 or more apart. Copy `<run>/rankings.md` over
-`rankings.md`.
+merges their `<run>/rankings-<letter>.md` into `<run>/rankings.md` and
+prints each deck's criteria the rankers put 4 or more apart. Copy
+`<run>/rankings.md` over `rankings.md`.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.

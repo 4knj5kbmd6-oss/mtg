@@ -13,7 +13,7 @@ budget `<budget>`, the quota `<quota>` (`adds`, `lands`, and `cuts` as a
 fewest and a most), `<universes_beyond>` (true or false), `<new_sets>` (true
 or false), and the decks, each
 slug with its commander, Moxfield created date (the build date), updated date
-(the last edit), bracket and fact files. A deck's dates may be unknown; its
+(the last edit), bracket and combos file. A deck's dates may be unknown; its
 "New since built?" cells then read `-`.
 
 ## Inputs

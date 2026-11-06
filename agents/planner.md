@@ -28,9 +28,6 @@ owner's: keep it.
    lists the cards the deck cheats into play rather than casts. Write a
    Restriction only when the current plan or notes carry one.
 
-A plan is a few Win lines, each one sentence beside its roles; names in
-brackets are free.
-
 Write the draft to `<run>/<slug>-plan.md` and check it,
 `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py --plan <run>/<slug>-plan.md <slug>`,
 which prints each card it names that the list lacks. Fix the draft and check

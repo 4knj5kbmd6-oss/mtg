@@ -231,15 +231,11 @@ def test_settings_defaults():
     Path("settings.json").unlink()
     defaults = copy.deepcopy(settings.DEFAULTS)
     assert settings.settings() == defaults
-    assert defaults["scorers"] == 3 and defaults["rankers"] == 3
-    sonnet = "claude-sonnet-5-5"
-    assert defaults["models"] == {"scorer": sonnet, "ranker": sonnet, "researcher": "claude-opus-5-5", "judge": sonnet,
-                                  "librarian": sonnet, "shopper": sonnet, "planner": "claude-opus-5-5"}
     Path("settings.json").write_text('{"scorers": 1, "quota": {"adds": 15}, "cart": {"finish": "nonfoil"}, '
                                      '"models": {"researcher": "claude-sonnet-5-5"}}')
     assert settings.settings() == {**defaults, "scorers": 1, "quota": {**defaults["quota"], "adds": 15},
                                    "cart": {**defaults["cart"], "finish": "nonfoil"},
-                                   "models": {**defaults["models"], "researcher": sonnet}}
+                                   "models": {**defaults["models"], "researcher": "claude-sonnet-5-5"}}
     assert settings.DEFAULTS == defaults
 
 

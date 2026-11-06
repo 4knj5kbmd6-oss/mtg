@@ -4,11 +4,11 @@ usage: python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run_dir>
 reads every <run_dir>/rankings-<letter>.md, one per ranker, in letter order, each in the ranker agent's shape, a deck
 known by the folder its Commander links to; writes <run_dir>/rankings.md in that shape: per deck each criterion the
 mean, to one decimal, of the rankers' values sorted with the lowest and highest dropped while five or more remain
-(the middle three of five, all of four or fewer), the Score round((mean - 1) / 8 * 100, 1) of the four, every other
-cell and the deck's Ledger rows from the ranker whose Score for the deck is the median one (the lower middle when
-even), rows by Score, strongest first, ties in the order of those rankers' tables; prints to stderr, per deck, the
-criteria the rankers put SPLIT or more apart, each with its values in letter order. One ranker's file is copied as
-it is."""
+(the middle three of five, all of four or fewer), the Score round((mean - 1) / 8 * 100, 1) of the criteria, every
+other cell and the deck's Ledger rows from the ranker whose Score for the deck is the median one (the lower middle
+when even), rows by Score, strongest first, ties in the order of those rankers' tables; prints to stderr, per deck,
+the criteria the rankers put SPLIT or more apart, each with its values in letter order. One ranker's file is copied
+as it is."""
 import re, shutil, statistics, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
