@@ -1,4 +1,4 @@
-import gzip, importlib, json, sys
+import gzip, importlib, json, os, sys, time
 from pathlib import Path
 import pytest
 from conftest import ROOT, run, read, snapshot
@@ -348,6 +348,60 @@ def test_atomic_cards_download_again_only_when_mtgjson_names_a_new_version(monke
     answers.update(mtgjson("5.3.0+20261102"))
     fetch_oracle.salts(fresh=True)
     assert got == [meta, atomic, meta, meta, atomic]
+
+
+META, ATOMIC_GZ = f"{net.MTGJSON}/Meta.json", f"{net.MTGJSON}/AtomicCards.json.gz"
+KEPT = time.mktime((2026, 11, 1, 12, 0, 0, 0, 0, -1))  # the cached copies' date, 2026-11-01
+
+
+def failing(source, get):
+    """get, but raising Failed for the URL source"""
+    def answer(url, body=None):
+        if url == source: raise net.Failed(f"{url}: timed out")
+        return get(url, body) if body else get(url)
+    return answer
+
+
+def cache(path, data):
+    path.write_bytes(data)
+    os.utime(path, (KEPT, KEPT))
+
+
+@pytest.mark.parametrize("cached", [False, True])
+def test_an_unreachable_oracle_tags_file_keeps_the_cached_copy(monkeypatch, capsys, cached):
+    if cached: cache(fetch_oracle.TAGS, TAGS)
+    monkeypatch.setattr(fetch_oracle, "get", failing("tags", None))
+    index = {"oracle_tags": {"updated_at": "2026-11-02T00:00:00.000+00:00", "jsonl_download_uri": "tags"}}
+    assert bool(fetch_oracle.tags(index)) == cached
+    assert capsys.readouterr().out == "oracle tags: tags unreachable, " + (
+        "kept the copy of 2026-11-01\n" if cached else "no tags\n")
+
+
+@pytest.mark.parametrize("source", [META, ATOMIC_GZ])
+@pytest.mark.parametrize("cached", [False, True])
+def test_an_unreachable_mtgjson_keeps_the_cached_atomic_cards(monkeypatch, capsys, source, cached):
+    answers = mtgjson("5.3.0+20261102")
+    if cached: cache(fetch_oracle.ATOMIC, mtgjson()[ATOMIC_GZ])
+    monkeypatch.setattr(fetch_oracle, "get", failing(source, answers.__getitem__))
+    assert fetch_oracle.salts(fresh=True) == ({"tide": 0.5, "Sol Ring": 1.59, "wave": 0.2} if cached else {})
+    assert capsys.readouterr().out == f"salt: {source} unreachable, " + (
+        "kept the copy of 2026-11-01\n" if cached else "no salt\n")
+
+
+@pytest.mark.parametrize("source", ["tags", META, ATOMIC_GZ])
+def test_a_rebuild_goes_on_without_tags_or_salt(monkeypatch, capsys, source):
+    monkeypatch.setattr(fetch_oracle, "get", failing(source, scryfall([])))
+    fetch_oracle.rebuild()
+    assert f"{source} unreachable, no " in capsys.readouterr().out
+    assert "Sol Ring" in json.loads(read("output/data/oracle.json"))["cards"]
+
+
+def test_a_rebuild_without_rulings_keeps_oracle_json(monkeypatch):
+    before = read("output/data/oracle.json")
+    monkeypatch.setattr(fetch_oracle, "get", failing("rulings", scryfall([])))
+    with pytest.raises(net.Failed, match="^rulings: timed out$"):
+        fetch_oracle.rebuild()
+    assert read("output/data/oracle.json") == before
 
 
 def test_add_fetches_only_the_names_oracle_json_lacks(monkeypatch):

@@ -4,14 +4,17 @@ texts, oldest first) from Scryfall's bulk rulings file and its tags: the labels 
 tag above them in the tag tree, from Scryfall's bulk oracle tags file, cached as output/data/oracle-tags.jsonl.gz and
 downloaded again only when Scryfall's bulk index shows a newer one, and its salt, its EDHREC saltiness, from MTGJSON's
 AtomicCards.json.gz, cached in output/data/ and downloaded again only when MTGJSON's Meta.json version changes (no salt
-when MTGJSON has none). Given card names, instead fetch each one oracle.json lacks singly from Scryfall into it, with its
-rulings, and its tags and salt from the cached files, every other entry as it was.
+when MTGJSON has none). When the tags or salt source does not answer, its cached copy is used and one line says so;
+the rulings have no cache, and without them the run stops, oracle.json as it was. Given card names, instead fetch each
+one oracle.json lacks singly from Scryfall into it, with its rulings, and its tags and salt from the cached files,
+every other entry as it was.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py ["Card Name" ...]"""
-import gzip, json, os, sys
+import gzip, json, os, sys, time
 from datetime import datetime
 from pathlib import Path
+from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from net import get, MTGJSON, SCRYFALL
+from net import get, Failed, MTGJSON, SCRYFALL
 from project import card, listed, write, ORACLE, DATA, DECKS
 from tables import adds, owned
 API, BATCH = f"{SCRYFALL}/cards/collection", 75  # Scryfall's most names per collection request
@@ -39,11 +42,12 @@ def rulings(index):
 def tags(index=None):
     """oracle_id -> the labels of its functional tags and every tag above them, sorted, from the cached oracle tags file,
     {} with none; given Scryfall's bulk index, that file is downloaded first if the index shows a newer one (the cached
-    copy's mtime is its updated_at)"""
+    copy's mtime is its updated_at), the cached copy kept with a line when it does not come"""
     if index:
         b = index["oracle_tags"]; when = int(datetime.fromisoformat(b["updated_at"]).timestamp())  # whole seconds
         if not TAGS.exists() or TAGS.stat().st_mtime < when:
-            replace(TAGS, get(b["jsonl_download_uri"])); os.utime(TAGS, (when, when))
+            try: replace(TAGS, get(b["jsonl_download_uri"])); os.utime(TAGS, (when, when))
+            except (Failed, HTTPError): unreachable("oracle tags", b["jsonl_download_uri"], TAGS, "no tags")
     if not TAGS.exists(): return {}
     tree = {t["id"]: t for t in map(json.loads, gzip.decompress(TAGS.read_bytes()).splitlines()) if t["type"] == "oracle"}
     def lineage(i):
@@ -60,13 +64,22 @@ def tags(index=None):
 
 def salts(fresh=False):
     """oracle_id -> its EDHREC saltiness, from the cached copy of MTGJSON's atomic cards, {} with none; fresh, that copy
-    is downloaded again first when MTGJSON's Meta.json names a version other than its own"""
+    is downloaded again first when MTGJSON's Meta.json names a version other than its own, and kept with a line when
+    Meta.json or the atomic cards do not come"""
     atomic = json.loads(gzip.decompress(ATOMIC.read_bytes())) if ATOMIC.exists() else {}
-    if fresh and atomic.get("meta", {}).get("version") != json.loads(get(f"{MTGJSON}/Meta.json"))["data"]["version"]:
-        raw = get(f"{MTGJSON}/AtomicCards.json.gz")
-        replace(ATOMIC, raw); atomic = json.loads(gzip.decompress(raw))
+    url = f"{MTGJSON}/Meta.json"
+    try:
+        if fresh and atomic.get("meta", {}).get("version") != json.loads(get(url))["data"]["version"]:
+            raw = get(url := f"{MTGJSON}/AtomicCards.json.gz")
+            replace(ATOMIC, raw); atomic = json.loads(gzip.decompress(raw))
+    except (Failed, HTTPError): unreachable("salt", url, ATOMIC, "no salt")
     return {f["identifiers"]["scryfallOracleId"]: f["edhrecSaltiness"] for faces in atomic.get("data", {}).values()
             for f in faces if "edhrecSaltiness" in f and "scryfallOracleId" in f["identifiers"]}
+
+def unreachable(what, url, path, none):
+    """print that url did not answer, with the date of path, the cached copy kept, or none when there is no copy"""
+    kept = f"kept the copy of {time.strftime('%Y-%m-%d', time.localtime(path.stat().st_mtime))}" if path.exists() else none
+    print(f"{what}: {url} unreachable, {kept}")
 
 def community(o, tagged, salty):
     """the tags of the card with oracle id o, and its salt when MTGJSON has one"""

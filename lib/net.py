@@ -1,5 +1,5 @@
 """HTTP for the scripts: paced requests to Scryfall, Commander Spellbook, MTGJSON and Wizards."""
-import json, re, time, urllib.error, urllib.request
+import http.client, json, re, time, urllib.error, urllib.request
 SCRYFALL, UA = "https://api.scryfall.com", "mtg-toolbox"
 MTGJSON = "https://mtgjson.com/api/v5"
 SEARCH = f"{SCRYFALL}/cards/search?q="
@@ -21,14 +21,15 @@ def request(url, body):
 
 def get(url, body=None):
     """request(url, body), a 429 or 5xx answer retried once a second later; another HTTP error is raised as it
-    came, and a second 429 or 5xx, a timeout or no connection raises Failed"""
+    came, and a second 429 or 5xx, a timeout, no connection or a broken answer (a truncated body) raises Failed"""
     for again in (True, False):
         try: return request(url, body)
         except urllib.error.HTTPError as e:
             if e.code != 429 and e.code < 500: raise
             if not again: raise Failed(f"{url}: HTTP {e.code}")
             time.sleep(1)
-        except OSError as e: raise Failed(f"{url}: {getattr(e, 'reason', e)}")
+        except (OSError, http.client.HTTPException) as e:
+            raise Failed(f"{url}: {str(getattr(e, 'reason', e)) or type(e).__name__}")
 
 def found(url):
     """get(url) parsed as JSON, or None on a 404"""

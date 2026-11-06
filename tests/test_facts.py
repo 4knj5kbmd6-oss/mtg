@@ -149,7 +149,8 @@ def test_a_cached_variants_file_is_read_until_it_is_a_day_old(combos):
     assert cached() == slimmed()
 
 
-@pytest.mark.parametrize("answer", [URLError("down"), Failed(f"{BULK}: HTTP 503"), b"<title>Just a moment...</title>"])
+@pytest.mark.parametrize("answer", [URLError("down"), Failed(f"{BULK}: HTTP 503"), b"<title>Just a moment...</title>",
+                                    gzip.compress(b'{"detail": "x"}'), gzip.compress(b"[]")])
 def test_a_stale_cached_variants_file_is_used_when_spellbook_sends_none(combos, monkeypatch, capsys, answer):
     deck("braids", "Braids, Arisen Nightmare", {"Gravecrawler": 1, "Phyrexian Altar": 1})
     CACHED.write_bytes(gzip.compress((SAVED / "variants.json").read_bytes()))
@@ -166,8 +167,10 @@ def test_a_stale_cached_variants_file_is_used_when_spellbook_sends_none(combos, 
     (URLError("down"), BULK),
     (Failed(f"{BULK}: HTTP 503"), BULK),
     (b"<title>Just a moment...</title>", BULK),
+    (gzip.compress(b'{"detail": "x"}'), BULK),
     (URLError("down"), BRACKET),
     (b"<title>Just a moment...</title>", BRACKET),
+    (b'{"detail": "x"}', BRACKET),
 ])
 def test_no_answer_from_spellbook_names_the_url_and_writes_nothing(combos, monkeypatch, capsys, answer, url):
     deck("beamtown", "The Beamtown Bullies", {"Seeker of Skybreak": 1})
@@ -185,6 +188,37 @@ def test_facts_writes_two_files_per_deck(combos, monkeypatch):
     facts.main()
     assert sorted(p.name for p in Path("run").iterdir()) == [f"{d}-{f}.md" for d in ("beamtown", "braids")
                                                              for f in ("combos", "counts")]
+
+
+def test_facts_writes_the_counts_when_spellbook_answers_without_cards_or_combos(combos, monkeypatch, capsys):
+    deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1})
+    answering(combos, monkeypatch, BRACKET, b'{"detail": "x"}')
+    monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown"])
+    facts.main()
+    assert capsys.readouterr().out == f"Commander Spellbook unreachable: {BRACKET}\n"
+    assert sorted(p.name for p in Path("run").iterdir()) == ["beamtown-counts.md"]
+
+
+def test_facts_names_the_list_cards_oracle_json_lacks_commanders_in(combos, monkeypatch, capsys):
+    deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1, "Not A Card": 1})
+    oracle = json.loads(read("output/data/oracle.json"))
+    oracle["cards"].pop("Braids, Arisen Nightmare")
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    monkeypatch.setattr(sys, "argv", ["facts.py", "run", "braids"])
+    facts.main()
+    assert "braids: not in oracle.json: Braids, Arisen Nightmare, Not A Card" in capsys.readouterr().out.splitlines()
+
+
+def test_a_deck_after_one_spellbook_fails_still_gets_its_files(combos, monkeypatch, capsys):
+    deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1})
+    deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1})
+    saved = combos.get
+    beamtown = lambda body: body and body["commanders"][0]["card"] == "The Beamtown Bullies"
+    monkeypatch.setattr(combos, "get", lambda url, body=None: b'{"detail": "x"}' if beamtown(body) else saved(url, body))
+    monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown", "braids"])
+    facts.main()
+    assert f"Commander Spellbook unreachable: {BRACKET}" in capsys.readouterr().out.splitlines()
+    assert sorted(p.name for p in Path("run").iterdir()) == ["beamtown-counts.md", "braids-combos.md", "braids-counts.md"]
 
 
 def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():

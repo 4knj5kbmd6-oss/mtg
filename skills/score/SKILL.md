@@ -41,6 +41,9 @@ to a judged criterion or its levels still ranks the decks.
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...`,
    which prints each plan card name not in the deck's list.
    When Spellbook is unreachable the run goes on without the combos files.
+   When facts.py names cards oracle.json lacks, run
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py "<card name>" ...`
+   with them and rerun facts.py for those decks.
    If `rankings.md` is missing or has no row for one of the run's decks,
    first rank the decks. Group decks by shared colours (two or three per group). Dispatch
    `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and

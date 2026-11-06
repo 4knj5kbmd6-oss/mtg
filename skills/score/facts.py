@@ -2,8 +2,9 @@
 and <slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below, then its
 Game Changers, by game_changers() below, ending with the deck's Salt level, by salt() below.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run_dir> <slug> [slug ...]
-Prints the cards of each deck Spellbook does not know. When Spellbook is unreachable it prints one line naming the URL,
-and the deck gets no combos file."""
+Writes each deck's counts file before its combos file. Prints, per deck, the list's cards oracle.json lacks, commanders
+included, and the cards Spellbook does not know. When Spellbook is unreachable it prints one line naming the URL, and the
+deck gets no combos file."""
 import math, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
@@ -79,8 +80,12 @@ def counts(run, slug):
 def main():
     if len(sys.argv) < 3: sys.exit(__doc__)
     run = sys.argv[1]
+    oracle = named()
     for slug in sys.argv[2:]:
-        combos.write(run, slug)
         counts(run, slug)
+        commanders, rest = decklist(slug)
+        if lacking := [n for _, n in commanders + rest if n.casefold() not in oracle]:
+            print(f"{slug}: not in oracle.json:", ", ".join(lacking))
+        combos.write(run, slug)
 
 if __name__ == "__main__": main()

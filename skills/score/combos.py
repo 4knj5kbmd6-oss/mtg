@@ -5,8 +5,9 @@ and posts the list to estimate-bracket; writes the Included table (each combo wh
 the commanders' colour identity, its result, whether Spellbook marks it a definite or arguable two-card combo), the
 Almost included table (combos one card short whose missing card is in the deck's Adds tables), each with the combo's
 bracket tag and salt, and the cards Spellbook flags as mass land denial or extra turns. Prints the deck's names
-Spellbook does not know. If Spellbook does not answer, a cached variants file is used however old and the title line
-says so; with none, or with no JSON from estimate-bracket, prints one line naming the URL and writes nothing."""
+Spellbook does not know. If Spellbook does not answer, or sends a variants file without variants, a cached variants file
+is used however old and the title line says so; with none, or with no JSON holding cards and combos from
+estimate-bracket, prints one line naming the URL and writes nothing."""
 import gzip, json, sys, time
 from functools import cache
 from pathlib import Path
@@ -23,10 +24,13 @@ FLAGS = {"massLandDenial": "mass land denial", "extraTurn": "extra turns"}
 TAGS = {"R": "Ruthless", "S": "Spicy", "P": "Powerful", "O": "Oddball", "C": "Core", "E": "Exhibition", "B": "Banned"}
 
 def ask(endpoint, body):
-    """Spellbook's JSON answer to body at endpoint, or None after printing the URL when there is none"""
+    """Spellbook's JSON answer to body at endpoint, or None after printing the URL when there is none or it lacks
+    cards and combos"""
     url = f"{SPELLBOOK}/{endpoint}/"
-    try: return json.loads(get(url, body))
-    except (OSError, ValueError, Failed): print(f"Commander Spellbook unreachable: {url}")
+    try:
+        if {"cards", "combos"} <= set(answer := json.loads(get(url, body))): return answer
+    except (OSError, ValueError, TypeError, Failed): pass
+    print(f"Commander Spellbook unreachable: {url}")
 
 def combo(v):
     """(id, card names, result, identity, bracket tag, salt) of a variant"""
@@ -49,12 +53,12 @@ def slim(data):
 @cache
 def variants():
     """(every combo, the date of the stale copy they come from or None), the cached file fetched again when missing or
-    a day old; None when Spellbook does not send it and nothing is cached"""
+    a day old; None when Spellbook does not send it, or sends a file without variants, and nothing is cached"""
     if VARIANTS.exists() and time.time() - VARIANTS.stat().st_mtime < DAY: return parse(VARIANTS.read_bytes()), None
     try:
         save(VARIANTS, data := slim(get(BULK)))
         return parse(data), None
-    except (OSError, ValueError, EOFError, Failed):
+    except (OSError, ValueError, EOFError, KeyError, TypeError, Failed):
         if not VARIANTS.exists(): return None
         return parse(VARIANTS.read_bytes()), time.strftime("%Y-%m-%d", time.localtime(VARIANTS.stat().st_mtime))
 

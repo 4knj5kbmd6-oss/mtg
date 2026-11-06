@@ -1,4 +1,4 @@
-import io, re, socket, urllib.error
+import http.client, io, re, socket, urllib.error
 import pytest
 import net
 
@@ -67,3 +67,11 @@ def test_requests_are_paced_and_carry_the_tools_headers(monkeypatch):
 def test_no_test_reaches_the_network():
     with pytest.raises(net.Failed, match="^https://api.scryfall.com/bulk-data: "):
         net.get("https://api.scryfall.com/bulk-data")
+
+
+def test_a_truncated_answer_exits_naming_the_url(monkeypatch):
+    class Truncated(io.BytesIO):
+        def read(self, *a): raise http.client.IncompleteRead(b"par", 10)
+    monkeypatch.setattr(net.urllib.request, "urlopen", lambda req, timeout: Truncated())
+    with pytest.raises(net.Failed, match=f"^{re.escape(URL)}: IncompleteRead\\(3 bytes read, 10 more expected\\)$"):
+        net.get(URL)
