@@ -2,7 +2,7 @@ import copy, json
 from pathlib import Path
 import pytest
 from conftest import run, read
-import merge, merge_rankings, project, settings
+import facts, merge, merge_rankings, project, settings, tables
 
 # each card's score from scorers A, B and C
 SCORES = {
@@ -296,53 +296,80 @@ def test_an_unknown_settings_key_is_named_and_ignored():
     assert '"budget": 20' in out.stdout
 
 
-# each deck's Score and four criteria from rankers A, B and C, Salt the same from each, and each ranker's own
-# Bracket and Kill turn
-RANKS = {"zara": {"A": (60, [7, 5, 5, 4]), "B": (50, [6, 4, 5, 4]), "C": (70, [3, 5, 9, 4])},
-         "kor": {"A": (50, [5] * 3 + [3]), "B": (88, [8] * 3 + [3]), "C": (75, [8] * 3 + [3])}}
-NAMES = {"zara": ("Zara, Tide Caller", "U"), "kor": ("Kor Skyfisher", "W")}
-OWN = {x: (b, k) for x, b, k in zip("ABCDE", "34233", ["6-7", "5", "8", "7", "6"])}
-RULE = "|---|---|---|---|---|---|---|---|---|"
-CRIT_RULE = "|---|---|---|---|---|---|"
+# each deck's Speed, Resilience and Interaction from rankers A to E; zara's Salt is 4, kor's 3
+JUDGED = {"zara": {"A": [7, 5, 5], "B": [6, 4, 5], "C": [3, 5, 9]},
+          "kor": {"A": [5, 5, 5], "B": [8, 8, 8], "C": [8, 8, 8]}}
+OWN = {x: (b, k) for x, b, k in zip("ABCDE", ["3", "4", "2", "3, top", "3"], ["6-7", "5", "8", "7", "6"])}
+JUDGMENTS_RULE = "|---|---|---|---|---|---|---|"
 
 
-def ledger(name, x):
+def decks(salts={"Zara, Tide Caller": 0.525, "Kor Skyfisher": 0.45}):
+    """the fixture with a second deck, kor, the commanders given colours and these salts, moxfield.json naming both,
+    and run/ holding both decks' counts files"""
+    oracle = json.loads(read("output/data/oracle.json"))
+    oracle["cards"]["Kor Skyfisher"] = {"name": "Kor Skyfisher", "type_line": "Creature — Kor Bird Soldier",
+                                        "color_identity": ["W"]}
+    oracle["cards"]["Zara, Tide Caller"]["color_identity"] = ["U"]
+    for name, value in salts.items(): oracle["cards"][name]["salt"] = value
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    Path("output/decks/kor").mkdir()
+    Path("output/decks/kor/list.txt").write_text("1 Kor Skyfisher\n\n1 Sol Ring\n9 Island\n")
+    Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara", "k1": "kor"}}))
+    Path("run").mkdir(exist_ok=True)
+    for slug in ("zara", "kor"): facts.counts("run", slug)
+
+
+def ledger(slug, x):
     """ranker x's Ledger rows for one deck, each naming the ranker"""
-    return [f"| {name} | {c} | 5 | count {x} | cards {x} |" for c in ("Resilience", "Interaction", "Salt")]
+    return [f"| {slug} | {c} | 5 | count {x} | cards {x} |" for c in ("Resilience", "Interaction")]
 
 
-def rankers(ranks=RANKS, letters="ABC"):
-    """one run/rankings-<letter>.md per letter, as the ranker agent shapes it, its rows by its own Score"""
-    Path("run").mkdir()
+def rankers(judged=JUDGED, letters="ABC", order=None):
+    """one run/rankings-<letter>.md per letter in the ranker agent's shape, its decks in order[letter] or strongest
+    first by its own values; makes the decks first"""
+    if not Path("run").exists(): decks()
     for x in letters:
-        decks = sorted(ranks, key=lambda d: -ranks[d][x][0])
-        rows = "".join(f"| {i} | [{NAMES[d][0]}](output/decks/{d}/) | {NAMES[d][1]} | {OWN[x][0]} | {ranks[d][x][0]} | "
-                       f"{OWN[x][1]} | none | why {x} | [Moxfield](https://moxfield.com/decks/{d}) |\n"
-                       for i, d in enumerate(decks, 1))
-        crit = "".join(f"| {i} | {NAMES[d][0]} | {' | '.join(map(str, ranks[d][x][1]))} |\n" for i, d in enumerate(decks, 1))
-        books = "".join(f"{l}\n" for d in decks for l in ledger(NAMES[d][0], x))
-        Path(f"run/rankings-{x}.md").write_text(f"# Rankings\n\n{merge_rankings.RANKINGS}\n{RULE}\n{rows}\n"
-                                                f"## Criteria\n\n{merge_rankings.CRITERIA}\n{CRIT_RULE}\n{crit}\n"
-                                                f"## Ledger\n\n{merge_rankings.LEDGER}\n|---|---|---|---|---|\n{books}")
+        slugs = (order or {}).get(x) or sorted(judged, key=lambda d: -sum(judged[d][x]))
+        rows = "".join(f"| {d} | {' | '.join(map(str, judged[d][x]))} | {OWN[x][1]} | {OWN[x][0]} | why {x} |\n"
+                       for d in slugs)
+        books = "".join(f"{l}\n" for d in slugs for l in ledger(d, x))
+        Path(f"run/rankings-{x}.md").write_text(f"# Judgments ({x})\n\n{merge_rankings.JUDGMENTS}\n{JUDGMENTS_RULE}\n"
+                                                f"{rows}\n## Ledger\n\n| Deck | Criterion | Value | Count | Cards |\n"
+                                                f"|---|---|---|---|---|\n{books}")
 
 
-def test_merge_rankings_takes_the_mean_of_three_rankers_on_four_criteria():
-    rankers()
+def ranked():
+    """run/rankings.md as {slug: {column: cell}}, its Rankings and Criteria columns, its decks in order"""
+    secs = dict(tables.split(read("run/rankings.md")))
+    heads = lambda h: [c.strip() or "Moxfield" for c in h.strip("|").split("|")]
+    crit = {r[0]: dict(zip(heads(merge_rankings.CRITERIA), r)) for r in tables.cells(secs["## Criteria"])}
+    return {r[1].split("decks/")[1].rstrip("/)"): crit[r[0]] | dict(zip(heads(merge_rankings.RANKINGS), r))
+            for r in tables.cells(secs[None])}
+
+
+def merges(*stderr):
+    """ranked() after a merge that succeeds printing these lines"""
     out = run("skills/score/merge_rankings.py", "run")
-    assert out.returncode == 0
-    assert out.stderr == "zara: split Speed 7/6/3, Interaction 5/5/9\n"
-    # zara's criteria 5.3, 4.7, 6.3 and Salt 4.0, their mean 5.075, its Score 50.9; kor's 7.0 three times and 3.0, 62.5
+    assert (out.returncode, out.stderr) == (0, "".join(f"{l}\n" for l in stderr))
+    return ranked()
+
+
+def test_merge_rankings_takes_the_mean_of_three_rankers_and_computes_the_rest():
+    rankers()
+    merges("zara: split Speed 7/6/3, Interaction 5/5/9")
+    # zara's criteria 5.3, 4.7, 6.3 and Salt 4, their mean 5.075, its Score 50.9; its own Scores 53.1, 46.9 and 53.1
+    # make A the median; kor's 7.0 three times and Salt 3, 62.5, its own 43.8, 71.9 and 71.9 make B the median
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
-{RULE}
-| 1 | [Kor Skyfisher](output/decks/kor/) | W | 2 | 62.5 | 8 | none | why C | [Moxfield](https://moxfield.com/decks/kor) |
-| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 50.9 | 6-7 | none | why A | [Moxfield](https://moxfield.com/decks/zara) |
+|---|---|---|---|---|---|---|---|---|
+| 1 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 62.5 | 5 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
+| 2 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 50.9 | 6-7 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
 
 ## Criteria
 
 {merge_rankings.CRITERIA}
-{CRIT_RULE}
+|---|---|---|---|---|---|
 | 1 | Kor Skyfisher | 7.0 | 7.0 | 7.0 | 3.0 |
 | 2 | Zara, Tide Caller | 5.3 | 4.7 | 6.3 | 4.0 |
 
@@ -350,25 +377,87 @@ def test_merge_rankings_takes_the_mean_of_three_rankers_on_four_criteria():
 
 {merge_rankings.LEDGER}
 |---|---|---|---|---|
-""" + "".join(f"{l}\n" for l in ledger("Kor Skyfisher", "C") + ledger("Zara, Tide Caller", "A"))
+| Kor Skyfisher | Resilience | 5 | count B | cards B |
+| Kor Skyfisher | Interaction | 5 | count B | cards B |
+| Kor Skyfisher | Salt | 3 | mean 0.45 over 1 cards | - |
+| Zara, Tide Caller | Resilience | 5 | count A | cards A |
+| Zara, Tide Caller | Interaction | 5 | count A | cards A |
+| Zara, Tide Caller | Salt | 4 | mean 0.53 over 1 cards | - |
+"""
 
 
-def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_ledger():
-    # Speed 1 5 6 7 9 keeps 5 6 7, Resilience 3 3 4 9 9 keeps 3 4 9; Scores 70 60 30 50 40 make D the median
-    five = {"zara": {"A": (70, [1, 3, 5, 4]), "B": (60, [9, 9, 5, 4]), "C": (30, [5, 3, 5, 4]),
-                     "D": (50, [6, 4, 5, 4]), "E": (40, [7, 9, 5, 4])}}
+def test_merge_rankings_takes_the_middle_three_of_five_and_the_median_rankers_cells():
+    # Speed 1 5 6 7 9 keeps 5 6 7, Resilience 3 3 4 9 9 keeps 3 4 9; own Scores 28.1 71.9 40.6 46.9 65.6 make D the median
+    five = {"zara": {"A": [1, 3, 5], "B": [9, 9, 5], "C": [5, 3, 5], "D": [6, 4, 5], "E": [7, 9, 5]},
+            "kor": {x: [5, 5, 5] for x in "ABCDE"}}
     rankers(five, "ABCDE")
-    out = run("skills/score/merge_rankings.py", "run")
-    assert out.returncode == 0
-    assert out.stderr == "zara: split Speed 1/9/5/6/7, Resilience 3/9/3/4/9\n"
-    text = read("run/rankings.md")
-    # (6.0 + 5.3 + 5.0 + 4.0) / 4 = 5.075, its Score 50.9
-    assert "| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 50.9 | 7 | none | why D |" in text
-    assert "| 1 | Zara, Tide Caller | 6.0 | 5.3 | 5.0 | 4.0 |" in text
-    assert text.endswith("|---|---|---|---|---|\n" + "".join(f"{l}\n" for l in ledger("Zara, Tide Caller", "D")))
+    got = merges("zara: split Speed 1/9/5/6/7, Resilience 3/9/3/4/9")["zara"]
+    # (6.0 + 5.3 + 5.0 + 4) / 4 = 5.075, its Score 50.9
+    assert [got[c] for c in ("Speed", "Resilience", "Interaction", "Salt", "Score", "Bracket", "Kill turn", "Why")] == \
+        ["6.0", "5.3", "5.0", "4.0", "50.9", "3, top", "7", "why D"]
+    assert "| Zara, Tide Caller | Resilience | 5 | count D | cards D |" in read("run/rankings.md")
 
 
-def test_one_ranker_is_copied_as_it_is():
+def test_merge_rankings_rounds_a_mean_of_two_or_four_half_up():
+    rankers({"zara": {"A": [5, 4, 5], "B": [6, 5, 5]}, "kor": {x: [5, 5, 5] for x in "AB"}}, "AB")
+    assert [merges()["zara"][c] for c in ("Speed", "Resilience")] == ["5.5", "4.5"]
+    rankers({"zara": {"A": [5, 5, 5], "B": [5, 5, 5], "C": [5, 5, 5], "D": [6, 5, 5]},
+             "kor": {x: [5, 5, 5] for x in "ABCD"}}, "ABCD")
+    assert merges()["zara"]["Speed"] == "5.3"  # 21 / 4 = 5.25
+
+
+def test_merge_rankings_rounds_a_score_ending_in_5_up():
+    # Speed and Resilience 5 6 6, 5.7 each, Interaction 5.0 and Salt 4: (20.4 / 4 - 1) / 8 * 100 = 51.25
+    rankers({"zara": {"A": [5, 5, 5], "B": [6, 6, 5], "C": [6, 6, 5]}, "kor": {x: [5, 5, 5] for x in "ABC"}})
+    assert merges()["zara"]["Score"] == "51.3"
+
+
+def test_merge_rankings_breaks_a_tie_by_mean_place_then_by_slug():
+    same = {"zara": {x: [5, 5, 5] for x in "ABC"}, "kor": {x: [5, 5, 5] for x in "ABC"}}
+    decks({"Zara, Tide Caller": 0.45, "Kor Skyfisher": 0.45})
+    rankers(same, order={"A": ["zara", "kor"], "B": ["zara", "kor"], "C": ["kor", "zara"]})
+    assert list(merges()) == ["zara", "kor"]
+    for x in "ABC": Path(f"run/rankings-{x}.md").unlink()
+    rankers(same, "AB", order={"A": ["zara", "kor"], "B": ["kor", "zara"]})
+    assert list(merges()) == ["kor", "zara"]
+
+
+def test_one_ranker_goes_through_the_merge():
     rankers(letters="B")
-    assert run("skills/score/merge_rankings.py", "run").returncode == 0
-    assert read("run/rankings.md") == read("run/rankings-B.md")
+    got = merges()
+    # kor 8, 8, 8 and Salt 3: 71.9; zara 6, 4, 5 and Salt 4: 46.9
+    assert [(d, got[d]["Score"], got[d]["Speed"], got[d]["Why"]) for d in got] == \
+        [("kor", "71.9", "8.0", "why B"), ("zara", "46.9", "6.0", "why B")]
+
+
+@pytest.mark.parametrize("change, faults", [
+    (lambda t: t.replace("| kor |", "| ghost |"), ["kor: missing", "ghost: not a deck of the run"]),
+    (lambda t: t + "| ghost | 5 | 5 | 5 | 6 | 3 | why |\n", ["ghost: not a deck of the run"]),
+    (lambda t: t.replace("| zara | 7 |", "| zara | 10 |"), ["zara: Speed 10 is not a whole number from 1 to 9"]),
+    (lambda t: t.replace("| 6-7 | 3 |", "| 6-7 | 3 top |", 1),
+     ["zara: Bracket 3 top is not 1 to 5 with ', top' or ', low'"]),
+])
+def test_merge_rankings_rejects_a_faulty_ranker_file(change, faults):
+    rankers()
+    path = Path("run/rankings-A.md")
+    head, _, books = path.read_text().partition("\n## Ledger")
+    path.write_text(change(head.rstrip("\n") + "\n") + "\n## Ledger" + books)
+    out = run("skills/score/merge_rankings.py", "run")
+    assert (out.returncode, out.stderr) == (1, "".join(f"rankings-A.md: {f}\n" for f in faults))
+    assert not Path("run/rankings.md").exists()
+
+
+def test_merge_rankings_computes_the_link_game_changers_and_colours():
+    decks()
+    Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara"}}))
+    oracle = json.loads(read("output/data/oracle.json"))
+    oracle["cards"]["Sol Ring"]["game_changer"] = True
+    oracle["cards"]["Zara, Tide Caller"]["color_identity"] = ["G", "U", "W"]
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    rankers()
+    got = merges("zara: split Speed 7/6/3, Interaction 5/5/9")
+    assert got["kor"]["Moxfield"] == "-" and got["zara"]["Moxfield"] == "[Moxfield](https://moxfield.com/decks/z1)"
+    assert got["kor"]["Game Changers"] == got["zara"]["Game Changers"] == "Sol Ring"
+    assert got["zara"]["Colours"] == "WUG"
+    Path("moxfield.json").unlink()
+    assert merges("zara: split Speed 7/6/3, Interaction 5/5/9")["zara"]["Moxfield"] == "-"

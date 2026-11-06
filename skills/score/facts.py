@@ -1,6 +1,6 @@
 """Write each deck's two fact files into <run_dir>: <slug>-combos.md, its combos from Commander Spellbook (combos.py),
-and <slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below, ending
-with the deck's Salt level, by salt() below.
+and <slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below, then its
+Game Changers, by game_changers() below, ending with the deck's Salt level, by salt() below.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run_dir> <slug> [slug ...]
 Prints the cards of each deck Spellbook does not know. When Spellbook is unreachable it prints one line naming the URL,
 and the deck gets no combos file."""
@@ -43,9 +43,18 @@ def salt(slug):
     level = min(9, max(1, math.floor(1 + 8 * (mean - 0.3) / 0.6 + 0.5)))
     return mean, n, level, sorted({(name, s) for _, name, s in found if s >= SALTY}, key=lambda c: (-c[1], c[0]))
 
+def game_changers(slug):
+    """the sorted front-face names of the list's cards, commanders in and the SIDEBOARD block out, whose oracle.json
+    entry has game_changer"""
+    oracle = named()
+    commanders, rest = decklist(slug)
+    return sorted({name.split(" // ")[0] for _, name in commanders + rest
+                   if (oracle.get(name.casefold()) or {}).get("game_changer")})
+
 def counts(run, slug):
     """write <run>/<slug>-counts.md: per category of ROWS the list's card copies in it and their names, commanders in
-    and the SIDEBOARD block out, a card oracle.json lacks in none; then the deck's Salt row, by salt()"""
+    and the SIDEBOARD block out, a card oracle.json lacks in none; then its Game Changers row, by game_changers(), and
+    its Salt row, by salt()"""
     oracle = named()
     commanders, rest = decklist(slug)
     found = {r: {} for r in ROWS}
@@ -60,6 +69,8 @@ def counts(run, slug):
                 into.append("Instant-speed answers")
         for c in into: found[c][name] = found[c].get(name, 0) + copies
     rows = [[r, str(sum(found[r].values())), "; ".join(sorted(found[r])) or "-"] for r in ROWS]
+    changers = game_changers(slug)
+    rows.append(["Game Changers", str(len(changers)), "; ".join(changers) or "-"])
     mean, n, level, salty = salt(slug)
     rows.append(["Salt", str(level),
                  f"mean {mean:.2f} over {n} cards; " + ("; ".join(f"{c} {s:.1f}" for c, s in salty) or "-")])

@@ -210,8 +210,23 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 | Counters | 1 | Tidal Insight |
 | Removal | 1 | Wave Breaker |
 | Wipes | 1 | Brine Elemental |
+| Game Changers | 0 | - |
 | Salt | 1 | mean 0.00 over 0 cards; - |
 """
+
+
+def test_counts_name_the_game_changers_of_the_list_without_its_sideboard():
+    oracle = json.loads(read("output/data/oracle.json"))
+    for name in ("Sol Ring", "Drowned Scholar // Tidal Insight", "Zara, Tide Caller", "Pearl Diver"):
+        oracle["cards"][name]["game_changer"] = True
+    Path("output/data/oracle.json").write_text(json.dumps(oracle))
+    list_ = Path("output/decks/zara/list.txt")
+    list_.write_text(list_.read_text().replace("1 Tidal Insight", "1 Drowned Scholar // Tidal Insight")
+                     + "\nSIDEBOARD:\n1 Pearl Diver\n")
+    assert facts.game_changers("zara") == ["Drowned Scholar", "Sol Ring", "Zara, Tide Caller"]
+    Path("run").mkdir()
+    facts.counts("run", "zara")
+    assert "\n| Game Changers | 3 | Drowned Scholar; Sol Ring; Zara, Tide Caller |\n| Salt |" in read("run/zara-counts.md")
 
 
 def salted(values):

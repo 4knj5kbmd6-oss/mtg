@@ -19,10 +19,10 @@ every slug under `output/decks/` that has a `list.txt`. Then dispatch
 `rankers` `mtg-toolbox:ranker` agents, lettered A, B, C and on, each prompt
 giving `<run>` as an absolute path, the letter and those slugs, in the same
 order for every ranker, and nothing else; they read each deck's two fact
-files in `<run>`: combos and counts. When all are back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
-merges their `<run>/rankings-<letter>.md` into `<run>/rankings.md` and
-prints each deck's criteria the rankers put 4 or more apart. Copy
-`<run>/rankings.md` over `rankings.md`.
+files in `<run>`: combos and counts. When all are back, run
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`; when
+it exits naming a ranker file, re-dispatch that letter alone and merge
+again. Copy `<run>/rankings.md` over `rankings.md`.
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
