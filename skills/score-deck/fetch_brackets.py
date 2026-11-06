@@ -1,6 +1,6 @@
 """Fetch Wizards' Commander Brackets announcement and its updates into output/data/brackets.md, one ## section per
 article of PAGES, in their date order.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/fetch_brackets.py
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/fetch_brackets.py
 Fetches only the articles the file lacks, matched by their Source lines, so an article added to PAGES is fetched alone.
 Each section is the article's heading, its URL and its text up to the article's end, read by fetch_syntax's parser. A
 page that answers other than 200, or with Cloudflare's challenge, stops the run with one line naming its URL. Prints

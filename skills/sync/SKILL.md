@@ -53,5 +53,5 @@ and the Moxfield pass leaves it alone.
 Report in a line per changed deck: cards in, cards out; then the added
 decks, the landed changes and any blocked deck `sync.py` printed, and the
 lines `plan_check.py` printed. A
-`rescore:` deck needs rescoring (`/score`); say so, do not start it
+`rescore:` deck needs rescoring (`/score-cards`); say so, do not start it
 unasked.

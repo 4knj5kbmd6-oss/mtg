@@ -1,5 +1,5 @@
 """Merge the rankers' judgments into rankings.md, computing every cell a ranker does not judge.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py [--recompute] <run_dir>
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/merge_rankings.py [--recompute] <run_dir>
 The decks are the slugs of <run_dir>/*-counts.md. Each <run_dir>/rankings-<letter>.md, in the ranker agent's shape,
 must hold each deck exactly once, each JUDGED criterion a whole number from 1 to its SCALE and its Bracket 1 to 5,
 optionally followed by ", top" or ", low"; anything else exits 1 with one "rankings-<letter>.md: <slug>: <what>" line

@@ -167,7 +167,7 @@ def test_every_add_scored_by_name_reaches_the_sheet(sheet):
         Path(f"run/work-zara-{letter}").mkdir()
         Path(f"run/work-zara-{letter}/zara.md").write_text("# Zara, Tide Caller: fit scores\n\n## Adds\n"
             "| Card | Score | Role | Note |\n|---|---|---|---|\n" + "".join(f"| {n} | {s} | draw | fits |\n" for n, s in score.items()))
-    out = run("skills/score/merge.py", "run", "zara", *names)
+    out = run("skills/score-cards/merge.py", "run", "zara", *names)
     assert out.returncode == 0, out.stderr
     for k in project.KINDS: Path(f"output/decks/zara/{k}.md").write_text(read(f"run/merged/zara/{k}.md"))
     assert dict(sheet.bands("zara")) == {

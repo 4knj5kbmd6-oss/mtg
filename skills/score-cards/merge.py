@@ -1,5 +1,5 @@
 """Merge the scorers' files to a deck's nonlands.md and lands.md: median, majority Role and spread flags.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run_dir> <slug> [card ...]
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-cards/merge.py <run_dir> <slug> [card ...]
 reads every <run_dir>/work-*/<slug>.md, one per scorer, its letter the folder name's last character, in letter
 order, the deck title from output/decks/<slug>/plan.md's first `# ` heading (else list.txt's first line)
 and the Adds and Cuts tables from output/decks/<slug>/nonlands.md and lands.md; writes <run_dir>/merged/<slug>/nonlands.md and lands.md, their

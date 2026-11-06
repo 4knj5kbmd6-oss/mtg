@@ -48,12 +48,12 @@ first use and looks up on Scryfall any card it has not seen.
    yourself in the [plan shape](skills/deck-files/SKILL.md#plan).
    Not cast names the cards the deck cheats into play rather than casts;
    `/mana` leaves them out of its land count.
-3. `/score`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
+3. `/score-cards`, then `/score-deck`, then `/upgrades`; `/cart` builds a TCGplayer cart from any list.
 
-**Cost.** Every deck in a `/score` run is read by `scorers` scorers on their
-`models` entry (defaults in [`settings.py`](lib/settings.py)), each taking a
-group of decks that share colours, plus `rankers` rankers when several decks
-are rescored or a deck has no bracket yet. `scorers`, `rankers` and `models`
+**Cost.** Every deck in a `/score-cards` run is read by `scorers` scorers on
+their `models` entry (defaults in [`settings.py`](lib/settings.py)), each
+taking a group of decks that share colours; a `/score-deck` run, or a deck
+with no bracket yet, adds `rankers` rankers reading every deck. `scorers`, `rankers` and `models`
 in `settings.json` lower it.
 
 ## Settings
@@ -61,7 +61,7 @@ in `settings.json` lower it.
 `settings.json`, beside `output/`, holds any of these keys. An absent file
 or key takes its default from [`settings.py`](lib/settings.py), and
 a partial `models`, `quota` or `cart` keeps the rest of its default. A `key=value` on
-the command line overrides one for that run (`/score budget=50 quota.adds=15`).
+the command line overrides one for that run (`/score-cards budget=50 quota.adds=15`).
 
 | Key | What |
 |---|---|
@@ -111,9 +111,9 @@ Your output, all under `output/` (gitignored):
 
 | Path | What |
 |---|---|
-| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `notes.md` (the plan `/plan` replaced), `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score` and `/upgrades`) |
+| `decks/<slug>/` | `list.txt` (the deck as you intend it: Moxfield's list with `changes.md` applied), `plan.md`, `notes.md` (the plan `/plan` replaced), `nonlands.md` and `lands.md` (fit scores with each card's Role, adds, cuts; `nonlands.md` ends with a Roles line tallying the roles), `changes.png` (an image of every add and cut, each with its score under it, redrawn by `/score-cards` and `/upgrades`) |
 | `data/` | `oracle.json` (Scryfall, with each card's rulings, functional `tags` and EDHREC `salt`), `tokens.md` and `images/` (each card's image, fetched once) |
-| `data/variants.json.gz` | Commander Spellbook's combos, cut to the fields `/score` reads, fetched again once a day old |
+| `data/variants.json.gz` | Commander Spellbook's combos, cut to the fields `/score-cards` and `/score-deck` read, fetched again once a day old |
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |
 | `data/rules.txt` | The Comprehensive Rules, for `/judge` |
 | `data/scryfall-syntax.md` | Scryfall's search reference, one section per docs page, for `/scryfall` |

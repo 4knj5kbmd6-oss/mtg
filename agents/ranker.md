@@ -1,6 +1,6 @@
 ---
 name: ranker
-description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as two tables. Dispatched by the score and upgrades skills: before a run whose deck rankings.md lacks, and after a rescore.
+description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as two tables. Dispatched by the score-deck skill, which the score-cards and upgrades skills run before a run whose deck rankings.md lacks.
 tools: Read, Grep, Glob, Bash, Write
 skills: mtg-toolbox:deck-files
 ---

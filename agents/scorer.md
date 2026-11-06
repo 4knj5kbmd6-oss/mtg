@@ -1,6 +1,6 @@
 ---
 name: scorer
-description: Scores every card in a group of the owner's Commander decks 0 to 10 with the fit-score metric, on its own, one file per deck. Dispatched by the score and upgrades skills, several to a group, their scores merged by median.
+description: Scores every card in a group of the owner's Commander decks 0 to 10 with the fit-score metric, on its own, one file per deck. Dispatched by the score-cards and upgrades skills, several to a group, their scores merged by median.
 tools: Read, Grep, Glob, Bash, Write, WebFetch
 skills: mtg-toolbox:deck-files
 ---

@@ -1,7 +1,7 @@
 """Write each deck's two fact files into <run_dir>: <slug>-combos.md, its combos from Commander Spellbook (combos.py),
 and <slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below, then its
 Game Changers, by game_changers() below, ending with the deck's Salt level, by salt() below.
-usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run_dir> <slug> [slug ...]
+usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/facts.py <run_dir> <slug> [slug ...]
 Writes each deck's counts file before its combos file. Prints, per deck, the list's cards oracle.json lacks, commanders
 included, and the cards Spellbook does not know. When Spellbook is unreachable it prints one line naming the URL, and the
 deck gets no combos file."""
@@ -9,6 +9,7 @@ import math, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mana"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "score-cards"))
 from project import decklist, front, named
 from tables import table
 from mana import land_drop

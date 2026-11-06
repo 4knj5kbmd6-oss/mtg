@@ -1,10 +1,10 @@
 ---
-name: score
-description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md, redraw its changes.png, recompute rankings.md after a rescore of several decks or when a deck has no bracket yet. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
-argument-hint: "[slug ...] [key=value ...] | <slug> <card name> [<card name> ...]"
+name: score-cards
+description: Score every card in one or more of your Commander decks with the fit-score metric (independent scorers, median), write output/decks/<slug>/nonlands.md and lands.md and redraw its changes.png. Use when asked to score, rescore or re-evaluate a deck's cards, or after a plan or metric change.
+argument-hint: "[slug ...] [key=value ...] | <slug> <card name ...>"
 ---
 
-# score
+# score-cards
 
 The metric lives in the `mtg-toolbox:scorer` agent,
 `${CLAUDE_PLUGIN_ROOT}/agents/scorer.md`; the owner tunes it there, this
@@ -13,30 +13,11 @@ fix the metric or the deck's `plan.md` and rescore.
 
 Settings and dispatch as the deck-files skill's Dispatch section says.
 
-To rank the decks, first fetch the bracket articles the project lacks,
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/fetch_brackets.py`, and write
-every deck's two fact files,
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...` given
-every slug under `output/decks/` that has a `list.txt`. Then dispatch
-`rankers` `mtg-toolbox:ranker` agents, lettered A, B, C and on, each prompt
-giving `<run>` as an absolute path, the letter and those slugs, in the same
-order for every ranker, and nothing else; they read each deck's two fact
-files in `<run>`: combos and counts. When all are back, run
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`; when
-it exits naming a ranker file, re-dispatch that letter alone and merge
-again. Copy `<run>/rankings.md` over `rankings.md`.
-
-After a change to a computed criterion alone (merge_rankings.py's
-`COMPUTED`), run `facts.py <run>` with every slug as above, then
-`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py --recompute <run>`,
-then copy `<run>/rankings.md` over `rankings.md`; no ranker runs. A change
-to a judged criterion or its levels still ranks the decks.
-
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
 2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
    files into it,
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`,
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/facts.py <run> <slug> ...`,
    and check each deck's plan,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/plan_check.py <slug> ...`,
    which prints each plan card name not in the deck's list.
@@ -45,14 +26,15 @@ to a judged criterion or its levels still ranks the decks.
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py "<card name>" ...`
    with them and rerun facts.py for those decks.
    If `rankings.md` is missing or has no row for one of the run's decks,
-   first rank the decks. Group decks by shared colours (two or three per group). Dispatch
+   first rank the decks as
+   `${CLAUDE_PLUGIN_ROOT}/skills/score-deck/SKILL.md` ranks them. Group decks by shared colours (two or three per group). Dispatch
    `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and
    on, each prompt giving `<run>`, the letter, the scorer's own
    `<run>/work-<group>-<letter>/` subfolder, where its finished files land,
    and the group's slugs, each with its bracket from `rankings.md` and its
    combos file.
 3. When all of a group are back, per deck
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`. It
+   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-cards/merge.py <run> <slug>`. It
    prints the deck's shape line and, with two or more scorers, the count of
    split cards (merge.py's SPLIT apart), listed in `<run>/<slug>-flagged.md`.
 4. Copy each deck's merged pair, `<run>/merged/<slug>/`, into
@@ -62,9 +44,8 @@ to a judged criterion or its levels still ranks the decks.
    redraws `output/decks/<slug>/changes.png` from its Adds and Cuts tables; a
    deck with neither prints "no adds or cuts" and gets no image. With
    `images` false the report says in a line that changes.png was skipped.
-5. If more than one deck was rescored, or the owner asks, rank the decks.
 
-Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
+Card names after a slug, `/score-cards <slug> <card name> [<card name> ...]`,
 score only those cards for that deck, usually a card just added through
 `changes.md`. A card not in the deck's `list.txt` is a candidate, scored as
 if added; one missing from `oracle.json` is fetched into it first with
@@ -74,9 +55,9 @@ deck alone as a group of one, each scorer's prompt also naming the cards,
 and merge.py given them after the slug, `merge.py <run> <slug> "<card name>" ...`; it
 patches those rows into the deck's `nonlands.md` and `lands.md` (a
 candidate's into Adds) instead of rewriting them; a later `/upgrades`
-drops a candidate its research does not list. The rankers do not run.
+drops a candidate its research does not list.
 
-Report: per deck its score from `rankings.md`, its Interaction and Salt
-named as computed, the shape line, the 10s and the split cards in one line
+Report: per deck the shape line, the 10s and the split cards in one line
 ("split: X, Y"), a sign the plan is unclear on them; anything that moved by 3 or more since the last scoring; the lines
-`plan_check.py` printed.
+`plan_check.py` printed. It ends by naming the decks rescored and that
+`/score-deck` ranks them.
