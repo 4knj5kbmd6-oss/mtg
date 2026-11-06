@@ -19,7 +19,7 @@ inputs named below.
 
 To rank the decks, dispatch `rankers` `mtg-toolbox:ranker` agents, lettered
 A, B, C and on, each prompt giving `<run>` and the letter; they read every
-deck's three fact files in `<run>`: combos, mana and counts. When all are
+deck's two fact files in `<run>`: combos and counts. When all are
 back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
 merges their `<run>/rankings-<letter>.md`, each criterion the mean of the
 middle three rankers (all of four or fewer), into `<run>/rankings.md` and prints each deck's
@@ -28,7 +28,7 @@ criteria the rankers put 4 or more apart. Copy `<run>/rankings.md` over
 
 1. If Moxfield's `updated` may be newer than the list, run
    `mtg-toolbox:sync` first.
-2. Make a fresh scratchpad folder `<run>/` and write each deck's three fact
+2. Make a fresh scratchpad folder `<run>/` and write each deck's two fact
    files into it,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...`,
    and check each deck's plan,
@@ -41,7 +41,7 @@ criteria the rankers put 4 or more apart. Copy `<run>/rankings.md` over
    on, each prompt giving `<run>`, the letter, the scorer's own
    `<run>/work-<group>-<letter>/` subfolder, where its finished files land,
    and the group's slugs, each with its bracket from `rankings.md` and its
-   combos and mana files.
+   combos file.
 3. When all of a group are back, per deck
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge.py <run> <slug>`. It
    prints the deck's shape line and, with two or more scorers, the count of

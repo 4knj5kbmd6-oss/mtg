@@ -245,14 +245,8 @@ def test_mana_counts_fetch_lands_by_the_types_they_find(capsys):
 | Lands | Lands now | U | B | Split now |
 |---|---|---|---|---|
 | 8 (7-8) | 13 | 40% (3) | 60% (5) | U 60% (10), B 40% (7) |
-
-## Level
-| Lasting cheap sources | Castable | Ramp | Short |
-|---|---|---|---|
-| 3 | 100% | 88% | 0 |
 """
     # ramp: Mox Opal, Sol Ring, Arcane Signet (Dark Ritual is an instant); 3/8 and 5/8 tie on remainder, U first
-    # Short: U's 75th-percentile card needs 7 of [4, 6, 7] against 10 sources, B's 6 of [5, 6, 6, 7] against 7
     lands, sources = recommendation(read("run/lazav-mana.md"))
     assert 0 <= lands <= 21 - 3 and sum(sources) == lands
 
@@ -364,11 +358,6 @@ def test_mana_odds_are_unknown_with_fewer_known_cards_than_are_seen(capsys):
 | Lands | Lands now | U | Split now |
 |---|---|---|---|
 | unknown | 5 | unknown | U 100% (5) |
-
-## Level
-| Lasting cheap sources | Castable | Ramp | Short |
-|---|---|---|---|
-| 0 | unknown | unknown | unknown |
 """
 
 
@@ -454,9 +443,7 @@ def test_split_now_counts_a_dual_land_in_both_its_colours():
     mana.write("run", "duals")
     # 6 lands make 4 U and 5 B sources: 80/9 and 100/9 twentieths are 8 and 11, the one left over to U's remainder
     assert read("run/duals-mana.md").endswith("## Recommendation\n| Lands | Lands now | U | B | Split now |\n"
-                                               "|---|---|---|---|---|\n| unknown | 6 | unknown | unknown | U 45% (4), B 55% (5) |\n\n"
-                                               "## Level\n| Lasting cheap sources | Castable | Ramp | Short |\n"
-                                               "|---|---|---|---|\n| 0 | unknown | unknown | unknown |\n")
+                                               "|---|---|---|---|---|\n| unknown | 6 | unknown | unknown | U 45% (4), B 55% (5) |\n")
 
 
 def test_odds_mana_counts_ramp_from_the_turn_after_it_is_drawn():
@@ -545,95 +532,18 @@ def test_ramp_and_land_drops_read_from_oracle_text():
     assert [(mana.land_drop(e), mana.ramp(e)) for e in faced.values()] == [(True, False), (False, False)]
 
 
-def test_facts_writes_three_files_per_deck_the_mana_file_ending_with_its_level(combos, monkeypatch):
+def test_facts_writes_two_files_per_deck(combos, monkeypatch):
     deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1, "Island": 7})
     deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1, "Island": 7})
     monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown", "braids"])
     facts.main()
     assert sorted(p.name for p in Path("run").iterdir()) == [f"{d}-{f}.md" for d in ("beamtown", "braids")
-                                                             for f in ("combos", "counts", "mana")]
-    # 9 cards: too few to know Castable or Ramp, so it meets no bar
-    assert read("run/braids-mana.md").endswith("| 1 | unknown | unknown | 0 |\n\nMana level: 1\n")
-
-
-def test_a_plan_that_excludes_mana_gives_its_level_as_a_dash(combos, monkeypatch):
-    deck("braids", "Braids, Arisen Nightmare", {"Sol Ring": 1, "Island": 7})
-    Path("output/decks/braids/plan.md").write_text("# Braids: plan\n\n- **Not cast:** Sol Ring\n- **Mana:** excluded\n")
-    monkeypatch.setattr(sys, "argv", ["facts.py", "run", "braids"])
-    facts.main()
-    # the Level table stays, its numbers informative
-    assert read("run/braids-mana.md").endswith("## Level\n| Lasting cheap sources | Castable | Ramp | Short |\n"
-                                                "|---|---|---|---|\n| 0 | unknown | unknown | 0 |\n\nMana level: -\n")
-
-
-def test_mana_returns_castable_ramp_and_short_the_cards_not_cast_left_out():
-    cost = lambda name, value, cost: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": cost}
-    oracle = {"Zara, Tide Caller": {**cost("Zara, Tide Caller", 2, "{2}"), "color_identity": ["U"]},
-              "Cryptic": cost("Cryptic", 3, "{U}{U}{U}"), "Kraken": cost("Kraken", 9, "{7}{U}{U}"),
-              "Sprite": cost("Sprite", 1, "{U}"), "Filler": cost("Filler", 2, "{2}"),
-              "Island": {"name": "Island", "type_line": "Basic Land — Island", "cmc": 0, "produced_mana": ["U"]},
-              "Wastes": {"name": "Wastes", "type_line": "Basic Land", "cmc": 0, "produced_mana": ["C"]}}
-    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
-    deck("short", "Zara, Tide Caller", {"Island": 4, "Wastes": 32, "Filler": 58, "Sprite": 3, "Cryptic": 1, "Kraken": 1})
-    Path("output/decks/short/plan.md").write_text("- **Not cast:** Kraken\n")
-    Path("run").mkdir()
-    numbers = mana.write("run", "short")
-    # no lasting source, so mana on turn 4 is the lands among the 11 cards seen: Zara and 58 Fillers need 2, 3
-    # Sprites 1 and Cryptic 3 of them, Kraken not cast; no land drop makes a fifth mana
-    lands = lambda v: odds.at_least(v, 36, 99, 11)
-    assert numbers["castable"] == pytest.approx((59 * lands(2) + 3 * lands(1) + lands(3)) / 63)
-    assert numbers["ramp"] == 0
-    # U's cards by copy are 3 Sprites and Cryptic: the 75th percentile, the third of four, a Sprite, against 4 Islands
-    sprite = mana.needed(oracle["Sprite"], "U", 36, 99)
-    assert sprite < mana.needed(oracle["Cryptic"], "U", 36, 99) and numbers["short"] == sprite - 4 > 4
-    assert "## Level\n| Lasting cheap sources | Castable | Ramp | Short |\n|---|---|---|---|\n" \
-           f"| 0 | {numbers['castable']:.0%} | 0% | {sprite - 4} |\n" in read("run/short-mana.md")
-
-
-def test_ramp_counts_lasting_cheap_sources_from_the_turn_after_they_are_drawn():
-    rock = lambda name, value: {"name": name, "type_line": "Artifact", "cmc": value, "mana_cost": f"{{{value}}}",
-                                "oracle_text": "{T}: Add {C}."}
-    oracle = {"Zara, Tide Caller": {**rock("Zara, Tide Caller", 2), "color_identity": ["U"]}, "Rock": rock("Rock", 2),
-              "Dynamo": rock("Dynamo", 4), "Filler": {**rock("Filler", 2), "oracle_text": ""},
-              "Wastes": {"name": "Wastes", "type_line": "Basic Land", "cmc": 0, "produced_mana": ["C"]}}
-    Path("output/data/oracle.json").write_text(json.dumps({"cards": oracle}))
-    deck("rocks", "Zara, Tide Caller", {"Wastes": 36, "Rock": 10, "Dynamo": 10, "Filler": 43})
-    Path("run").mkdir()
-    numbers = mana.write("run", "rocks")
-    # the 10 Rocks make a mana each, the 10 Dynamos, of mana value 4, are not cheap
-    assert numbers["ramp"] == odds.mana(5, 4, 99, 11, 36, 10, True) > 0
-    assert "| 10 |" in read("run/rocks-mana.md").split("## Level\n")[1]
-
-
-def test_a_lasting_cheap_source_is_cheap_ramp_a_tagged_rock_or_dork_or_a_free_mana_egg():
-    entry = lambda name, kind, cost, value, text, tags=(): {"name": name, "type_line": kind, "mana_cost": cost,
-                                                            "cmc": value, "oracle_text": text, "tags": list(tags)}
-    assert all(mana.lasting(entry(n, *card)) for n, card in RAMP.items())
-    assert not any(mana.lasting(entry(n, *card)) for n, card in NOT_RAMP.items())
-    petal, ritual = entry("Lotus Petal", *NOT_RAMP["Lotus Petal"]), entry("Dark Ritual", *NOT_RAMP["Dark Ritual"])
-    assert mana.lasting({**petal, "tags": ["mana egg"]}) and not mana.lasting({**ritual, "tags": ["mana egg"]})
-    stone = entry("Odd Stone", "Artifact", "{2}", 2, "", ["mana rock"])
-    assert mana.lasting(stone) and not mana.lasting({**stone, "cmc": 3})
-    assert not mana.lasting(entry("Thran Dynamo", "Artifact", "{4}", 4, "{T}: Add {C}{C}{C}."))
-
-
-def test_mana_level_follows_the_rankers_mana_table():
-    level = facts.level
-    # Castable and Ramp compare as whole percents
-    assert [level(0.90, 0.35, 0), level(0.896, 0.346, 0), level(0.95, 0.5, 1), level(0.87, 0.25, 2)] == [9, 9, 7, 7]
-    # Ramp under 25% or a colour short by 3 or 4 holds it at 5; Castable under 84% or short by 5 at 3
-    assert [level(0.95, 0.24, 0), level(0.86, 0.9, 0), level(0.84, 0.0, 4), level(0.95, 0.9, 3)] == [5, 5, 5, 5]
-    assert [level(0.95, 0.9, 5), level(0.83, 0.9, 0), level(0.75, 0.0, 9), level(0.74, 0.9, 0)] == [3, 3, 3, 1]
-    # a number the deck is too small to know meets no bar
-    assert [level(None, 0.9, 0), level(0.95, None, 0), level(0.95, 0.5, None)] == [1, 5, 3]
+                                                             for f in ("combos", "counts")]
 
 
 def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
     oracle = json.loads(read("output/data/oracle.json"))
-    tags = {"Zara, Tide Caller": ["card advantage", "draw", "draw engine", "repeatable draw"],
-            "Kelp Weaver": ["draw", "repeatable draw"],  # a looter: draws more than once but is no engine
-            "Sol Ring": ["ramp", "tutor", "tutor-land"],  # a land tutor is ramp
-            "Coral Signet": ["protection", "recursion", "tutor", "tutor-card"],
+    tags = {"Coral Signet": ["protection", "recursion"],
             "Tidal Insight": ["counterspell", "draw"],  # an instant
             "Wave Breaker": ["removal", "spot removal"],  # with flash, below
             "Brine Elemental": ["removal", "removal-creature", "sweeper"],  # a sweeper is a wipe, not removal
@@ -647,8 +557,6 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 
 | Category | Count | Cards |
 |---|---|---|
-| Tutors | 1 | Coral Signet |
-| Draw engines | 1 | Zara, Tide Caller |
 | Recursion | 1 | Coral Signet |
 | Protection | 1 | Coral Signet |
 | Answers | 4 | Brine Elemental; Sunken Grotto; Tidal Insight; Wave Breaker |

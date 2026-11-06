@@ -139,33 +139,3 @@ Sources needed and the split can disagree: Sources needed is the 90% bar for
 the colour's most demanding card on any mix of lands, the split the most
 weighted pips met across the whole deck at L lands, so a colour's hardest card
 can need more sources than its share gives it.
-
-## Mana level
-
-The `## Level` table counts the Lasting cheap sources among the N, X left
-out, and gives Castable, Ramp and Short, from which `facts.py` reads the Mana
-level by the ranker's Mana table, percentages compared as whole numbers.
-
-- **Mana on a turn:** one land drop a turn, plus one mana a turn from each
-  lasting cheap source from the turn after it is drawn. A lasting cheap source
-  is a nonland of mana value 2 or less that taps for mana or puts a land onto
-  the battlefield (a mana rock, a mana dork, Rampant Growth), or a mana value
-  0 mana egg such as Lotus Petal; rituals, Treasure makers and counterspells
-  count nothing.
-- **Castable:** the share of the deck's cast nonlands, commanders in and Not
-  cast out, that have their mana value in mana by turn 4, or by the turn equal
-  to their mana value when later.
-- **Ramp:** the chance of 5 or more mana on turn 4.
-- **Short:** per colour, the sources its 75th-percentile card needs at the 90%
-  bar, minus the deck's land sources of that colour; the largest gap over the
-  colours.
-
-In these terms a lasting cheap source is not a land drop, and either of mv
-<= 2 and Ramp or tagged `mana rock` or `mana dork` in `oracle.json`, or of
-mv 0 and tagged `mana egg`. The mana on turn u is Q(v, u, N, 7 + u, ℓ, e_u,
-late), ℓ the N's land drops and e_u the lasting cheap sources of mv <= u - 1.
-Short counts each colour's Land sources among the N's land drops, and its
-75th-percentile card is the nearest rank among the copies of the cast cards
-with a pip of the colour ordered by Sources needed against ℓ lands, a card no
-count serves needing ℓ + 1. A number is `unknown` when N is below the cards
-seen by a turn it reads, and meets no bar.
