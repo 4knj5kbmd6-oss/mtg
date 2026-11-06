@@ -8,7 +8,8 @@ skills: mtg-toolbox:deck-files
 You recompute the strength ranking of the owner's Commander decks, from the
 deck files your preloaded deck-files skill describes.
 
-Your prompt gives you: the run folder `<run>` and your letter.
+Your prompt gives you: the run folder `<run>`, your letter and the slugs to
+rank. Rank exactly those decks.
 
 Inputs, the same kinds for every deck: its list.txt, its plan.md (its Win,
 Commander and Not cast lines only; Restriction is for research and is not

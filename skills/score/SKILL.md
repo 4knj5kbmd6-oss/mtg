@@ -13,10 +13,13 @@ fix the metric or the deck's `plan.md` and rescore.
 
 Settings and dispatch as the deck-files skill's Dispatch section says.
 
-To rank the decks, dispatch `rankers` `mtg-toolbox:ranker` agents, lettered
-A, B, C and on, each prompt giving `<run>` and the letter; they read every
-deck's two fact files in `<run>`: combos and counts. When all are
-back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
+To rank the decks, first write every deck's two fact files,
+`python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run> <slug> ...` given
+every slug under `output/decks/` that has a `list.txt`. Then dispatch
+`rankers` `mtg-toolbox:ranker` agents, lettered A, B, C and on, each prompt
+giving `<run>` as an absolute path, the letter and those slugs, in the same
+order for every ranker, and nothing else; they read each deck's two fact
+files in `<run>`: combos and counts. When all are back, `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/merge_rankings.py <run>`
 merges their `<run>/rankings-<letter>.md` into `<run>/rankings.md` and
 prints each deck's criteria the rankers put 4 or more apart. Copy
 `<run>/rankings.md` over `rankings.md`.
@@ -48,8 +51,7 @@ prints each deck's criteria the rankers put 4 or more apart. Copy
    redraws `output/decks/<slug>/changes.png` from its Adds and Cuts tables; a
    deck with neither prints "no adds or cuts" and gets no image. With
    `images` false the report says in a line that changes.png was skipped.
-5. If more than one deck was rescored, or the owner asks, run `facts.py`
-   on `<run>` with every deck not rescored this run, then rank the decks.
+5. If more than one deck was rescored, or the owner asks, rank the decks.
 
 Card names after a slug, `/score <slug> <card name> [<card name> ...]`,
 score only those cards for that deck, usually a card just added through
