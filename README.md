@@ -53,7 +53,7 @@ first use and looks up on Scryfall any card it has not seen.
 **Cost.** Every deck in a `/score-cards` run is read by `scorers` scorers on
 their `models` entry (defaults in [`settings.py`](lib/settings.py)), each
 taking a group of decks that share colours; a `/score-deck` run, or a deck
-with no bracket yet, adds `rankers` rankers reading every deck, each Speed axis the median across them. `scorers`, `rankers` and `models`
+with no bracket yet, adds `rankers` rankers reading every deck, each Speed axis the median across them, on 1 to 10. `scorers`, `rankers` and `models`
 in `settings.json` lower it.
 
 ## Settings
@@ -105,7 +105,7 @@ Your project-wide files, beside `output/` (gitignored):
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
-| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, each 1 to 9, the Score the mean of each normalised from 1 to 9 to 100; then a `Speed` table of the two judged axes, Win and Development, each 1 to 9, whose mean is Speed; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price, whose mean is Card quality, and USD, the deck's summed price in whole dollars; then a `Ledger` table of the cards behind each score |
+| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, the Score the mean of each normalised to 100; then a `Speed` table of the two judged axes, Win and Development, whose mean is Speed, every criterion and axis on 1 to 10; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price, whose mean is Card quality, and USD, the deck's summed price in whole dollars; then a `Ledger` table of the cards behind each score |
 
 Your output, all under `output/` (gitignored):
 

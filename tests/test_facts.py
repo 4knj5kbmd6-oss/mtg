@@ -307,9 +307,9 @@ def test_99_salt_is_the_mean_over_the_99s_copies_without_plain_lands_or_unknown_
                     "Pearl Diver": 3.0})  # the SIDEBOARD block is not the deck
     list_ = Path("output/decks/zara/list.txt")
     list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring") + "\nSIDEBOARD:\n1 Pearl Diver\n")
-    # (0.1 + 0.1 + 2 * 2.1 + 0.2 + 0.1 + 0.5) / 7 = 0.743, level 1 + 8 * 0.443 / 0.6 = 6.9; the commander's 0.3 apart
+    # (0.1 + 0.1 + 2 * 2.1 + 0.2 + 0.1 + 0.5) / 7 = 0.743, level 1 + 9 * 0.443 / 0.6 = 7.6; the commander's 0.3 apart
     got = quality()
-    assert got["99 salt"] == (7, "mean 0.74 over 7 cards; Sol Ring 2.10")
+    assert got["99 salt"] == (8, "mean 0.74 over 7 cards; Sol Ring 2.10")
     assert got["Commander salt"] == (1, "sum 0.30; Zara, Tide Caller 0.30")
 
 
@@ -318,9 +318,9 @@ def test_commander_salt_and_price_add_the_partners():
     valued("salt", {"Zara, Tide Caller": 0.4, "Pearl Diver": 0.35, "Sol Ring": 2.0})
     valued("price", {"Zara, Tide Caller": 6.0, "Pearl Diver": 4.0, "Sol Ring": 1.0})
     got = quality()
-    # salt 0.75: 1 + 8 * 0.45 / 0.6 = 7; price 10 dollars: 1 + 8 * log10(10) / 2 = 5
-    assert got["Commander salt"] == (7, "sum 0.75; Zara, Tide Caller 0.40; Pearl Diver 0.35")
-    assert got["Commander price"] == (5, "sum $10.00; Zara, Tide Caller $6.00; Pearl Diver $4.00")
+    # salt 0.75: 1 + 9 * 0.45 / 0.6 = 7.75; price 10 dollars: 1 + 9 * log10(10) / 2 = 5.5, half up
+    assert got["Commander salt"] == (8, "sum 0.75; Zara, Tide Caller 0.40; Pearl Diver 0.35")
+    assert got["Commander price"] == (6, "sum $10.00; Zara, Tide Caller $6.00; Pearl Diver $4.00")
 
 
 def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more():
@@ -331,16 +331,17 @@ def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more(
     Path("run").mkdir()
     facts.counts("run", "zara")
     # 2 * 1.5 + 30 + 4 * 0.25 + 20 = 54 dollars over 8 copies, under 125 level 1; the commander's 4 dollars
-    # 1 + 8 * log10(4) / 2 = 3.4
+    # 1 + 9 * log10(4) / 2 = 3.7
     assert read("run/zara-counts.md").endswith(
         "| Commander salt | 1 | sum 0.00; - |\n"
-        "| Commander price | 3 | sum $4.00; Zara, Tide Caller $4.00 |\n"
+        "| Commander price | 4 | sum $4.00; Zara, Tide Caller $4.00 |\n"
         "| 99 salt | 1 | mean 0.00 over 0 cards; - |\n"
         "| 99 price | 1 | sum $54.00 over 8 cards; Kelp Weaver $30.00; Wave Breaker $20.00 |\n")
 
 
-@pytest.mark.parametrize("value, level", [(0.3, 1), (0.6, 5), (0.9, 9), (0.1, 1), (1.4, 9), (0.65, 6)])
-def test_salt_levels_run_from_1_at_030_to_9_at_090(value, level):
+# 0.6 is 1 + 9 * 0.3 / 0.6 = 5.5, half up; 0.65 is 6.25
+@pytest.mark.parametrize("value, level", [(0.3, 1), (0.6, 6), (0.9, 10), (0.1, 1), (1.4, 10), (0.65, 6)])
+def test_salt_levels_run_from_1_at_030_to_10_at_090(value, level):
     Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n\n1 Sol Ring\n")
     valued("salt", {"Zara, Tide Caller": value, "Sol Ring": value})
     got = quality()
@@ -348,10 +349,10 @@ def test_salt_levels_run_from_1_at_030_to_9_at_090(value, level):
 
 
 @pytest.mark.parametrize("row, usd, level", [
-    ("99 price", 0, 1), ("99 price", 100, 1), ("99 price", 125, 1), ("99 price", 250, 3), ("99 price", 500, 4),
-    ("99 price", 1000, 6), ("99 price", 4000, 9), ("99 price", 10000, 9),
+    ("99 price", 0, 1), ("99 price", 100, 1), ("99 price", 125, 1), ("99 price", 250, 3), ("99 price", 500, 5),
+    ("99 price", 1000, 6), ("99 price", 4000, 10), ("99 price", 10000, 10),
     ("Commander price", 0, 1), ("Commander price", 0.5, 1), ("Commander price", 1, 1), ("Commander price", 2, 2),
-    ("Commander price", 10, 5), ("Commander price", 50, 8), ("Commander price", 100, 9), ("Commander price", 250, 9)])
+    ("Commander price", 10, 6), ("Commander price", 50, 9), ("Commander price", 100, 10), ("Commander price", 250, 10)])
 def test_price_levels_run_on_a_log_scale_from_125_to_4000_dollars_for_the_99_and_1_to_100_for_the_commanders(
         row, usd, level):
     Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n\n1 Sol Ring\n")

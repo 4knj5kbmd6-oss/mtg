@@ -6,15 +6,15 @@ from conftest import run, read
 import facts, fetch_brackets, fetch_syntax, merge_rankings, tables
 
 
-# each deck's Win and Development from rankers A to E; zara's Card quality is 4.8, kor's 2.5, and both decks'
+# each deck's Win and Development from rankers A to E; zara's Card quality is 5.3, kor's 2.8, and both decks'
 # Interaction 1, their cards untagged
 JUDGED = {"zara": {"A": [6, 5], "B": [7, 6], "C": [3, 4]},
           "kor": {"A": [5, 6], "B": [8, 7], "C": [8, 7]}}
 OWN = dict(zip("ABCDE", ["3", "4", "2", "3, top", "3"]))  # each ranker's Bracket
 UNTAGGED = "1 | 0 answers, 0 instant, 0 weighted | -"  # an untagged deck's Interaction Ledger cells past the criterion
-# zara's commander salt 0.525 is level 4 and its 10 dollars 5; its 99's salt mean 3.0 / 4 = 0.75 is 7 and its 250
-# dollars 3: Card quality 19 / 4 = 4.75, 4.8, USD 260. kor's 0.45 is 3 and its 1 dollar 1; its 99's salt 0.6 is 5 and
-# its 4.25 dollars 1: Card quality 2.5, USD 5
+# zara's commander salt 0.525 is level 4 and its 10 dollars 6; its 99's salt mean 3.0 / 4 = 0.75 is 8 and its 250
+# dollars 3: Card quality 21 / 4 = 5.25, 5.3, USD 260. kor's 0.45 is 3 and its 1 dollar 1; its 99's salt 0.6 is 6 and
+# its 4.25 dollars 1: Card quality 11 / 4 = 2.75, 2.8, USD 5
 SALTS = {"Zara, Tide Caller": 0.525, "Kor Skyfisher": 0.45, "Sol Ring": 0.6, "Brine Elemental": 2.4,
          "Coral Signet": 0.0, "Kelp Weaver": 0.0, "Island": 0.05}
 PRICES = {"Zara, Tide Caller": 10.0, "Kor Skyfisher": 1.0, "Sol Ring": 2.0, "Brine Elemental": 247.0, "Island": 0.25}
@@ -89,37 +89,38 @@ def merges(*stderr):
 def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest():
     rankers()
     merges("zara: split Win 6/7/3")
-    # zara's Win 6/7/3 has median 6 and Development 5/6/4 median 5, Speed their mean 5.5; with Interaction 1 and Card
-    # quality 4.8 its Score is (4.5 / 8 + 0 / 8 + 3.8 / 8) / 3 * 100 = 34.58; its own Scores 34.6 (5.5), 38.8 (6.5) and
-    # 26.3 (3.5) make A the median; kor's Win 8 and Development 7, Speed 7.5, with Card quality 2.5
-    # (6.5 + 1.5) / 24 * 100 = 33.33, its own 25.0, 33.3 and 33.3 make B the median
+    # zara's Win 6/7/3 has median 6, mapped 6.6, and Development 5/6/4 median 5, mapped 5.5, Speed their mean 6.05;
+    # with Interaction 1 and Card quality 5.3 its Score is (5.1 / 9 + 0 / 9 + 4.3 / 9) / 3 * 100 = 34.81; its own
+    # Scores 34.8 (6.1), 38.9 (7.2) and 26.7 (3.9) make A the median; kor's Win 8 and Development 7, mapped 8.9 and
+    # 7.8, Speed 8.4, with Card quality 2.8 (7.4 + 1.8) / 27 * 100 = 34.07, its own 25.6, 34.1 and 34.1 make B the
+    # median
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
 |---|---|---|---|---|---|---|---|
-| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 34.6 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
-| 2 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 33.3 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
+| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 34.8 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
+| 2 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 34.1 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
 
 ## Criteria
 
 | # | Commander | Speed | Interaction | Card quality |
 |---|---|---|---|---|
-| 1 | Zara, Tide Caller | 5.5 | 1.0 | 4.8 |
-| 2 | Kor Skyfisher | 7.5 | 1.0 | 2.5 |
+| 1 | Zara, Tide Caller | 6.1 | 1.0 | 5.3 |
+| 2 | Kor Skyfisher | 8.4 | 1.0 | 2.8 |
 
 ## Speed
 
 | # | Commander | Win | Development |
 |---|---|---|---|
-| 1 | Zara, Tide Caller | 6.0 | 5.0 |
-| 2 | Kor Skyfisher | 8.0 | 7.0 |
+| 1 | Zara, Tide Caller | 6.6 | 5.5 |
+| 2 | Kor Skyfisher | 8.9 | 7.8 |
 
 ## Card quality
 
 | # | Commander | Commander salt | Commander price | 99 salt | 99 price | USD |
 |---|---|---|---|---|---|---|
-| 1 | Zara, Tide Caller | 4.0 | 5.0 | 7.0 | 3.0 | 260 |
-| 2 | Kor Skyfisher | 3.0 | 1.0 | 5.0 | 1.0 | 5 |
+| 1 | Zara, Tide Caller | 4.0 | 6.0 | 8.0 | 3.0 | 260 |
+| 2 | Kor Skyfisher | 3.0 | 1.0 | 6.0 | 1.0 | 5 |
 
 ## Ledger
 
@@ -128,27 +129,27 @@ def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest(
 | Zara, Tide Caller | Win | 5 | - | cards A |
 | Zara, Tide Caller | Development | 5 | - | cards A |
 | Zara, Tide Caller | Interaction | {UNTAGGED} |
-| Zara, Tide Caller | Card quality | 4.8 | cmdr salt 4, cmdr price 5, 99 salt 7, 99 price 3 | Zara, Tide Caller 0.53; Zara, Tide Caller $10.00; Brine Elemental 2.40; Brine Elemental $247.00 |
+| Zara, Tide Caller | Card quality | 5.3 | cmdr salt 4, cmdr price 6, 99 salt 8, 99 price 3 | Zara, Tide Caller 0.53; Zara, Tide Caller $10.00; Brine Elemental 2.40; Brine Elemental $247.00 |
 | Kor Skyfisher | Win | 5 | - | cards B |
 | Kor Skyfisher | Development | 5 | - | cards B |
 | Kor Skyfisher | Interaction | {UNTAGGED} |
-| Kor Skyfisher | Card quality | 2.5 | cmdr salt 3, cmdr price 1, 99 salt 5, 99 price 1 | Kor Skyfisher 0.45; Kor Skyfisher $1.00 |
+| Kor Skyfisher | Card quality | 2.8 | cmdr salt 3, cmdr price 1, 99 salt 6, 99 price 1 | Kor Skyfisher 0.45; Kor Skyfisher $1.00 |
 """
 
 
 @pytest.mark.parametrize("answers, instant, level", [
     (0, 0, 1),
-    (2, 0, 1),  # 1 + 2 / 5 = 1.4
-    (2, 1, 2),  # 1 + 3 / 5 = 1.6
-    (10, 5, 4),  # 1 + 15 / 5
-    (8, 4, 3),  # 1 + 12 / 5 = 3.4
-    (8, 5, 4),  # 1 + 13 / 5 = 3.6
-    (30, 7, 8),  # 1 + 37 / 5 = 8.4
-    (30, 8, 9),  # 1 + 38 / 5 = 8.6
-    (25, 15, 9),  # 1 + 40 / 5
-    (40, 30, 9),  # 1 + 70 / 5 held at 9
+    (2, 0, 1),  # 1 + 9 * 2 / 40 = 1.45
+    (2, 1, 2),  # 1 + 9 * 3 / 40 = 1.675
+    (10, 5, 4),  # 1 + 9 * 15 / 40 = 4.375
+    (14, 5, 5),  # 1 + 9 * 19 / 40 = 5.275
+    (15, 5, 6),  # 1 + 9 * 20 / 40 = 5.5, half up
+    (30, 7, 9),  # 1 + 9 * 37 / 40 = 9.325
+    (30, 8, 10),  # 1 + 9 * 38 / 40 = 9.55
+    (25, 15, 10),  # 1 + 9 * 40 / 40
+    (40, 30, 10),  # 1 + 9 * 70 / 40 held at 10
 ])
-def test_interaction_is_1_plus_the_weighted_answers_over_5_half_up_held_from_1_to_9(answers, instant, level):
+def test_interaction_is_1_plus_9_times_the_weighted_answers_over_40_half_up_held_from_1_to_10(answers, instant, level):
     assert merge_rankings.interaction({"Answers": answers, "Instant-speed answers": instant}) == \
         (level, f"{answers} answers, {instant} instant, {answers + instant} weighted")
 
@@ -162,7 +163,7 @@ def test_the_merged_ledgers_interaction_row_carries_the_answers_and_their_cards(
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
     facts.counts("run", "zara")
     rankers()
-    assert merges("zara: split Win 6/7/3")["zara"]["Interaction"] == "2.0"  # 1 + 4 / 5 = 1.8
+    assert merges("zara: split Win 6/7/3")["zara"]["Interaction"] == "2.0"  # 1 + 9 * 4 / 40 = 1.9
     assert "| Zara, Tide Caller | Interaction | 2 | 3 answers, 1 instant, 4 weighted | " \
            "Brine Elemental; Tidal Insight; Wave Breaker |\n" in read("run/rankings.md")
 
@@ -182,44 +183,51 @@ def test_each_judged_criterion_is_the_median_the_mean_of_the_middle_two_when_eve
     assert merge_rankings.shown(merge_rankings.middle(values)) == median
 
 
+@pytest.mark.parametrize("value, mapped", [(1, "1.0"), (5, "5.5"), (9, "10.0"), (3, "3.3"), (8, "8.9")])
+def test_each_judged_axis_maps_from_1_to_9_onto_1_to_10_half_up(value, mapped):
+    # 1 + (x - 1) * 9 / 8: 3 is 3.25, half up, and 8 is 8.875
+    assert merge_rankings.shown(merge_rankings.axis(value)) == mapped
+
+
 def test_merge_rankings_takes_the_median_of_four_and_the_median_rankers_cells():
-    # each Speed axis 9 5 9 7 sorts to 5 7 9 9, its median 8; own Scores 49.2 32.5 49.2 40.8 make D the median
+    # each Speed axis 9 5 9 7 sorts to 5 7 9 9, its median 8, mapped 8.9; own Scores 49.3 32.6 49.3 41.1 make D the
+    # median
     four = {"zara": {"A": flat(9), "B": flat(5), "C": flat(9), "D": flat(7)}, "kor": {x: flat(5) for x in "ABCD"}}
     rankers(four, "ABCD")
     got = merges("zara: split Win 9/5/9/7, Development 9/5/9/7")["zara"]
-    # (7.0 / 8 + 0 / 8 + 3.8 / 8) / 3 * 100 = 45.0
+    # (7.9 / 9 + 0 / 9 + 4.3 / 9) / 3 * 100 = 45.19
     assert [got[c] for c in ("Speed", "Interaction", "Card quality", "Score", "Bracket", "Why")] == \
-        ["8.0", "1.0", "4.8", "45.0", "3, top", "why D"]
+        ["8.9", "1.0", "5.3", "45.2", "3, top", "why D"]
     assert "| Zara, Tide Caller | Win | 5 | - | cards D |" in read("run/rankings.md")
 
 
 def test_merge_rankings_rounds_speed_half_up():
-    rankers({"zara": {"A": [5, 5], "B": [6, 5]}, "kor": {x: flat(5) for x in "AB"}}, "AB")
-    assert [merges()["zara"][c] for c in ("Win", "Development", "Speed")] == ["5.5", "5.0", "5.3"]  # 10.5 / 2 = 5.25
+    rankers({"zara": {"A": [6, 5], "B": [6, 5]}, "kor": {x: flat(5) for x in "AB"}}, "AB")
+    assert [merges()["zara"][c] for c in ("Win", "Development", "Speed")] == ["6.6", "5.5", "6.1"]  # 12.1 / 2 = 6.05
 
 
-def test_speed_is_the_mean_of_its_merged_axes_and_the_score_normalises_each_criterion_from_1_to_9():
+def test_speed_is_the_mean_of_its_mapped_axes_and_the_score_normalises_each_criterion_from_1_to_10():
     rankers({"zara": {"A": [5, 3], "B": [6, 3]}, "kor": {x: flat(5) for x in "AB"}}, "AB")
     got = merges()["zara"]
-    # Win 5.5 and Development 3.0: Speed 8.5 / 2 = 4.25; Speed (4.3 - 1) / 8, Interaction 0 / 8 and Card quality
-    # (4.8 - 1) / 8: (3.3 + 0 + 3.8) / 24 * 100 = 29.58
+    # Win 5.5, mapped 6.0625, and Development 3, mapped 3.25: 6.1 and 3.3, Speed 9.4 / 2 = 4.7; Speed (4.7 - 1) / 9,
+    # Interaction 0 / 9 and Card quality (5.3 - 1) / 9: (3.7 + 0 + 4.3) / 27 * 100 = 29.63
     assert [got[c] for c in ("Win", "Development", "Speed", "Interaction", "Card quality", "Score")] == \
-        ["5.5", "3.0", "4.3", "1.0", "4.8", "29.6"]
+        ["6.1", "3.3", "4.7", "1.0", "5.3", "29.6"]
 
 
-def test_merge_rankings_rounds_a_score_ending_in_5_up():
-    # Speed 5.3, Interaction 1 and Card quality 4.8: (4.3 + 0 + 3.8) / 24 * 100 = 33.75
-    rankers({"zara": {"A": [5, 5], "B": [6, 5]}, "kor": {x: flat(5) for x in "AB"}}, "AB")
-    assert merges()["zara"]["Score"] == "33.8"
+@pytest.mark.parametrize("criteria, got", [([1, 1, 1], "0.0"), ([10, 10, 10], "100.0"), ([5.5, 1, 10], "50.0"),
+                                           ([2, 1, 1], "3.7")])  # 1 / 27 * 100 = 3.70
+def test_the_score_is_the_mean_of_each_criterion_normalised_from_1_to_10_out_of_100(criteria, got):
+    assert merge_rankings.shown(merge_rankings.score([merge_rankings.Fraction(str(v)) for v in criteria])) == got
 
 
 def test_card_quality_is_the_mean_of_the_four_levels_to_one_decimal():
-    # zara's levels 4 5 7 3 and kor's 3 1 5 1, as decks() gives them
+    # zara's levels 4 6 8 3 and kor's 3 1 6 1, as decks() gives them
     decks()
     _, comp, quality = merge_rankings.facts_of(Path("run"))
-    assert [comp[d]["Card quality"][0] for d in ("zara", "kor")] == [merge_rankings.Fraction(48, 10),
-                                                                     merge_rankings.Fraction(25, 10)]
-    assert quality == {"zara": ["4.0", "5.0", "7.0", "3.0", "260"], "kor": ["3.0", "1.0", "5.0", "1.0", "5"]}
+    assert [comp[d]["Card quality"][0] for d in ("zara", "kor")] == [merge_rankings.Fraction(53, 10),
+                                                                     merge_rankings.Fraction(28, 10)]
+    assert quality == {"zara": ["4.0", "6.0", "8.0", "3.0", "260"], "kor": ["3.0", "1.0", "6.0", "1.0", "5"]}
 
 
 def test_merge_rankings_breaks_a_tie_by_mean_place_then_by_slug():
@@ -235,10 +243,10 @@ def test_merge_rankings_breaks_a_tie_by_mean_place_then_by_slug():
 def test_one_ranker_goes_through_the_merge():
     rankers(letters="B")
     got = merges()
-    # zara Speed 13 / 2 = 6.5, 1 and Card quality 4.8: (5.5 + 0 + 3.8) / 24 * 100 = 38.75; kor 7.5, 1 and 2.5:
-    # (6.5 + 0 + 1.5) / 24 * 100 = 33.33
+    # zara Speed (7.8 + 6.6) / 2 = 7.2, 1 and Card quality 5.3: (6.2 + 0 + 4.3) / 27 * 100 = 38.89; kor
+    # (8.9 + 7.8) / 2 = 8.35, 1 and 2.8: (7.4 + 0 + 1.8) / 27 * 100 = 34.07
     assert [(d, got[d]["Score"], got[d]["Speed"], got[d]["Why"]) for d in got] == \
-        [("zara", "38.8", "6.5", "why B"), ("kor", "33.3", "7.5", "why B")]
+        [("zara", "38.9", "7.2", "why B"), ("kor", "34.1", "8.4", "why B")]
 
 
 @pytest.mark.parametrize("change, faults", [
@@ -324,23 +332,23 @@ def test_recompute_after_a_salt_change_moves_only_that_decks_card_quality_score_
     for slug in ("zara", "kor"): facts.counts("run", slug)
     assert run("skills/score-deck/merge_rankings.py", "--recompute", "run").returncode == 0
     after = ranked()
-    # kor's Commander salt 9: Card quality 16 / 4 = 4.0, (6.5 + 0 + 3) / 24 * 100 = 39.58, its Score 39.6 above
-    # zara's 34.6
+    # kor's Commander salt 10: Card quality 18 / 4 = 4.5, (7.4 + 0 + 3.5) / 27 * 100 = 40.37, its Score 40.4 above
+    # zara's 34.8
     assert list(after) == ["kor", "zara"]
     assert after["zara"] == before["zara"] | {"#": "2"}
-    assert after["kor"] == before["kor"] | {"#": "1", "Commander salt": "9.0", "Card quality": "4.0", "Score": "39.6"}
-    assert "| Kor Skyfisher | Card quality | 4.0 | cmdr salt 9, cmdr price 1, 99 salt 5, 99 price 1 | " \
+    assert after["kor"] == before["kor"] | {"#": "1", "Commander salt": "10.0", "Card quality": "4.5", "Score": "40.4"}
+    assert "| Kor Skyfisher | Card quality | 4.5 | cmdr salt 10, cmdr price 1, 99 salt 6, 99 price 1 | " \
            "Kor Skyfisher 0.90; Kor Skyfisher $1.00 |" in read("run/rankings.md")
 
 
 def test_recompute_reads_the_speed_table_and_computes_speed_from_it():
     assert recomputed().returncode == 0
-    Path("rankings.md").write_text(read("rankings.md").replace("| Zara, Tide Caller | 6.0 | 5.0 |",
-                                                               "| Zara, Tide Caller | 9.0 | 5.0 |"))
+    Path("rankings.md").write_text(read("rankings.md").replace("| Zara, Tide Caller | 6.6 | 5.5 |",
+                                                               "| Zara, Tide Caller | 10.0 | 5.5 |"))
     assert run("skills/score-deck/merge_rankings.py", "--recompute", "run").returncode == 0
-    # Win 9.0 and Development 5.0: Speed 7.0; (6 + 0 + 3.8) / 24 * 100 = 40.83
+    # Win 10.0 and Development 5.5 as written: Speed 7.75, 7.8; (6.8 + 0 + 4.3) / 27 * 100 = 41.11
     got = ranked()["zara"]
-    assert [got[c] for c in ("Win", "Speed", "Score")] == ["9.0", "7.0", "40.8"]
+    assert [got[c] for c in ("Win", "Speed", "Score")] == ["10.0", "7.8", "41.1"]
 
 
 def test_recompute_stops_on_a_rankings_md_without_the_speed_table():

@@ -19,7 +19,7 @@ prose. Earlier rankings are not read.
 
 A line may close by lethal or by a lock.
 
-Score each deck's strength in a four-player game on these criteria: you judge Win and Development each from 1 to 9, and Speed is their mean; Interaction and Card quality are computed, each 1 to 9, and you do not write them. On Win and Development a deck gets the highest defined level whose line it meets in full, or the even value between two levels when it sits between them.
+Score each deck's strength in a four-player game on these criteria: you judge Win and Development each from 1 to 9, and Speed is their mean; Interaction and Card quality are computed, each 1 to 10, and you do not write them. On Win and Development a deck gets the highest defined level whose line it meets in full, or the even value between two levels when it sits between them.
 
 **Win: the turn it wins or locks the table in a typical four-player game**
 | | |

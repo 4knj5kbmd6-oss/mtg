@@ -38,25 +38,25 @@ ANSWERS = {"change target", "hatebear", "silence", "prevent cast", "prevent acti
 ROWS = ["Recursion", "Protection", "Answers", "Instant-speed answers", "Counters", "Removal", "Creature removal",
         "Noncreature removal", "Wipes"]
 FLASH = re.compile(r"^(?:\w[\w ]*, )*flash(?:,|$)", re.I | re.M)
-# Card quality is four levels, each 1 to 9, from each card's EDHREC saltiness (salt) and USD price (price) in
+# Card quality is four levels, each 1 to 10, from each card's EDHREC saltiness (salt) and USD price (price) in
 # oracle.json, the commanders apart from the 99. 99 salt is the mean over the 99's copies, a land under PLAIN left out
-# (basics, plain duals), 0.30 level 1 and 0.90 level 9; Commander salt is the commanders' salts summed, on the same
-# levels. 99 price is the 99's prices summed per copy, 125 dollars level 1 and 4,000 level 9 on a log scale; Commander
-# price the commanders' prices summed, 1 dollar level 1 and 100 level 9. A card with no value adds nothing. A card of
+# (basics, plain duals), 0.30 level 1 and 0.90 level 10; Commander salt is the commanders' salts summed, on the same
+# levels. 99 price is the 99's prices summed per copy, 125 dollars level 1 and 4,000 level 10 on a log scale; Commander
+# price the commanders' prices summed, 1 dollar level 1 and 100 level 10. A card with no value adds nothing. A card of
 # the 99 at SALTY or more, or at PRICEY dollars or more, is named.
 PLAIN, SALTY, PRICEY = 0.5, 2.0, 20.0
 
 def held(x):
-    """x rounded half up and held to 1 to 9"""
-    return min(9, max(1, math.floor(x + 0.5)))
+    """x rounded half up and held to 1 to 10"""
+    return min(10, max(1, math.floor(x + 0.5)))
 
 def salt_level(s):
-    """1 + 8 * (s - 0.3) / 0.6, held"""
-    return held(1 + 8 * (s - 0.3) / 0.6)
+    """1 + 9 * (s - 0.3) / 0.6, held"""
+    return held(1 + 9 * (s - 0.3) / 0.6)
 
 def price_level(usd, low, high):
-    """1 + 8 * ln(usd / low) / ln(high / low), held; 1 with no usd"""
-    return held(1 + 8 * math.log(usd / low) / math.log(high / low)) if usd > 0 else 1
+    """1 + 9 * ln(usd / low) / ln(high / low), held; 1 with no usd"""
+    return held(1 + 9 * math.log(usd / low) / math.log(high / low)) if usd > 0 else 1
 
 def quality(slug):
     """the counts file's four Card quality rows, [Category, level, Cards], the commanders apart from the 99 (the rest of
