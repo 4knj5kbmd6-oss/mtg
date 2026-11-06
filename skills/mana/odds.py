@@ -26,7 +26,9 @@ def given_lands(want, sources, lands, size, drawn, least):
     return sum(w * at_least(want, sources, lands, k) for k, w in ways.items()) / total if total else 0.0
 
 def supply(turn, size, drawn, lands, ramp, late):
-    """[the chance of at least v mana on this turn, as mana() counts it, for v from 0 to drawn + 1]"""
+    """[the chance of at least v mana on this turn, for v from 0 to drawn + 1, from drawn cards of a deck of size cards,
+    lands of them land drops played one a turn and ramp of them a mana each; when late, one of the drawn, at random, is
+    this turn's draw, and as ramp it makes nothing yet]"""
     ways = [0] * (drawn + 2)
     for a in range(min(drawn, lands) + 1):
         for b in range(min(drawn - a, ramp) + 1):
@@ -37,13 +39,6 @@ def supply(turn, size, drawn, lands, ramp, late):
     total, tail = choose(size, drawn) * (drawn if late else 1), 0
     for m in reversed(range(drawn + 2)): tail += ways[m]; ways[m] = tail / total
     return ways
-
-def mana(want, turn, size, drawn, lands, ramp, late):
-    """the chance of at least want mana on this turn from drawn cards of a deck of size cards, lands of them land drops
-    played one a turn and ramp of them a mana each; when late, one of the drawn, at random, is this turn's draw, and as
-    ramp it makes nothing yet"""
-    chances = supply(turn, size, drawn, lands, ramp, late)
-    return chances[want] if want < len(chances) else 0.0
 
 def lands_seen(lands, size, drawn, least, deepest):
     """rows sigma from 0 to lands, columns j from 0 to deepest: the chance that the lands among drawn cards of a deck of

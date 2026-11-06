@@ -1,7 +1,7 @@
 # Builder brief: mtg
 
 Implement the mtg change named in your prompt, following this brief and
-agents/builder.md. The repo is `/Users/tdienes/git/mtg`, public at
+agents/builder.md. The repo is public at
 github.com/4knj5kbmd6-oss/mtg-toolbox, with no tester. Requests are GitHub
 issues there; the orchestrator fast-forwards `main` to your branch,
 amends the patch bump of `version` in `.claude-plugin/plugin.json`
@@ -21,17 +21,19 @@ own scratchpad folder.
 ## Building
 
 - Read the repo's CLAUDE.md first: core files versus the gitignored
-  `output/` folder (Tom's decks, plans, scores, carts: never edit them
-  except where the brief says), and the rules about Moxfield and
-  TCGplayer (never sign in, never check out).
+  `output/` folder (the owner's decks, plans, scores, carts: never edit
+  them except where the brief says). The rules about Moxfield and
+  TCGplayer (never sign in, never check out) are in
+  `skills/sync/SKILL.md`, `skills/cart/SKILL.md` and `agents/shopper.md`.
 - The repo is a Claude Code plugin: skills live in `skills/<name>/` with
-  their scripts and agent briefs beside them, the manifest and marketplace
-  file in `.claude-plugin/`. A change to a procedure edits the skill, not
+  their scripts beside them, the agents they dispatch in `agents/`, the
+  manifest and marketplace file in `.claude-plugin/`. A change to a procedure edits the skill, not
   a doc elsewhere. Scripts take the working directory as the project (the
   folder that holds `output/`), never their own location; a worktree gets
   an `output` symlink to the orchestrator's output copy for testing.
-- No network calls unless the brief asks: `fetch-oracle.py`, `sheet.py`
-  and the sync scripts hit Scryfall and Moxfield.
+- No network calls unless the brief asks: any script importing
+  `lib/net` reaches the network (Moxfield is reached only by `fetch.js`
+  in the browser).
 - Rename or move files with `git mv` so history follows.
 
 ## Tests

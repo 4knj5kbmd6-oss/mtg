@@ -2,10 +2,10 @@
 the mana skill: the Curve, Lands, Colours and Recommendation tables, each number as METHOD.md defines it.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/mana/mana.py <run_dir> <slug> [slug ...]
 Prints any card oracle.json lacks, left out of the counts, and any Not cast name off the list."""
-import json, re, sys
+import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from project import DECKS, ORACLE, decklist, front, is_land, key
+from project import DECKS, decklist, field, front, is_land, key, named, names
 from tables import table, split as sections, scores
 import odds, recommend
 
@@ -20,7 +20,6 @@ EXTRA = re.compile(r"\badds? an additional\b", re.I)
 SEARCH = re.compile(r"search your library for [^.]*?\b(?:land|Plains|Island|Swamp|Mountain|Forest) cards?\b[^.]*"
                     r"\bonto the battlefield", re.I)
 SPENDS = re.compile(r"\bsacrifice (?:a|any number of) lands?\b", re.I)
-NOT_CAST = re.compile(r"^- \*\*Not cast:\*\*(.*)$", re.M)
 SYMBOL = re.compile(r"\{([^}]*)\}")
 
 def colours(e, identity):
@@ -81,20 +80,13 @@ def weights(slug):
 
 def not_cast(slug, listed):
     """the oracle names of the cards the plan's Not cast line names, by name or either face, among listed (casefolded
-    name or face -> oracle entry); prints any other name. The names are separated by ; or, in a line written with
-    commas, by commas: a name may hold commas, so the longest run of comma-separated parts that names a card is taken"""
+    name or face -> oracle entry); prints any other name"""
     path = DECKS / slug / "plan.md"
-    line = NOT_CAST.search(path.read_text()) if path.exists() else None
-    got, unknown = set(), []
-    for chunk in line[1].split(";") if line else []:
-        parts = [p.strip() for p in chunk.split(",")]
-        while parts:
-            j = next((j for j in range(len(parts), 0, -1) if ", ".join(parts[:j]).casefold() in listed), 1)
-            name, parts = ", ".join(parts[:j]), parts[j:]
-            if name.casefold() in listed: got.add(listed[name.casefold()]["name"])
-            elif name: unknown.append(name)
-    if unknown: print(f"{slug}: Not cast, not in list.txt:", ", ".join(unknown))
-    return got
+    text = path.read_text() if path.exists() else ""
+    got = [n for f in field("Not cast", text) for n in names(f, listed)]
+    if unknown := [n for n in got if n.casefold() not in listed]:
+        print(f"{slug}: Not cast, not in list.txt:", ", ".join(unknown))
+    return {listed[n.casefold()]["name"] for n in got if n.casefold() in listed}
 
 def advice(identity, commanders, rest, weight, skipped):
     """the Recommendation table's row: the lands and their band, the land drops now and each colour's share and
@@ -158,12 +150,11 @@ def page(slug, commanders, rest, weight, skipped):
                                                  [[*advice(identity, commanders, rest, weight, skipped), split_now]]), ""])
 
 def write(run, slug):
-    cards = json.loads(ORACLE.read_text())["cards"]
-    named = {f.casefold(): e for n, e in cards.items() for f in n.split(" // ")} | {n.casefold(): e for n, e in cards.items()}
+    oracle = named()
     commanders, rest = decklist(slug)
-    if missing := [n for _, n in commanders + rest if n.casefold() not in named]:
+    if missing := [n for _, n in commanders + rest if n.casefold() not in oracle]:
         print(f"{slug}: not in oracle.json:", ", ".join(missing))
-    entries = lambda part: [(c, named[n.casefold()]) for c, n in part if n.casefold() in named]
+    entries = lambda part: [(c, oracle[n.casefold()]) for c, n in part if n.casefold() in oracle]
     listed = {f.casefold(): e for _, e in entries(commanders + rest) for f in [e["name"], *e["name"].split(" // ")]}
     Path(run, f"{slug}-mana.md").write_text(page(slug, entries(commanders), entries(rest), weights(slug),
                                                  not_cast(slug, listed)))

@@ -50,6 +50,27 @@ def lands():
     fronts = {n.split(" // ")[0]: e for n, e in json.loads(ORACLE.read_text())["cards"].items()}
     return lambda name: is_land(fronts.get(key(name), {}))
 
+def named():
+    """oracle.json's cards by name and by each face's name, casefolded"""
+    cards = json.loads(ORACLE.read_text())["cards"]
+    faces = {f.casefold(): e for n, e in cards.items() for f in n.split(" // ")}
+    return faces | {n.casefold(): e for n, e in cards.items()}
+
+def field(label, text):
+    """the text after each `- **<label>:**` bullet of text"""
+    return re.findall(rf"^- \*\*{label}:\*\*[ \t]*(.*)$", text, re.M)
+
+def names(text, known):
+    """the card names of text, separated by ; or by commas, a comma-separated run taken whole when it names a known
+    card (known: casefolded names)"""
+    out = []
+    for chunk in text.split(";"):
+        parts = [p.strip() for p in chunk.split(", ")]
+        while parts:
+            j = next((j for j in range(len(parts), 0, -1) if ", ".join(parts[:j]).casefold() in known), 1)
+            out.append(", ".join(parts[:j])); parts = parts[j:]
+    return [n for n in out if n]
+
 def by_kind(rows, land):
     """{"nonlands": rows, "lands": rows}, split on whether a row's first cell names a land"""
     return {k: [r for r in rows if land(r[0]) == (k == "lands")] for k in KINDS}

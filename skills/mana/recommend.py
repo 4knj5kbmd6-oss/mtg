@@ -64,15 +64,10 @@ def terms(lands, size, identity, spells, commanders, kept):
             for j, x in enumerate(add): row[j] += w * x
     return merged
 
-def worth(allocation, lands, size, identity, spells, commanders, kept=0):
-    """the weighted cards whose pips are met on their due turn, given its lands, with allocation's sources of each
-    colour among the lands. spells: (weight, is ramp, due turn, {colour: pips}); commanders: (weight, due turn,
-    {colour: pips}); kept as in lands()"""
-    return sum(odds.met([allocation[identity[i]] for i, _ in vector], [p for _, p in vector], table)
-               for vector, table in terms(lands, size, identity, spells, commanders, kept).items())
-
 def split(lands, size, identity, spells, commanders, kept=0):
-    """{colour: sources}, summing to lands, with the most worth(), ties to the greatest in identity order"""
+    """{colour: sources}, summing to lands, with the most weighted cards whose pips are met on their due turn, given
+    its lands, ties to the greatest in identity order. spells: (weight, is ramp, due turn, {colour: pips}); commanders:
+    (weight, due turn, {colour: pips}); kept as in lands()"""
     m = len(identity)
     if m < 2: return dict.fromkeys(identity, lands)
     single, gold = [[0.0] * (lands + 1) for _ in identity], []

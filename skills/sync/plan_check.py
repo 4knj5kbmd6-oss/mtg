@@ -9,22 +9,7 @@ usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills
 import re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
-from project import DECKS, decklist
-
-def field(label, text):
-    """the text after each `- **<label>:**` bullet of text"""
-    return re.findall(rf"^- \*\*{label}:\*\*[ \t]*(.*)$", text, re.M)
-
-def names(text, known):
-    """the card names of text, separated by ; or by commas, a comma-separated run taken whole when it names a known
-    card (known: casefolded names)"""
-    out = []
-    for chunk in text.split(";"):
-        parts = [p.strip() for p in chunk.split(", ")]
-        while parts:
-            j = next((j for j in range(len(parts), 0, -1) if ", ".join(parts[:j]).casefold() in known), 1)
-            out.append(", ".join(parts[:j])); parts = parts[j:]
-    return [n for n in out if n]
+from project import DECKS, decklist, field, names
 
 def win(text, known):
     """the cards of a Win bullet, `<name>: <role> + <role>. <sentence>`: a role in brackets gives the cards inside

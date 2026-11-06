@@ -1,4 +1,4 @@
-"""Run a Scryfall search and print its total count, Scryfall's warnings and the first 20 cards' names and type lines.
+"""Run a Scryfall search and print its total count, Scryfall's warnings and the first SHOWN cards' names and type lines.
 usage: python3 ${CLAUDE_PLUGIN_ROOT}/skills/scryfall/search.py "<query>"
 A query Scryfall rejects (400) or that matches nothing (404) prints Scryfall's own error text and warnings and exits 1.
 A warning names a term Scryfall ignored, which widens the results."""
@@ -12,7 +12,7 @@ SHOWN = 20
 
 def answer(body):
     """a search response as the count line, a "Warning: " line for each of Scryfall's warnings and a
-    "Name | Type line" line for each of its first 20 cards, or an error response as Scryfall's text for it (its
+    "Name | Type line" line for each of its first SHOWN cards, or an error response as Scryfall's text for it (its
     details) and its warnings"""
     r = json.loads(body)
     warnings = [f"Warning: {w}" for w in r.get("warnings", [])]

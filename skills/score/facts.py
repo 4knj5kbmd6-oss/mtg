@@ -4,11 +4,11 @@ with the deck's Salt level, by salt() below.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score/facts.py <run_dir> <slug> [slug ...]
 Prints the cards of each deck Spellbook does not know. When Spellbook is unreachable it prints one line naming the URL,
 and the deck gets no combos file."""
-import json, math, re, sys
+import math, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "mana"))
-from project import ORACLE, decklist, front
+from project import decklist, front, named
 from tables import table
 from mana import land_drop
 import combos
@@ -29,20 +29,15 @@ FLASH = re.compile(r"^(?:\w[\w ]*, )*flash(?:,|$)", re.I | re.M)
 # duals); a mean of 0.30 is level 1, each 0.075 above it one level more, 0.90 level 9. A card at SALTY or more is named.
 PLAIN, SALTY = 0.5, 2.0
 
-def oracle():
-    """oracle.json's cards by name and by each face's name, casefolded"""
-    cards = json.loads(ORACLE.read_text())["cards"]
-    return {f.casefold(): e for n, e in cards.items() for f in n.split(" // ")} | {n.casefold(): e for n, e in cards.items()}
-
 def salt(slug):
     """(mean, cards, level, salty) of the deck: its mean salt over the list's copies, commanders in and the SIDEBOARD
     block out, leaving out a card with no salt value or none in oracle.json and a land drop under PLAIN; the copies the
     mean is over; the level, 1 + 8 * (mean - 0.3) / 0.6 rounded and held to 1 to 9; [(name, salt)] of the cards at
     SALTY or more, saltiest first"""
-    named = oracle()
+    oracle = named()
     commanders, rest = decklist(slug)
     found = [(copies, name, e["salt"]) for copies, name in commanders + rest
-             if (e := named.get(name.casefold())) and e.get("salt") is not None and not (land_drop(e) and e["salt"] < PLAIN)]
+             if (e := oracle.get(name.casefold())) and e.get("salt") is not None and not (land_drop(e) and e["salt"] < PLAIN)]
     n = sum(c for c, _, _ in found)
     mean = sum(c * s for c, _, s in found) / n if n else 0
     level = min(9, max(1, math.floor(1 + 8 * (mean - 0.3) / 0.6 + 0.5)))
@@ -51,11 +46,11 @@ def salt(slug):
 def counts(run, slug):
     """write <run>/<slug>-counts.md: per category of ROWS the list's card copies in it and their names, commanders in
     and the SIDEBOARD block out, a card oracle.json lacks in none; then the deck's Salt row, by salt()"""
-    named = oracle()
+    oracle = named()
     commanders, rest = decklist(slug)
     found = {r: {} for r in ROWS}
     for copies, name in commanders + rest:
-        if (e := named.get(name.casefold())) is None: continue
+        if (e := oracle.get(name.casefold())) is None: continue
         tags = set(e.get("tags", []))
         into = [c for c, (want, not_) in CATEGORIES.items() if tags & want and not tags & not_]
         if {"Counters", "Removal", "Wipes"} & set(into) or tags & ANSWERS:
