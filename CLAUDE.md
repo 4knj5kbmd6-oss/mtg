@@ -2,8 +2,8 @@
 
 Your Commander decks and the tooling around them.
 
-Project words: Moxfield, TCGplayer, Scryfall, Commander, bracket, Game
-Changer, fit score, decklist.
+Project words: Moxfield, TCGplayer, Scryfall, Commander, fit score,
+decklist.
 
 ## Layout
 

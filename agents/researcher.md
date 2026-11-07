@@ -13,7 +13,7 @@ budget `<budget>`, the quota `<quota>` (`adds`, `lands`, and `cuts` as a
 fewest and a most), `<universes_beyond>` (true or false), `<new_sets>` (true
 or false), and the decks, each
 slug with its commander, Moxfield created date (the build date), updated date
-(the last edit), bracket and combos file. A deck's dates may be unknown; its
+(the last edit) and combos file. A deck's dates may be unknown; its
 "New since built?" cells then read `-`.
 
 ## Inputs
@@ -37,17 +37,11 @@ The deck files your preloaded deck-files skill describes, and:
    Universes Beyond cards only when `<universes_beyond>` is true. Scryfall search
    syntax is useful: e.g. `id<=br date>=2025-08-07 o:"..."`. Verify every card's
    rules text and release date on Scryfall before recommending it.
-3. Keep the deck at its bracket. An add that would push it over (a
-   Game Changer past the cap, an infinite combo in a bracket-2 deck, etc.) is still
-   listed, and its own Why says so. Check the deck's infinite combos against the
-   combos file's Included table and each add against its Almost included table:
-   an add that completes a combo there is still listed, its Why naming the combo
-   it completes and that the deck's bracket would move.
-4. Give an approximate current price (TCGplayer market) per add. Prefer cheap
+3. Give an approximate current price (TCGplayer market) per add. Prefer cheap
    unless the gain is large. List no add priced above `<budget>`
    ("none" means no cap).
-5. A card is in only if you can say what it does for this deck's specific plan.
-6. For a colour short of sources against its pips, the remedy stays within the land rule below and off the restricted lists; every other two-colour land is eligible.
+4. A card is in only if you can say what it does for this deck's specific plan.
+5. For a colour short of sources against its pips, the remedy stays within the land rule below and off the restricted lists; every other two-colour land is eligible.
 
 ## Output
 
@@ -64,7 +58,7 @@ sacrifice piece); fewer than `<quota.lands>`, or none, is fine.
 
 ```
 # <deck>: top adds (<today>)
-Built <created>, last edited <updated>, bracket <n>.
+Built <created>, last edited <updated>.
 
 | # | Add | New since built? | Why | ~Price |
 |---|---|---|---|---|

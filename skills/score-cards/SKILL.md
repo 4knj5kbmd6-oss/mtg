@@ -25,21 +25,18 @@ Settings and dispatch as the deck-files skill's Dispatch section says.
    When facts.py names cards oracle.json lacks, run
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/sync/fetch_oracle.py "<card name>" ...`
    with them and rerun facts.py for those decks.
-   If `rankings.md` is missing or has no row for one of the run's decks,
-   first rank the decks as
-   `${CLAUDE_PLUGIN_ROOT}/skills/score-deck/SKILL.md` ranks them. Group decks by shared colours (two or three per group). Dispatch
+   Group decks by shared colours (two or three per group). Dispatch
    `scorers` `mtg-toolbox:scorer` agents per group, lettered A, B, C and
    on, each prompt giving `<run>`, the letter, the scorer's own
    `<run>/work-<group>-<letter>/` subfolder, where its finished files land,
-   and the group's slugs, each with its bracket from `rankings.md` and its
-   combos file.
+   and the group's slugs, each with its combos file.
 3. When all of a group are back, per deck
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-cards/merge.py <run> <slug>`. It
    prints the deck's shape line and, with two or more scorers, the count of
    split cards (merge.py's SPLIT apart), listed in `<run>/<slug>-flagged.md`.
 4. Copy each deck's merged pair, `<run>/merged/<slug>/`, into
    `output/decks/<slug>/`. Check the shape line merge.py printed for each
-   deck against rule 8 of the metric. Then, unless `images` is false, per
+   deck against rule 7 of the metric. Then, unless `images` is false, per
    deck `python3 ${CLAUDE_PLUGIN_ROOT}/skills/upgrades/sheet.py <slug>`
    redraws `output/decks/<slug>/changes.png` from its Adds and Cuts tables; a
    deck with neither prints "no adds or cuts" and gets no image. With

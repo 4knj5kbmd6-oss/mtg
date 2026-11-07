@@ -54,7 +54,6 @@
     }
    ],
    "identity": "U",
-   "bracketTag": "B",
    "salt": null,
    "popularity": 5
   },
@@ -115,7 +114,6 @@
     }
    ],
    "identity": "B",
-   "bracketTag": "E",
    "salt": 1.9,
    "popularity": 43664
   },
@@ -146,7 +144,6 @@
     }
    ],
    "identity": "BRG",
-   "bracketTag": "E",
    "salt": null,
    "popularity": 1657
   },
@@ -177,7 +174,6 @@
     }
    ],
    "identity": "G",
-   "bracketTag": "S",
    "salt": null,
    "popularity": 4365
   },
@@ -233,7 +229,6 @@
     }
    ],
    "identity": "G",
-   "bracketTag": "S",
    "salt": null,
    "popularity": 14657
   },
@@ -284,7 +279,6 @@
     }
    ],
    "identity": "B",
-   "bracketTag": "E",
    "salt": 1.39,
    "popularity": 66041
   },
@@ -330,7 +324,6 @@
     }
    ],
    "identity": "B",
-   "bracketTag": "E",
    "salt": 2.53,
    "popularity": 79643
   }

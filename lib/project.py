@@ -62,11 +62,6 @@ def field(label, text):
     """the text after each `- **<label>:**` bullet of text"""
     return re.findall(rf"^- \*\*{label}:\*\*[ \t]*(.*)$", text, re.M)
 
-def cedh(slug):
-    """whether output/decks/<slug>/plan.md carries `- **cEDH:** yes`, the deck built for the cEDH metagame"""
-    plan = DECKS / slug / "plan.md"
-    return plan.exists() and any(v.strip() == "yes" for v in field("cEDH", plan.read_text()))
-
 def names(text, known):
     """the card names of text, separated by ; or by commas, a comma-separated run taken whole when it names a known
     card (known: casefolded names)"""

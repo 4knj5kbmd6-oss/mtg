@@ -1,6 +1,6 @@
 ---
 name: score-deck
-description: Rank every one of your Commander decks by strength and bracket each (independent rankers, merged), and write rankings.md beside output/. Use when asked to rank or bracket the decks, after /score-cards, or after a change to a ranking criterion.
+description: Rank every one of your Commander decks by strength (independent rankers, merged), and write rankings.md beside output/. Use when asked to rank the decks, after /score-cards, or after a change to a ranking criterion.
 argument-hint: "[key=value ...]"
 ---
 
@@ -10,10 +10,8 @@ Ranks every deck under `output/decks/` that has a `list.txt`.
 
 Settings and dispatch as the deck-files skill's Dispatch section says.
 
-1. Make a fresh scratchpad folder `<run>/`. Fetch the bracket articles the
-   project lacks,
-   `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/fetch_brackets.py`, and
-   write every deck's two fact files,
+1. Make a fresh scratchpad folder `<run>/` and write every deck's two fact
+   files,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/facts.py <run> <slug> ...`
    given every slug under `output/decks/` that has a `list.txt`.
 2. Dispatch `rankers` `mtg-toolbox:ranker` agents, lettered A, B, C and on,

@@ -248,7 +248,7 @@ def test_sync_writes_tokens_once_every_deck_came_back():
 
 PLAIN = ["Brine Elemental", "Coral Signet", "Deep Current", "Island", "Kelp Weaver", "Misty Cove", "Sol Ring",
          "Sunken Grotto", "Tidal Insight", "Tidepool Ruins", "Wave Breaker", "Zara, Tide Caller"]
-TIDE = {"name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
+TIDE = {"name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land",
         "legalities": {"commander": "legal", "modern": "legal"}, "prices": {"usd": "1"},
         "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant", "artist": "-"},
                        {"name": "Tidal Flats", "type_line": "Land"}],
@@ -313,12 +313,11 @@ def test_rebuild_retries_double_faced_cards_by_front_face_and_lone_names_alone(m
     fetch_oracle.rebuild()
     names = fetch_oracle.card_names()
     assert posts == [names, ["Rising Tide"], ["Not A Card"], ["Sign in Blood"]]
-    assert capsys.readouterr().out == (f"{len(names)} requested, 14 saved; missing: ['Not A Card']\n"
-                                       "game changers: ['Rising Tide // Tidal Flats']\n")
+    assert capsys.readouterr().out == f"{len(names)} requested, 14 saved; missing: ['Not A Card']\n"
     cards = json.loads(read("output/data/oracle.json"))["cards"]
     assert sorted(cards) == sorted(PLAIN + ["Rising Tide // Tidal Flats", "Sign in Blood"])
     assert cards["Rising Tide // Tidal Flats"] == {
-        "name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land", "game_changer": True,
+        "name": "Rising Tide // Tidal Flats", "oracle_id": "tide", "type_line": "Instant // Land",
         "legalities": {"commander": "legal"}, "related_tokens": ["Fish"], "rulings": ["First.", "Second."],
         "tags": ["removal", "removal-creature", "spot removal"], "salt": 0.5, "price": 1.0, "card_faces": [{"name": "Rising Tide", "mana_cost": "{1}{U}", "type_line": "Instant"},
                        {"name": "Tidal Flats", "type_line": "Land"}]}
@@ -438,7 +437,6 @@ def test_plan_check_prints_the_plan_cards_not_in_the_list():
         "- **Win:** Beats: Zara, Tide Caller + big fish (Brine Elemental; Wave Breaker; Lost Fish) + mana (Sol Ring;"
         " Ghost Signet). Swings for lethal (twice).\n"
         "- **Commander:** draws a card on every spell.\n"
-        "- **cEDH:** yes\n"
         "- **Not cast:** Brine Elemental; Nowhere Card\n")
     out = run("skills/sync/plan_check.py", "zara", "nodeck")
     assert out.returncode == 0, out.stderr

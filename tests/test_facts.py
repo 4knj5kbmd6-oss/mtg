@@ -10,7 +10,7 @@ SAVED = ROOT / "tests" / "spellbook"  # Spellbook's estimate-bracket answers for
 SLUG = {"The Beamtown Bullies": "beamtown", "Braids, Arisen Nightmare": "braids"}  # each saved deck by its commander
 COLOURS = {"The Beamtown Bullies": ["B", "G", "R"], "Braids, Arisen Nightmare": ["B"]}
 BULK = "https://json.commanderspellbook.com/variants.json.gz"
-BRACKET = "https://backend.commanderspellbook.com/estimate-bracket/"
+ESTIMATE = "https://backend.commanderspellbook.com/estimate-bracket/"
 CACHED = Path("output/data/variants.json.gz")
 
 
@@ -78,7 +78,7 @@ def test_the_cache_keeps_only_the_fields_read_and_rereads_to_the_same_combos():
     slim = script.slim(bulk)
     kept = json.loads(gzip.decompress(slim))
     assert kept == slimmed()
-    assert {*kept["variants"][0]} == {"id", "uses", "produces", "identity", "bracketTag", "salt", "popularity"}
+    assert {*kept["variants"][0]} == {"id", "uses", "produces", "identity", "salt", "popularity"}
     assert script.parse(slim) == script.parse(bulk) != []
 
 
@@ -89,20 +89,20 @@ def test_combos_one_card_away_list_only_missing_cards_in_the_adds(combos, capsys
     assert write(combos, "beamtown") == """# beamtown: combos from commanderspellbook.com
 
 ## Included
-| Cards | Result | Two-card | Bracket tag | Salt |
-|---|---|---|---|---|
+| Cards | Result | Two-card | Salt |
+|---|---|---|---|
 
 ## Almost included
-| Missing | Present | Result | Bracket tag | Salt |
-|---|---|---|---|---|
-| Illusionist's Bracers | Seeker of Skybreak | Infinite mana creatures you control can produce, Infinite untap of creatures you control | Spicy | - |
-| Thornbite Staff | The Beamtown Bullies + Bronze Bombshell | Infinite damage | Exhibition | - |
+| Missing | Present | Result | Salt |
+|---|---|---|---|
+| Illusionist's Bracers | Seeker of Skybreak | Infinite mana creatures you control can produce, Infinite untap of creatures you control | - |
+| Thornbite Staff | The Beamtown Bullies + Bronze Bombshell | Infinite damage | - |
 
 ## Flagged cards
 | Card | Flag |
 |---|---|
 """
-    assert [u for u, _ in combos.asked] == [BULK, BRACKET]
+    assert [u for u, _ in combos.asked] == [BULK, ESTIMATE]
     assert combos.asked[1][1] == {"commanders": [{"card": "The Beamtown Bullies"}], "main": [
         {"card": "Bloom Tender", "quantity": 1}, {"card": "Seeker of Skybreak", "quantity": 1},
         {"card": "Bronze Bombshell", "quantity": 1}, {"card": "Not A Card", "quantity": 1}]}
@@ -114,21 +114,21 @@ def test_included_combos_carry_spellbooks_two_card_mark_and_flags_and_stay_in_co
     deck("braids", "Braids, Arisen Nightmare", {"Ashnod's Altar": 1, "Gravecrawler": 1, "Phyrexian Altar": 1,
                                                 "Pitiless Plunderer": 1, "Reassembling Skeleton": 1},
          adds=["Lieutenant Commander Data", "Warren Soultrader", "Zulaport Cutthroat"])
-    bracket = json.loads((SAVED / "braids-estimate-bracket.json").read_text())
-    bracket["combos"][0]["arguablyTwoCard"] = bracket["combos"][1]["definitelyTwoCard"] = True
-    bracket["cards"][0]["massLandDenial"] = bracket["cards"][0]["extraTurn"] = True
-    answering(combos, monkeypatch, BRACKET, json.dumps(bracket).encode())
+    estimate = json.loads((SAVED / "braids-estimate-bracket.json").read_text())
+    estimate["combos"][0]["arguablyTwoCard"] = estimate["combos"][1]["definitelyTwoCard"] = True
+    estimate["cards"][0]["massLandDenial"] = estimate["cards"][0]["extraTurn"] = True
+    answering(combos, monkeypatch, ESTIMATE, json.dumps(estimate).encode())
     assert write(combos, "braids") == """# braids: combos from commanderspellbook.com
 
 ## Included
-| Cards | Result | Two-card | Bracket tag | Salt |
-|---|---|---|---|---|
-| Gravecrawler + Phyrexian Altar | Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers, Infinite storm count | definite | Exhibition | 2.5 |
-| Pitiless Plunderer + Ashnod's Altar + Reassembling Skeleton | Infinite colorless mana, Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers | arguable | Exhibition | 1.4 |
+| Cards | Result | Two-card | Salt |
+|---|---|---|---|
+| Gravecrawler + Phyrexian Altar | Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers, Infinite storm count | definite | 2.5 |
+| Pitiless Plunderer + Ashnod's Altar + Reassembling Skeleton | Infinite colorless mana, Infinite death triggers, Infinite creature ETB, Infinite creature LTB, Infinite creature sacrifice triggers | arguable | 1.4 |
 
 ## Almost included
-| Missing | Present | Result | Bracket tag | Salt |
-|---|---|---|---|---|
+| Missing | Present | Result | Salt |
+|---|---|---|---|
 
 ## Flagged cards
 | Card | Flag |
@@ -142,7 +142,7 @@ def test_a_cached_variants_file_is_read_until_it_is_a_day_old(combos):
     deck("braids", "Braids, Arisen Nightmare", {"Gravecrawler": 1, "Phyrexian Altar": 1})
     CACHED.write_bytes(gzip.compress(b'{"variants": []}'))
     assert "| Gravecrawler + Phyrexian Altar |" not in write(combos, "braids")
-    assert [u for u, _ in combos.asked] == [BRACKET]
+    assert [u for u, _ in combos.asked] == [ESTIMATE]
     combos.variants.cache_clear()
     os.utime(CACHED, (time.time() - 24 * 60 * 60 - 60,) * 2)
     assert "| Gravecrawler + Phyrexian Altar |" in write(combos, "braids")
@@ -168,9 +168,9 @@ def test_a_stale_cached_variants_file_is_used_when_spellbook_sends_none(combos, 
     (Failed(f"{BULK}: HTTP 503"), BULK),
     (b"<title>Just a moment...</title>", BULK),
     (gzip.compress(b'{"detail": "x"}'), BULK),
-    (URLError("down"), BRACKET),
-    (b"<title>Just a moment...</title>", BRACKET),
-    (b'{"detail": "x"}', BRACKET),
+    (URLError("down"), ESTIMATE),
+    (b"<title>Just a moment...</title>", ESTIMATE),
+    (b'{"detail": "x"}', ESTIMATE),
 ])
 def test_no_answer_from_spellbook_names_the_url_and_writes_nothing(combos, monkeypatch, capsys, answer, url):
     deck("beamtown", "The Beamtown Bullies", {"Seeker of Skybreak": 1})
@@ -178,7 +178,7 @@ def test_no_answer_from_spellbook_names_the_url_and_writes_nothing(combos, monke
     combos.write("run", "beamtown")
     assert capsys.readouterr().out == f"Commander Spellbook unreachable: {url}\n"
     assert not Path("run/beamtown-combos.md").exists()
-    assert CACHED.exists() == (url == BRACKET)
+    assert CACHED.exists() == (url == ESTIMATE)
 
 
 def test_facts_writes_two_files_per_deck(combos, monkeypatch):
@@ -192,10 +192,10 @@ def test_facts_writes_two_files_per_deck(combos, monkeypatch):
 
 def test_facts_writes_the_counts_when_spellbook_answers_without_cards_or_combos(combos, monkeypatch, capsys):
     deck("beamtown", "The Beamtown Bullies", {"Sol Ring": 1})
-    answering(combos, monkeypatch, BRACKET, b'{"detail": "x"}')
+    answering(combos, monkeypatch, ESTIMATE, b'{"detail": "x"}')
     monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown"])
     facts.main()
-    assert capsys.readouterr().out == f"Commander Spellbook unreachable: {BRACKET}\n"
+    assert capsys.readouterr().out == f"Commander Spellbook unreachable: {ESTIMATE}\n"
     assert sorted(p.name for p in Path("run").iterdir()) == ["beamtown-counts.md"]
 
 
@@ -217,7 +217,7 @@ def test_a_deck_after_one_spellbook_fails_still_gets_its_files(combos, monkeypat
     monkeypatch.setattr(combos, "get", lambda url, body=None: b'{"detail": "x"}' if beamtown(body) else saved(url, body))
     monkeypatch.setattr(sys, "argv", ["facts.py", "run", "beamtown", "braids"])
     facts.main()
-    assert f"Commander Spellbook unreachable: {BRACKET}" in capsys.readouterr().out.splitlines()
+    assert f"Commander Spellbook unreachable: {ESTIMATE}" in capsys.readouterr().out.splitlines()
     assert sorted(p.name for p in Path("run").iterdir()) == ["beamtown-counts.md", "braids-combos.md", "braids-counts.md"]
 
 
@@ -246,7 +246,6 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 | Creature removal | 2 | Brine Elemental; Wave Breaker |
 | Noncreature removal | 0 | - |
 | Wipes | 1 | Brine Elemental |
-| Game Changers | 0 | - |
 | Commander salt | 1 | sum 0.00; - |
 | Commander price | 1 | sum $0.00; - |
 | 99 salt | 1 | mean 0.00 over 0 cards; - |
@@ -272,20 +271,6 @@ def test_creature_and_noncreature_removal_count_removal_and_wipes_by_target_tags
     assert "\n| Removal | 5 | Brine Elemental; Coral Signet; Kelp Weaver; Sol Ring; Wave Breaker |\n" \
            "| Creature removal | 3 | Sol Ring; Tidal Insight; Wave Breaker |\n" \
            "| Noncreature removal | 3 | Coral Signet; Kelp Weaver; Sol Ring |\n| Wipes | 1 | Tidal Insight |\n" in got
-
-
-def test_counts_name_the_game_changers_of_the_list_without_its_sideboard():
-    oracle = json.loads(read("output/data/oracle.json"))
-    for name in ("Sol Ring", "Drowned Scholar // Tidal Insight", "Zara, Tide Caller", "Pearl Diver"):
-        oracle["cards"][name]["game_changer"] = True
-    Path("output/data/oracle.json").write_text(json.dumps(oracle))
-    list_ = Path("output/decks/zara/list.txt")
-    list_.write_text(list_.read_text().replace("1 Tidal Insight", "1 Drowned Scholar // Tidal Insight")
-                     + "\nSIDEBOARD:\n1 Pearl Diver\n")
-    assert facts.game_changers("zara") == ["Drowned Scholar", "Sol Ring", "Zara, Tide Caller"]
-    Path("run").mkdir()
-    facts.counts("run", "zara", 3)
-    assert "\n| Game Changers | 3 | Drowned Scholar; Sol Ring; Zara, Tide Caller |\n| Commander salt |" in read("run/zara-counts.md")
 
 
 def valued(field, values):

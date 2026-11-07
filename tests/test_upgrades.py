@@ -5,7 +5,7 @@ from conftest import run, read, snapshot
 import project, sheet as script
 
 ADDS = """# Zara, Tide Caller: top adds (2026-11-02)
-Built 2025-01-01, last edited 2025-06-01, bracket 2.
+Built 2025-01-01, last edited 2025-06-01.
 
 | # | Add | New since built? | Why | ~Price |
 |---|---|---|---|---|

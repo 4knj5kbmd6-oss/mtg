@@ -12,7 +12,7 @@
 | Wave Breaker | 3 | threat | Aggro body in a control deck |
 
 ## Adds
-Built 2025-01-01, last edited 2025-06-01, bracket 2.
+Built 2025-01-01, last edited 2025-06-01.
 
 | Card | Score | Role | Note | New | ~Price |
 |---|---|---|---|---|---|

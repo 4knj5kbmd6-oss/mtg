@@ -1,16 +1,14 @@
 import json
-from urllib.error import HTTPError
 from pathlib import Path
 import pytest
 from conftest import run, read
-import facts, fetch_brackets, fetch_syntax, merge_rankings, tables
+import facts, merge_rankings, tables
 
 
 # each deck's Win and Development from rankers A to E; zara's Card quality is 5.3, kor's 2.8, and both decks'
 # Interaction 1, their cards untagged
 JUDGED = {"zara": {"A": [6, 5], "B": [7, 6], "C": [3, 4]},
           "kor": {"A": [5, 6], "B": [8, 7], "C": [8, 7]}}
-OWN = dict(zip("ABCDE", ["3", "4", "2", "3, top", "3"]))  # each ranker's Bracket
 UNTAGGED = "1 | 0 answers, 0 instant, 0 weighted | -"  # an untagged deck's Interaction Ledger cells past the criterion
 # zara's commander salt 0.525 is level 4 and its 10 dollars 6; its 99's salt mean 3.0 / 4 = 0.75 is 8 and its 200
 # dollars 3: Card quality 21 / 4 = 5.25, 5.3. kor's 0.45 is 3 and its 1 dollar 1; its 99's salt 0.6 is 6 and
@@ -58,7 +56,7 @@ def rankers(judged=JUDGED, letters="ABC", order=None):
     if not Path("run").exists(): decks()
     for x in letters:
         slugs = (order or {}).get(x) or sorted(judged, key=lambda d: -sum(judged[d][x]))
-        rows = "".join(f"| {d} | {' | '.join(map(str, judged[d][x]))} | {OWN[x]} | why {x} |\n"
+        rows = "".join(f"| {d} | {' | '.join(map(str, judged[d][x]))} | why {x} |\n"
                        for d in slugs)
         books = "".join(f"{l}\n" for d in slugs for l in ledger(d, x))
         Path(f"run/rankings-{x}.md").write_text(f"# Judgments ({x})\n\n{judgments()}"
@@ -97,9 +95,9 @@ def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest(
     assert read("run/rankings.md") == f"""# Rankings
 
 {merge_rankings.RANKINGS}
-|---|---|---|---|---|---|---|---|
-| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 3 | 34.8 | none | why A | [Moxfield](https://moxfield.com/decks/z1) |
-| 2 | [Kor Skyfisher](output/decks/kor/) | W | 4 | 34.1 | none | why B | [Moxfield](https://moxfield.com/decks/k1) |
+|---|---|---|---|---|---|
+| 1 | [Zara, Tide Caller](output/decks/zara/) | U | 34.8 | why A | [Moxfield](https://moxfield.com/decks/z1) |
+| 2 | [Kor Skyfisher](output/decks/kor/) | W | 34.1 | why B | [Moxfield](https://moxfield.com/decks/k1) |
 
 ## Criteria
 
@@ -196,8 +194,8 @@ def test_merge_rankings_takes_the_median_of_four_and_the_median_rankers_cells():
     rankers(four, "ABCD")
     got = merges("zara: split Win 9/5/9/7, Development 9/5/9/7")["zara"]
     # (7.9 / 9 + 0 / 9 + 4.3 / 9) / 3 * 100 = 45.19
-    assert [got[c] for c in ("Speed", "Interaction", "Card quality", "Score", "Bracket", "Why")] == \
-        ["8.9", "1.0", "5.3", "45.2", "3, top", "why D"]
+    assert [got[c] for c in ("Speed", "Interaction", "Card quality", "Score", "Why")] == \
+        ["8.9", "1.0", "5.3", "45.2", "why D"]
     assert "| Zara, Tide Caller | Win | 5 | - | cards D |" in read("run/rankings.md")
 
 
@@ -251,18 +249,16 @@ def test_one_ranker_goes_through_the_merge():
 
 @pytest.mark.parametrize("change, faults", [
     (lambda t: t.replace("| kor |", "| ghost |"), ["kor: missing", "ghost: not a deck of the run"]),
-    (lambda t: t + "| ghost | 5 | 5 | 3 | why |\n", ["ghost: not a deck of the run"]),
+    (lambda t: t + "| ghost | 5 | 5 | why |\n", ["ghost: not a deck of the run"]),
     (lambda t: t.replace("| zara | 6 |", "| zara | 10 |"), ["zara: Win 10 is not a whole number from 1 to 9"]),
     (lambda t: t.replace("| zara | 6 | 5 |", "| zara | 6 | 0 |"),
      ["zara: Development 0 is not a whole number from 1 to 9"]),
     (lambda t: t.replace("| zara | 6 | 5 |", "| zara | 6 | 4.5 |"),
      ["zara: Development 4.5 is not a whole number from 1 to 9"]),
-    (lambda t: t.replace("| 3 | why A |", "| 3 top | why A |", 1),
-     ["zara: Bracket 3 top is not 1 to 5 with ', top' or ', low'"]),
     # the old shape, with Setup, Rebuild and Flow after Development
-    (lambda t: t.replace(judgments(), judgments("| Deck | Win | Development | Setup | Rebuild | Flow | Bracket | Why |"))
-     .replace(" | 3 | why A |", " | 3 | 4 | 5 | 3 | why A |"), ["zara: 8 cells, not 5", "kor: 8 cells, not 5"]),
-], ids=["missing", "extra", "win", "development", "fraction", "bracket", "old columns"])
+    (lambda t: t.replace(judgments(), judgments("| Deck | Win | Development | Setup | Rebuild | Flow | Why |"))
+     .replace(" | why A |", " | 3 | 4 | 5 | why A |"), ["zara: 7 cells, not 4", "kor: 7 cells, not 4"]),
+], ids=["missing", "extra", "win", "development", "fraction", "old columns"])
 def test_merge_rankings_rejects_a_faulty_ranker_file(change, faults):
     rankers()
     path = Path("run/rankings-A.md")
@@ -273,39 +269,18 @@ def test_merge_rankings_rejects_a_faulty_ranker_file(change, faults):
     assert not Path("run/rankings.md").exists()
 
 
-def test_merge_rankings_computes_the_link_game_changers_and_colours():
+def test_merge_rankings_computes_the_link_and_colours():
     decks()
     Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara"}}))
     oracle = json.loads(read("output/data/oracle.json"))
-    oracle["cards"]["Sol Ring"]["game_changer"] = True
     oracle["cards"]["Zara, Tide Caller"]["color_identity"] = ["G", "U", "W"]
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
     rankers()
     got = merges("zara: split Win 6/7/3")
     assert got["kor"]["Moxfield"] == "-" and got["zara"]["Moxfield"] == "[Moxfield](https://moxfield.com/decks/z1)"
-    assert got["kor"]["Game Changers"] == got["zara"]["Game Changers"] == "Sol Ring"
     assert got["zara"]["Colours"] == "WUG"
     Path("moxfield.json").unlink()
     assert merges("zara: split Win 6/7/3")["zara"]["Moxfield"] == "-"
-
-
-def declare_cedh():
-    """zara's plan with the cEDH line after its Commander bullet"""
-    plan = Path("output/decks/zara/plan.md")
-    head, _, rest = plan.read_text().partition("- **Commander:**")
-    first, _, after = rest.partition("\n")
-    plan.write_text(f"{head}- **Commander:**{first}\n- **cEDH:** yes\n{after}")
-
-
-@pytest.mark.parametrize("zara, stderr", [("5", []), ("4, top", ["zara: bracket 5 by plan"])])
-def test_merge_rankings_keeps_5_for_a_plan_declaring_cedh_and_caps_any_other_5(monkeypatch, zara, stderr):
-    # A is zara's median ranker, B kor's
-    monkeypatch.setitem(OWN, "A", zara)
-    monkeypatch.setitem(OWN, "B", "5, low")
-    declare_cedh()
-    rankers()
-    got = merges("zara: split Win 6/7/3", "kor: bracket 5 capped at 4, top", *stderr)
-    assert (got["zara"]["Bracket"], got["kor"]["Bracket"]) == ("5", "4, top")
 
 
 def recomputed():
@@ -359,72 +334,8 @@ def test_recompute_stops_on_a_rankings_md_without_the_speed_table():
     assert (out.returncode, out.stderr) == (1, "rankings.md has no Speed table, rank the decks\n")
 
 
-def test_recompute_keeps_5_for_a_plan_declaring_cedh_and_caps_any_other_5():
-    assert recomputed().returncode == 0
-    Path("rankings.md").write_text(read("rankings.md").replace("| W | 4 |", "| W | 5 |"))
-    declare_cedh()
-    out = run("skills/score-deck/merge_rankings.py", "--recompute", "run")
-    assert (out.returncode, out.stderr) == (0, "kor: bracket 5 capped at 4, top\nzara: bracket 5 by plan\n")
-    got = ranked()
-    assert (got["zara"]["Bracket"], got["kor"]["Bracket"]) == ("5", "4, top")
-
-
 def test_recompute_stops_on_a_deck_rankings_md_lacks():
     assert recomputed().returncode == 0
     Path("run/ghost-counts.md").write_text(read("run/zara-counts.md"))
     out = run("skills/score-deck/merge_rankings.py", "--recompute", "run")
     assert (out.returncode, out.stderr) == (1, "ghost: not in rankings.md, rank the decks\n")
-
-
-def article(url):
-    """a Wizards article page: its heading and text, then the related articles and footer every page carries"""
-    name = url.rsplit("/", 1)[1]
-    return (f"<html><nav>menu</nav><article><h1><span>{name}</span></h1><p>About {name}.</p><h3>Brackets</h3>"
-            f"<ul><li>Bracket 1</li></ul></article><aside><h3>Related</h3></aside><footer>legal</footer></html>").encode()
-
-
-@pytest.fixture
-def wizards(monkeypatch):
-    """Wizards answering each article URL with its page, the URLs asked kept in order"""
-    asked = []
-    def get(url): asked.append(url); return article(url)
-    monkeypatch.setattr(fetch_syntax, "get", get)
-    return asked
-
-
-def test_fetch_brackets_writes_one_section_per_article_and_fetches_once(wizards, capsys):
-    fetch_brackets.main()
-    assert wizards == fetch_brackets.PAGES
-    text = read("output/data/brackets.md")
-    assert text.startswith("## introducing-commander-brackets-beta\n\n"
-                           f"Source: {fetch_brackets.PAGES[0]}\n\nAbout introducing-commander-brackets-beta.\n\n"
-                           "#### Brackets\n\n- Bracket 1\n\n## commander-brackets-beta-update-april-22-2025\n")
-    assert text.count("\n## ") == 3 and "Related" not in text and "legal" not in text
-    first = fetch_brackets.sections(text)[fetch_brackets.PAGES[0]]
-    assert capsys.readouterr().out.splitlines()[0] == f"## introducing-commander-brackets-beta  ({len(first)} characters)"
-    fetch_brackets.main()
-    assert wizards == fetch_brackets.PAGES and read("output/data/brackets.md") == text
-
-
-def test_fetch_brackets_fetches_only_an_added_article(wizards, monkeypatch):
-    fetch_brackets.main()
-    later = fetch_brackets.NEWS + "commander-brackets-update-later"
-    monkeypatch.setattr(fetch_brackets, "PAGES", fetch_brackets.PAGES + [later])
-    wizards.clear()
-    fetch_brackets.main()
-    assert wizards == [later]
-    assert read("output/data/brackets.md").endswith(f"## commander-brackets-update-later\n\nSource: {later}\n\n"
-                                                    "About commander-brackets-update-later.\n\n#### Brackets\n\n- Bracket 1\n")
-
-
-@pytest.mark.parametrize("answer, why", [(HTTPError("u", 403, "Forbidden", {}, None), "HTTP 403"),
-                                         (b"<title>Just a moment...</title>", "Cloudflare challenge")],
-                         ids=["403", "challenge"])
-def test_fetch_brackets_stops_naming_a_refused_url(monkeypatch, answer, why):
-    def get(url):
-        if isinstance(answer, BaseException): raise answer
-        return answer
-    monkeypatch.setattr(fetch_syntax, "get", get)
-    with pytest.raises(SystemExit, match=f"^{fetch_brackets.PAGES[0]}: {why}$"):
-        fetch_brackets.main()
-    assert not Path("output/data/brackets.md").exists()

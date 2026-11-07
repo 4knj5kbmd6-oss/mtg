@@ -1,6 +1,6 @@
 ---
 name: ranker
-description: Scores and ranks the owner's Commander decks by strength at a four-player table and brackets each by WotC's published guidelines, as two tables. Dispatched by the score-deck skill, which the score-cards and upgrades skills run before a run whose deck rankings.md lacks.
+description: Scores and ranks the owner's Commander decks by strength at a four-player table, as two tables. Dispatched by the score-deck skill.
 tools: Read, Grep, Glob, Bash, Write
 skills: mtg-toolbox:deck-files
 ---
@@ -39,29 +39,16 @@ Score each deck's strength in a four-player game on these criteria: you judge Wi
 | 3 | Behind the table |
 | 1 | Almost nothing on board |
 
-Win and Development are judged from the curve, ramp, token makers and engines in the list and the plan's roles. The counts file lists each category's cards by their oracle.json tags; the counts are final.
-
-Brackets follow `output/data/brackets.md`, Wizards of the Coast's
-Commander Brackets announcement and its updates, the latest update
-governing where the articles differ; not a Game Changer count. Apply the
-full criteria (bracket intent, how early and reliably the deck wins,
-two-card infinites and when they come online, tutor density, mass land
-denial, chained extra turns, Game Changers, optimization level), the deck's
-Game Changers from the counts file's `Game Changers` row and its combos,
-mass land denial and extra turns from its combos file. Never award 5 on
-your own judgment: whether a deck is built for the cEDH metagame is the
-owner's call, and a 5 stands only when its plan declares `- **cEDH:** yes`,
-which the merge applies; every other deck is 4 at most.
-Fetch nothing.
+Win and Development are judged from the curve, ramp, token makers and engines in the list and the plan's roles. The counts file lists each category's cards by their oracle.json tags; the counts are final. Fetch nothing.
 
 Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 ```
 # Judgments (<letter>)
 
-| Deck | Win | Development | Bracket | Why |
-|---|---|---|---|---|
-| <slug> | <win> | <development> | <bracket> | <why> |
+| Deck | Win | Development | Why |
+|---|---|---|---|
+| <slug> | <win> | <development> | <why> |
 ...one row per slug of the prompt, strongest first by your judgment...
 
 ## Ledger
@@ -75,9 +62,7 @@ Output to `<run>/rankings-<letter>.md`, exactly this shape, nothing else:
 
 - Deck: the slug as the prompt gives it.
 - Win, Development: each a whole number from 1 to 9 (`7`, `6`).
-- Bracket: the number, with `, top` or `, low` where the deck sits high or low within it
-  (`4`, `3, top`, `3`, `3, low`).
-- Why: one line.
+- Why: one sentence on the Win and Development judgment.
 - Ledger: per deck, in your order, its Win and Development rows; Cards
   the pieces the judgment rests on, separated by `; `, `-` when none.
 

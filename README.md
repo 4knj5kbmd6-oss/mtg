@@ -2,8 +2,7 @@
 
 A rules judge and tooling for your Commander decks, run by Claude Code
 skills: a 0 to 10 fit score for every card in a deck, ranked adds and cuts, a
-strength ranking of your decks with their brackets, and a TCGplayer cart
-builder.
+strength ranking of your decks, and a TCGplayer cart builder.
 
 ## Install
 
@@ -52,8 +51,8 @@ first use and looks up on Scryfall any card it has not seen.
 
 **Cost.** Every deck in a `/score-cards` run is read by `scorers` scorers on
 their `models` entry (defaults in [`settings.py`](lib/settings.py)), each
-taking a group of decks that share colours; a `/score-deck` run, or a deck
-with no bracket yet, adds `rankers` rankers reading every deck, each Speed axis the median across them, on 1 to 10. `scorers`, `rankers` and `models`
+taking a group of decks that share colours; a `/score-deck` run adds
+`rankers` rankers reading every deck, each Speed axis the median across them, on 1 to 10. `scorers`, `rankers` and `models`
 in `settings.json` lower it.
 
 ## Settings
@@ -106,7 +105,7 @@ Your project-wide files, beside `output/` (gitignored):
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
-| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, the Score the mean of each normalised to 100; then a `Speed` table of the two judged axes, Win and Development, whose mean is Speed, every criterion and axis on 1 to 10; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price (the `exclude_priciest` priciest copies of the 99 left out), whose mean is Card quality; then a `Ledger` table of the cards behind each score |
+| `rankings.md` | Your decks in strength order: commander, colours, score (0 to 100 to one decimal), why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, the Score the mean of each normalised to 100; then a `Speed` table of the two judged axes, Win and Development, whose mean is Speed, every criterion and axis on 1 to 10; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price (the `exclude_priciest` priciest copies of the 99 left out), whose mean is Card quality; then a `Ledger` table of the cards behind each score |
 
 Your output, all under `output/` (gitignored):
 
@@ -118,5 +117,4 @@ Your output, all under `output/` (gitignored):
 | `data/oracle-tags.jsonl.gz`, `data/AtomicCards.json.gz` | Scryfall's oracle tags and MTGJSON's atomic cards, the sources of each card's `tags` and `salt` in `oracle.json`, fetched again by `/sync` when the source is newer |
 | `data/rules.txt` | The Comprehensive Rules, for `/judge` |
 | `data/scryfall-syntax.md` | Scryfall's search reference, one section per docs page, for `/scryfall` |
-| `data/brackets.md` | Wizards' Commander Brackets announcement and its updates, one section per article, for the rankers |
 | `carts/` | One report per cart |

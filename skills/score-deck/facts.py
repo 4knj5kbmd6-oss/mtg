@@ -1,6 +1,6 @@
 """Write each deck's two fact files into <run_dir>: <slug>-combos.md, its combos from Commander Spellbook (combos.py),
-and <slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below, then its
-Game Changers, by game_changers() below, ending with the deck's four Card quality levels, by quality() below.
+and <slug>-counts.md, per category the list's cards that oracle.json's tags put in it, by CATEGORIES below, ending
+with the deck's four Card quality levels, by quality() below.
 usage (from the folder that holds output/): python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/facts.py <run_dir> <slug> [slug ...] [key=value ...]
 Each key=value word overrides a setting for this run as settings.py takes it; quality() reads exclude_priciest.
 Writes each deck's counts file before its combos file. Prints, per deck, the list's cards oracle.json lacks, commanders
@@ -93,18 +93,10 @@ def quality(slug, out):
             ["99 price", str(price_level(total(kept), 100, 2000)),
              f"sum {usd(total(kept))} over {n(kept)} cards, {len(left)} priciest out: {'; '.join(shown) or '-'}"]]
 
-def game_changers(slug):
-    """the sorted front-face names of the list's cards, commanders in and the SIDEBOARD block out, whose oracle.json
-    entry has game_changer"""
-    oracle = named()
-    commanders, rest = decklist(slug)
-    return sorted({name.split(" // ")[0] for _, name in commanders + rest
-                   if (oracle.get(name.casefold()) or {}).get("game_changer")})
-
 def counts(run, slug, out):
     """write <run>/<slug>-counts.md: per category of ROWS the list's card copies in it and their names, commanders in
-    and the SIDEBOARD block out, a card oracle.json lacks in none; then its Game Changers row, by game_changers(), and
-    its four Card quality rows, by quality() with out"""
+    and the SIDEBOARD block out, a card oracle.json lacks in none; then its four Card quality rows, by quality() with
+    out"""
     oracle = named()
     commanders, rest = decklist(slug)
     found = {r: {} for r in ROWS}
@@ -120,8 +112,6 @@ def counts(run, slug, out):
                 into.append("Instant-speed answers")
         for c in into: found[c][name] = found[c].get(name, 0) + copies
     rows = [[r, str(sum(found[r].values())), "; ".join(sorted(found[r])) or "-"] for r in ROWS]
-    changers = game_changers(slug)
-    rows.append(["Game Changers", str(len(changers)), "; ".join(changers) or "-"])
     rows += quality(slug, out)
     Path(run, f"{slug}-counts.md").write_text(f"# {slug}: counts\n\n" + table("| Category | Count | Cards |", rows) + "\n")
 

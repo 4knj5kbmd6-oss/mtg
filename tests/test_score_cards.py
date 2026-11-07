@@ -89,7 +89,7 @@ def test_merge_writes_the_file_pair():
 | Wave Breaker | 3 | threat | fits |
 
 ## Adds
-Built 2025-01-01, last edited 2025-06-01, bracket 2.
+Built 2025-01-01, last edited 2025-06-01.
 
 | Card | Score | Role | Note | New | ~Price |
 |---|---|---|---|---|---|
@@ -208,7 +208,7 @@ def test_card_mode_reads_a_file_without_the_role_column():
 | Wave Breaker | 3 | - | Aggro body in a control deck |
 
 ## Adds
-Built 2025-01-01, last edited 2025-06-01, bracket 2.
+Built 2025-01-01, last edited 2025-06-01.
 
 | Card | Score | Role | Note | New | ~Price |
 |---|---|---|---|---|---|

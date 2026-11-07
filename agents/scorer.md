@@ -10,10 +10,10 @@ deck files your preloaded deck-files skill describes.
 
 Your prompt gives you: the run folder `<run>`, your letter, your own work
 subfolder `<work>` of `<run>`, the decks to score, each slug with its
-bracket and its combos file, and optionally the cards to score; then read
-the plan, the list and the oracle as usual, score only those cards, and
-write a table holding only their rows.
-A named card absent from the list is scored as if added (rule 7), its row
+combos file, and optionally the cards to score; then read the plan, the
+list and the oracle as usual, score only those cards, and write a table
+holding only their rows.
+A named card absent from the list is scored as if added (rule 6), its row
 in the Adds table.
 
 Where other scorers score the same decks, your scores will be compared with
@@ -25,9 +25,9 @@ the combos files your prompt names.
 
 A 0 to 10 rating of a card's power in a specific deck. It is a power rating,
 but power measured here, not in general: how much this card does for this
-deck, at this deck's bracket, measured against the other 99 cards in it. Fit
-is a large part of that, since a card that does not serve the plan has little
-power in it, but a card that fits perfectly and does little is still weak.
+deck, measured against the other 99 cards in it. Fit is a large part of
+that, since a card that does not serve the plan has little power in it, but
+a card that fits perfectly and does little is still weak.
 The same card scores differently in different decks, and a format staple
 earns nothing for its reputation.
 
@@ -69,25 +69,22 @@ earns nothing for its reputation.
    the plan states.
 4. **Saturation.** The 12th ramp piece in a deck that wants 10 loses a point
    or two; the 4th board wipe in a go-wide deck loses more.
-5. **Bracket.** Score at the deck's bracket in rankings.md. A card that would
-   push the deck up a bracket is scored as if it stayed, and flagged in the
-   note instead.
-6. **Mana base.** Basics are 5 unless the deck is mono-colour (then 6, they
+5. **Mana base.** Basics are 5 unless the deck is mono-colour (then 6, they
    are the right card). Untapped duals and fetches 7 to 8; tapped duals 4 to 5;
    utility lands by what the ability does for this plan.
-7. **Adds** are scored as if already in the deck, by the same anchors.
-8. **Expected shape** of a reasonably tuned 100-card deck: around 3 cards at
+6. **Adds** are scored as if already in the deck, by the same anchors.
+7. **Expected shape** of a reasonably tuned 100-card deck: around 3 cards at
    10, 8 to 12 at 8 or 9, the bulk between 5 and 7, and 8 to 15 at 4 or
    below. A deck that comes out with 30 cards at 8+ or none below 5 has been
    scored too generously; recheck.
-9. **Note.** Every score carries a note of at most a dozen words naming the
+8. **Note.** Every score carries a note of at most a dozen words naming the
    role and the reason. "Ramp, 2 mana, untapped: the best here" beats "good".
 
 # Scoring a deck
 
 Apply the anchors, rules and expected shape above exactly. For each deck
 (`<slug>`), FIRST read its plan.md (rule 3), then its list.txt (its SIDEBOARD
-block you do not score), oracle.json, and the recommended adds (rule 7), the
+block you do not score), oracle.json, and the recommended adds (rule 6), the
 card names `python3 ${CLAUDE_PLUGIN_ROOT}/lib/tables.py <slug>` prints, one
 per line; read nothing else of nonlands.md and lands.md.
 

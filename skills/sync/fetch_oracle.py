@@ -89,7 +89,6 @@ def community(o, tagged, salty):
 def entry(c):
     e = {k: c[k] for k in KEEP if k in c}
     e["legalities"] = {"commander": c["legalities"].get("commander")}
-    if c.get("game_changer"): e["game_changer"] = True
     prices = c.get("prices") or {}
     if usd := next(filter(None, map(prices.get, ("usd", "usd_foil", "usd_etched"))), None): e["price"] = float(usd)
     if "card_faces" in c: e["card_faces"] = [{k: f[k] for k in FACE if k in f} for f in c["card_faces"]]
@@ -140,7 +139,6 @@ def rebuild():
     save({"cards": out})
     fronts = {n.split(" // ")[0] for n in out}
     print(len(names), "requested,", len(out), "saved; missing:", [n for n in names if n.split(" // ")[0] not in fronts])
-    print("game changers:", sorted(n for n, e in out.items() if e.get("game_changer")))
 
 if __name__ == "__main__":
     if len(sys.argv) == 1: rebuild()
