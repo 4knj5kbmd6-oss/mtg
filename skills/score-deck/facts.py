@@ -43,8 +43,8 @@ FLASH = re.compile(r"^(?:\w[\w ]*, )*flash(?:,|$)", re.I | re.M)
 # Card quality is four levels, each 1 to 10, from each card's EDHREC saltiness (salt) and USD price (price) in
 # oracle.json, the commanders apart from the 99. 99 salt is the mean over the 99's copies, a land under PLAIN left out
 # (basics, plain duals), 0.30 level 1 and 0.90 level 10; Commander salt is the commanders' salts summed, on the same
-# levels. 99 price is the 99's prices summed per copy, the exclude_priciest priciest copies left out, 125 dollars level 1
-# and 4,000 level 10 on a log scale; Commander price the commanders' prices summed, 1 dollar level 1 and 100 level 10. A
+# levels. 99 price is the 99's prices summed per copy, the exclude_priciest priciest copies left out, 100 dollars level 1
+# and 2,000 level 10 on a log scale; Commander price the commanders' prices summed, 1 dollar level 1 and 100 level 10. A
 # card with no value adds nothing. A card of the 99 at SALTY or more, or at PRICEY dollars or more, is named.
 PLAIN, SALTY, PRICEY = 0.5, 2.0, 20.0
 
@@ -90,7 +90,7 @@ def quality(slug, out):
             ["Commander price", str(price_level(total(lead_price), 1, 100)),
              f"sum {usd(total(lead_price))}; {named_at(lead_price, 0, usd)}"],
             ["99 salt", str(salt_level(mean)), f"mean {salt(mean)} over {n(salts)} cards; {named_at(salts, SALTY, salt)}"],
-            ["99 price", str(price_level(total(kept), 125, 4000)),
+            ["99 price", str(price_level(total(kept), 100, 2000)),
              f"sum {usd(total(kept))} over {n(kept)} cards, {len(left)} priciest out: {'; '.join(shown) or '-'}"]]
 
 def game_changers(slug):

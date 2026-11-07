@@ -330,7 +330,7 @@ def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more(
     list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring") + "\nSIDEBOARD:\n1 Pearl Diver\n")
     Path("run").mkdir()
     facts.counts("run", "zara", 0)
-    # 2 * 1.5 + 30 + 4 * 0.25 + 20 = 54 dollars over 8 copies, under 125 level 1; the commander's 4 dollars
+    # 2 * 1.5 + 30 + 4 * 0.25 + 20 = 54 dollars over 8 copies, under 100 level 1; the commander's 4 dollars
     # 1 + 9 * log10(4) / 2 = 3.7
     assert read("run/zara-counts.md").endswith(
         "| Commander salt | 1 | sum 0.00; - |\n"
@@ -350,16 +350,16 @@ def test_exclude_priciest_leaves_out_copies_highest_first_ties_by_name_so_a_two_
     list_ = Path("output/decks/zara/list.txt")
     list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring"))
     # out: Kelp Weaver, Wave Breaker and one Sol Ring, which comes before Tidal Insight by name; kept 150 + 150 + 10
-    # + 4 * 0.25 = 311 dollars over 7 copies, 1 + 9 * ln(311 / 125) / ln(32) = 3.4
-    assert quality(out=3)["99 price"] == (3, "sum $311.00 over 7 cards, 3 priciest out: Kelp Weaver $300.00; "
+    # + 4 * 0.25 = 311 dollars over 7 copies, 1 + 9 * ln(311 / 100) / ln(20) = 4.4
+    assert quality(out=3)["99 price"] == (4, "sum $311.00 over 7 cards, 3 priciest out: Kelp Weaver $300.00; "
                                              "Wave Breaker $200.00; Sol Ring $150.00; Sol Ring $150.00; Tidal Insight $150.00")
 
 
 @pytest.mark.parametrize("words, row", [
-    # settings.json's 1: Kelp Weaver out, 200 dollars kept, 1 + 9 * ln(1.6) / ln(32) = 2.2
-    ([], "| 99 price | 2 | sum $200.00 over 1 cards, 1 priciest out: Kelp Weaver $300.00; Wave Breaker $200.00 |"),
-    # the word's 0: 500 dollars kept, 1 + 9 * ln(4) / ln(32) = 4.6
-    (["exclude_priciest=0"], "| 99 price | 5 | sum $500.00 over 2 cards, 0 priciest out: Kelp Weaver $300.00; "
+    # settings.json's 1: Kelp Weaver out, 200 dollars kept, 1 + 9 * ln(2) / ln(20) = 3.1
+    ([], "| 99 price | 3 | sum $200.00 over 1 cards, 1 priciest out: Kelp Weaver $300.00; Wave Breaker $200.00 |"),
+    # the word's 0: 500 dollars kept, 1 + 9 * ln(5) / ln(20) = 5.8
+    (["exclude_priciest=0"], "| 99 price | 6 | sum $500.00 over 2 cards, 0 priciest out: Kelp Weaver $300.00; "
                              "Wave Breaker $200.00 |")])
 def test_facts_takes_exclude_priciest_from_settings_and_a_key_value_word_overrides_it(monkeypatch, words, row):
     valued("price", {"Kelp Weaver": 300.0, "Wave Breaker": 200.0})
@@ -381,11 +381,11 @@ def test_salt_levels_run_from_1_at_030_to_10_at_090(value, level):
 
 
 @pytest.mark.parametrize("row, usd, level", [
-    ("99 price", 0, 1), ("99 price", 100, 1), ("99 price", 125, 1), ("99 price", 250, 3), ("99 price", 500, 5),
-    ("99 price", 1000, 6), ("99 price", 4000, 10), ("99 price", 10000, 10),
+    ("99 price", 0, 1), ("99 price", 50, 1), ("99 price", 100, 1), ("99 price", 250, 4), ("99 price", 500, 6),
+    ("99 price", 1000, 8), ("99 price", 2000, 10), ("99 price", 10000, 10),
     ("Commander price", 0, 1), ("Commander price", 0.5, 1), ("Commander price", 1, 1), ("Commander price", 2, 2),
     ("Commander price", 10, 6), ("Commander price", 50, 9), ("Commander price", 100, 10), ("Commander price", 250, 10)])
-def test_price_levels_run_on_a_log_scale_from_125_to_4000_dollars_for_the_99_and_1_to_100_for_the_commanders(
+def test_price_levels_run_on_a_log_scale_from_100_to_2000_dollars_for_the_99_and_1_to_100_for_the_commanders(
         row, usd, level):
     Path("output/decks/zara/list.txt").write_text("1 Zara, Tide Caller\n\n1 Sol Ring\n")
     valued("price", {"Zara, Tide Caller" if row == "Commander price" else "Sol Ring": usd})

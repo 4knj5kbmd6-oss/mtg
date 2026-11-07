@@ -12,12 +12,12 @@ JUDGED = {"zara": {"A": [6, 5], "B": [7, 6], "C": [3, 4]},
           "kor": {"A": [5, 6], "B": [8, 7], "C": [8, 7]}}
 OWN = dict(zip("ABCDE", ["3", "4", "2", "3, top", "3"]))  # each ranker's Bracket
 UNTAGGED = "1 | 0 answers, 0 instant, 0 weighted | -"  # an untagged deck's Interaction Ledger cells past the criterion
-# zara's commander salt 0.525 is level 4 and its 10 dollars 6; its 99's salt mean 3.0 / 4 = 0.75 is 8 and its 250
-# dollars 3: Card quality 21 / 4 = 5.25, 5.3, USD 260. kor's 0.45 is 3 and its 1 dollar 1; its 99's salt 0.6 is 6 and
+# zara's commander salt 0.525 is level 4 and its 10 dollars 6; its 99's salt mean 3.0 / 4 = 0.75 is 8 and its 200
+# dollars 3: Card quality 21 / 4 = 5.25, 5.3, USD 210. kor's 0.45 is 3 and its 1 dollar 1; its 99's salt 0.6 is 6 and
 # its 4.25 dollars 1: Card quality 11 / 4 = 2.75, 2.8, USD 5
 SALTS = {"Zara, Tide Caller": 0.525, "Kor Skyfisher": 0.45, "Sol Ring": 0.6, "Brine Elemental": 2.4,
          "Coral Signet": 0.0, "Kelp Weaver": 0.0, "Island": 0.05}
-PRICES = {"Zara, Tide Caller": 10.0, "Kor Skyfisher": 1.0, "Sol Ring": 2.0, "Brine Elemental": 247.0, "Island": 0.25}
+PRICES = {"Zara, Tide Caller": 10.0, "Kor Skyfisher": 1.0, "Sol Ring": 2.0, "Brine Elemental": 197.0, "Island": 0.25}
 
 
 def flat(speed):
@@ -119,7 +119,7 @@ def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest(
 
 | # | Commander | Commander salt | Commander price | 99 salt | 99 price | USD |
 |---|---|---|---|---|---|---|
-| 1 | Zara, Tide Caller | 4.0 | 6.0 | 8.0 | 3.0 | 260 |
+| 1 | Zara, Tide Caller | 4.0 | 6.0 | 8.0 | 3.0 | 210 |
 | 2 | Kor Skyfisher | 3.0 | 1.0 | 6.0 | 1.0 | 5 |
 
 ## Ledger
@@ -129,7 +129,7 @@ def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest(
 | Zara, Tide Caller | Win | 5 | - | cards A |
 | Zara, Tide Caller | Development | 5 | - | cards A |
 | Zara, Tide Caller | Interaction | {UNTAGGED} |
-| Zara, Tide Caller | Card quality | 5.3 | cmdr salt 4, cmdr price 6, 99 salt 8, 99 price 3 | Zara, Tide Caller 0.53; Zara, Tide Caller $10.00; Brine Elemental 2.40; Brine Elemental $247.00 |
+| Zara, Tide Caller | Card quality | 5.3 | cmdr salt 4, cmdr price 6, 99 salt 8, 99 price 3 | Zara, Tide Caller 0.53; Zara, Tide Caller $10.00; Brine Elemental 2.40; Brine Elemental $197.00 |
 | Kor Skyfisher | Win | 5 | - | cards B |
 | Kor Skyfisher | Development | 5 | - | cards B |
 | Kor Skyfisher | Interaction | {UNTAGGED} |
@@ -227,7 +227,7 @@ def test_card_quality_is_the_mean_of_the_four_levels_to_one_decimal():
     _, comp, quality = merge_rankings.facts_of(Path("run"))
     assert [comp[d]["Card quality"][0] for d in ("zara", "kor")] == [merge_rankings.Fraction(53, 10),
                                                                      merge_rankings.Fraction(28, 10)]
-    assert quality == {"zara": ["4.0", "6.0", "8.0", "3.0", "260"], "kor": ["3.0", "1.0", "6.0", "1.0", "5"]}
+    assert quality == {"zara": ["4.0", "6.0", "8.0", "3.0", "210"], "kor": ["3.0", "1.0", "6.0", "1.0", "5"]}
 
 
 def test_merge_rankings_breaks_a_tie_by_mean_place_then_by_slug():
