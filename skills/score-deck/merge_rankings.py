@@ -11,10 +11,9 @@ and writes nothing. Writes <run_dir>/rankings.md: its Rankings, Criteria, Speed,
 - each COMPUTED criterion is read from the deck's counts file: Interaction the level below, its Ledger row's Count
   "<a> answers, <i> instant, <w> weighted", its Cards the Answers row's Cards; Card quality the mean of the Counts of
   the QUALITY rows, its Ledger row's Count "cmdr salt <a>, cmdr price <b>, 99 salt <c>, 99 price <d>", its Cards the
-  cards those rows name, and the Card quality table those four levels and USD, the dollar sums of the Commander price
-  and 99 price rows added;
+  cards those rows name, and the Card quality table those four levels;
 - the Score is the mean over SCORED of (value as written - 1) / 9 * 100; every mapped axis, mean and Score is an exact
-  fraction rounded half up to one decimal, USD half up to a whole dollar;
+  fraction rounded half up to one decimal;
 - each ranker's own Score, computed the same way from its own values, picks the median ranker (the lower middle when
   even), whose Bracket, Why and Ledger rows the deck takes;
 - the Bracket is 5 when the deck's plan.md carries `- **cEDH:** yes`, whatever the rankers wrote, and a 5 of any other
@@ -56,10 +55,9 @@ JUDGMENTS = "| Deck | " + " | ".join(JUDGED) + " | Bracket | Why |"
 RANKINGS = "| # | Commander | Colours | Bracket | Score | Game Changers | Why | |"
 CRITERIA = "| # | Commander | " + " | ".join(SCORED) + " |"
 SPEED = "| # | Commander | " + " | ".join(JUDGED) + " |"
-CARD_QUALITY = "| # | Commander | " + " | ".join(QUALITY) + " | USD |"
+CARD_QUALITY = "| # | Commander | " + " | ".join(QUALITY) + " |"
 LEDGER = "| Commander | Criterion | Value | Count | Cards |"
 BRACKET = re.compile(r"[1-5](, (top|low))?")
-DOLLARS = re.compile(r"\$(\d+(?:\.\d+)?)")
 SUMMARY = re.compile(r"^.*?[;:] ")  # a Card quality row's Cards up to the first card it names
 MOXFIELD, RANKED = Path("moxfield.json"), Path("rankings.md")
 
@@ -129,9 +127,8 @@ def card_quality(got):
     levels = [int(got[r][0]) for r in QUALITY]
     level = tenths(mean(levels))
     cards = "; ".join(c for r in QUALITY for c in SUMMARY.sub("", got[r][1], 1).split("; ") if c != "-") or "-"
-    usd = sum(Fraction(DOLLARS.search(got[r][1])[1]) for r in ("Commander price", "99 price"))
     count = "cmdr salt {}, cmdr price {}, 99 salt {}, 99 price {}".format(*levels)
-    return level, ["Card quality", shown(level), count, cards], [*map(shown, levels), str(math.floor(usd + Fraction(1, 2)))]
+    return level, ["Card quality", shown(level), count, cards], list(map(shown, levels))
 
 def computed(got):
     """({criterion: (level, its Ledger row past the deck's name)} of each COMPUTED criterion, the Card quality table's
