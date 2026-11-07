@@ -39,7 +39,7 @@ def decks(salts=SALTS, prices=PRICES):
     Path("output/decks/kor/list.txt").write_text("1 Kor Skyfisher\n\n1 Sol Ring\n9 Island\n")
     Path("moxfield.json").write_text(json.dumps({"user": "owner", "decks": {"z1": "zara", "k1": "kor"}}))
     Path("run").mkdir(exist_ok=True)
-    for slug in ("zara", "kor"): facts.counts("run", slug)
+    for slug in ("zara", "kor"): facts.counts("run", slug, 0)
 
 
 def ledger(slug, x):
@@ -161,7 +161,7 @@ def test_the_merged_ledgers_interaction_row_carries_the_answers_and_their_cards(
             "Brine Elemental": ["removal", "sweeper"]}
     for name, t in tags.items(): oracle["cards"][name]["tags"] = t
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
-    facts.counts("run", "zara")
+    facts.counts("run", "zara", 0)
     rankers()
     assert merges("zara: split Win 6/7/3")["zara"]["Interaction"] == "2.0"  # 1 + 9 * 4 / 40 = 1.9
     assert "| Zara, Tide Caller | Interaction | 2 | 3 answers, 1 instant, 4 weighted | " \
@@ -329,7 +329,7 @@ def test_recompute_after_a_salt_change_moves_only_that_decks_card_quality_score_
     oracle = json.loads(read("output/data/oracle.json"))
     oracle["cards"]["Kor Skyfisher"]["salt"] = 0.9
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
-    for slug in ("zara", "kor"): facts.counts("run", slug)
+    for slug in ("zara", "kor"): facts.counts("run", slug, 0)
     assert run("skills/score-deck/merge_rankings.py", "--recompute", "run").returncode == 0
     after = ranked()
     # kor's Commander salt 10: Card quality 18 / 4 = 4.5, (7.4 + 0 + 3.5) / 27 * 100 = 40.37, its Score 40.4 above

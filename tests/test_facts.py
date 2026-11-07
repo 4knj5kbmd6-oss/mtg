@@ -232,7 +232,7 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
     oracle["cards"]["Wave Breaker"]["oracle_text"] = "Flash, haste"
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
     Path("run").mkdir()
-    facts.counts("run", "zara")
+    facts.counts("run", "zara", 3)
     assert read("run/zara-counts.md") == """# zara: counts
 
 | Category | Count | Cards |
@@ -250,7 +250,7 @@ def test_counts_put_the_fixture_decks_cards_in_categories_by_their_tags():
 | Commander salt | 1 | sum 0.00; - |
 | Commander price | 1 | sum $0.00; - |
 | 99 salt | 1 | mean 0.00 over 0 cards; - |
-| 99 price | 1 | sum $0.00 over 0 cards; - |
+| 99 price | 1 | sum $0.00 over 0 cards, 0 priciest out: - |
 """
 
 
@@ -267,7 +267,7 @@ def test_creature_and_noncreature_removal_count_removal_and_wipes_by_target_tags
     oracle["cards"]["Coral Signet"]["oracle_text"] = "Exile target artifact."
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
     Path("run").mkdir()
-    facts.counts("run", "zara")
+    facts.counts("run", "zara", 3)
     got = read("run/zara-counts.md")
     assert "\n| Removal | 5 | Brine Elemental; Coral Signet; Kelp Weaver; Sol Ring; Wave Breaker |\n" \
            "| Creature removal | 3 | Sol Ring; Tidal Insight; Wave Breaker |\n" \
@@ -284,7 +284,7 @@ def test_counts_name_the_game_changers_of_the_list_without_its_sideboard():
                      + "\nSIDEBOARD:\n1 Pearl Diver\n")
     assert facts.game_changers("zara") == ["Drowned Scholar", "Sol Ring", "Zara, Tide Caller"]
     Path("run").mkdir()
-    facts.counts("run", "zara")
+    facts.counts("run", "zara", 3)
     assert "\n| Game Changers | 3 | Drowned Scholar; Sol Ring; Zara, Tide Caller |\n| Commander salt |" in read("run/zara-counts.md")
 
 
@@ -295,9 +295,9 @@ def valued(field, values):
     Path("output/data/oracle.json").write_text(json.dumps(oracle))
 
 
-def quality(slug="zara"):
-    """the deck's Card quality rows, {Category: (level, Cards)}"""
-    return {r[0]: (int(r[1]), r[2]) for r in facts.quality(slug)}
+def quality(slug="zara", out=0):
+    """the deck's Card quality rows, {Category: (level, Cards)}, the out priciest copies of the 99 left out"""
+    return {r[0]: (int(r[1]), r[2]) for r in facts.quality(slug, out)}
 
 
 def test_99_salt_is_the_mean_over_the_99s_copies_without_plain_lands_or_unknown_salt():
@@ -329,14 +329,46 @@ def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more(
     list_ = Path("output/decks/zara/list.txt")
     list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring") + "\nSIDEBOARD:\n1 Pearl Diver\n")
     Path("run").mkdir()
-    facts.counts("run", "zara")
+    facts.counts("run", "zara", 0)
     # 2 * 1.5 + 30 + 4 * 0.25 + 20 = 54 dollars over 8 copies, under 125 level 1; the commander's 4 dollars
     # 1 + 9 * log10(4) / 2 = 3.7
     assert read("run/zara-counts.md").endswith(
         "| Commander salt | 1 | sum 0.00; - |\n"
         "| Commander price | 4 | sum $4.00; Zara, Tide Caller $4.00 |\n"
         "| 99 salt | 1 | mean 0.00 over 0 cards; - |\n"
-        "| 99 price | 1 | sum $54.00 over 8 cards; Kelp Weaver $30.00; Wave Breaker $20.00 |\n")
+        "| 99 price | 1 | sum $54.00 over 8 cards, 0 priciest out: Kelp Weaver $30.00; Wave Breaker $20.00 |\n")
+
+
+def test_a_99_with_fewer_priced_copies_than_exclude_priciest_leaves_them_all_out():
+    valued("price", {"Kelp Weaver": 300.0, "Sol Ring": 1.5})
+    assert quality(out=3)["99 price"] == (1, "sum $0.00 over 0 cards, 2 priciest out: Kelp Weaver $300.00; Sol Ring $1.50")
+
+
+def test_exclude_priciest_leaves_out_copies_highest_first_ties_by_name_so_a_two_copy_card_can_straddle_the_cut():
+    valued("price", {"Kelp Weaver": 300.0, "Wave Breaker": 200.0, "Sol Ring": 150.0, "Tidal Insight": 150.0,
+                     "Coral Signet": 10.0, "Island": 0.25})
+    list_ = Path("output/decks/zara/list.txt")
+    list_.write_text(list_.read_text().replace("1 Sol Ring", "2 Sol Ring"))
+    # out: Kelp Weaver, Wave Breaker and one Sol Ring, which comes before Tidal Insight by name; kept 150 + 150 + 10
+    # + 4 * 0.25 = 311 dollars over 7 copies, 1 + 9 * ln(311 / 125) / ln(32) = 3.4
+    assert quality(out=3)["99 price"] == (3, "sum $311.00 over 7 cards, 3 priciest out: Kelp Weaver $300.00; "
+                                             "Wave Breaker $200.00; Sol Ring $150.00; Sol Ring $150.00; Tidal Insight $150.00")
+
+
+@pytest.mark.parametrize("words, row", [
+    # settings.json's 1: Kelp Weaver out, 200 dollars kept, 1 + 9 * ln(1.6) / ln(32) = 2.2
+    ([], "| 99 price | 2 | sum $200.00 over 1 cards, 1 priciest out: Kelp Weaver $300.00; Wave Breaker $200.00 |"),
+    # the word's 0: 500 dollars kept, 1 + 9 * ln(4) / ln(32) = 4.6
+    (["exclude_priciest=0"], "| 99 price | 5 | sum $500.00 over 2 cards, 0 priciest out: Kelp Weaver $300.00; "
+                             "Wave Breaker $200.00 |")])
+def test_facts_takes_exclude_priciest_from_settings_and_a_key_value_word_overrides_it(monkeypatch, words, row):
+    valued("price", {"Kelp Weaver": 300.0, "Wave Breaker": 200.0})
+    Path("settings.json").write_text('{"exclude_priciest": 1}')
+    monkeypatch.setattr(facts.combos, "write", lambda run, slug: None)
+    monkeypatch.setattr(sys, "argv", ["facts.py", "run", "zara", *words])
+    Path("run").mkdir()
+    facts.main()
+    assert f"\n{row}\n" in read("run/zara-counts.md")
 
 
 # 0.6 is 1 + 9 * 0.3 / 0.6 = 5.5, half up; 0.65 is 6.25

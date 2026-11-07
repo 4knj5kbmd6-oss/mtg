@@ -67,6 +67,7 @@ the command line overrides one for that run (`/score-cards budget=50 quota.adds=
 |---|---|
 | `scorers` | Scorers per deck |
 | `rankers` | Rankers per ranking |
+| `exclude_priciest` | How many of the 99's priciest copies Card quality's 99 price leaves out |
 | `models` | The model each agent runs on, keyed by agent name |
 | `budget` | The highest TCGplayer price in dollars an add may carry |
 | `quota` | The adds, land adds and cuts each deck's research lists |
@@ -105,7 +106,7 @@ Your project-wide files, beside `output/` (gitignored):
 | `changes.md` | Your [intended swaps](#changesmd) not yet made on Moxfield |
 | `collection.md` | The cards you own, a table of `Card` and `Copies`, one row each; `/collection` caches each one's image and oracle text, `/collection decks` first adds every deck card it lacks at 1 copy |
 | `restricted.md`, `output/decks/<slug>/restricted.md` | Card names, one `- Name` line each, never added: for every deck, and for one deck |
-| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, the Score the mean of each normalised to 100; then a `Speed` table of the two judged axes, Win and Development, whose mean is Speed, every criterion and axis on 1 to 10; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price, whose mean is Card quality, and USD, the deck's summed price in whole dollars; then a `Ledger` table of the cards behind each score |
+| `rankings.md` | Your decks in strength order: commander, colours, bracket (5 only for a deck whose plan declares cEDH, any other at most 4), score (0 to 100 to one decimal), Game Changers, why, Moxfield link; then a `Criteria` table of each deck's scores on the criteria in [agents/ranker.md](agents/ranker.md), Speed, Interaction and Card quality, the Score the mean of each normalised to 100; then a `Speed` table of the two judged axes, Win and Development, whose mean is Speed, every criterion and axis on 1 to 10; then a `Card quality` table of its four computed levels, Commander salt, Commander price, 99 salt and 99 price (the `exclude_priciest` priciest copies of the 99 left out), whose mean is Card quality, and USD, the deck's summed price in whole dollars; then a `Ledger` table of the cards behind each score |
 
 Your output, all under `output/` (gitignored):
 

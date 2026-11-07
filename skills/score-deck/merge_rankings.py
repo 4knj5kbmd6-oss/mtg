@@ -60,6 +60,7 @@ CARD_QUALITY = "| # | Commander | " + " | ".join(QUALITY) + " | USD |"
 LEDGER = "| Commander | Criterion | Value | Count | Cards |"
 BRACKET = re.compile(r"[1-5](, (top|low))?")
 DOLLARS = re.compile(r"\$(\d+(?:\.\d+)?)")
+SUMMARY = re.compile(r"^.*?[;:] ")  # a Card quality row's Cards up to the first card it names
 MOXFIELD, RANKED = Path("moxfield.json"), Path("rankings.md")
 
 def tenths(x):
@@ -127,7 +128,7 @@ def card_quality(got):
     file's rows {category: (Count, Cards)}"""
     levels = [int(got[r][0]) for r in QUALITY]
     level = tenths(mean(levels))
-    cards = "; ".join(c for r in QUALITY for c in got[r][1].split("; ")[1:] if c != "-") or "-"
+    cards = "; ".join(c for r in QUALITY for c in SUMMARY.sub("", got[r][1], 1).split("; ") if c != "-") or "-"
     usd = sum(Fraction(DOLLARS.search(got[r][1])[1]) for r in ("Commander price", "99 price"))
     count = "cmdr salt {}, cmdr price {}, 99 salt {}, 99 price {}".format(*levels)
     return level, ["Card quality", shown(level), count, cards], [*map(shown, levels), str(math.floor(usd + Fraction(1, 2)))]

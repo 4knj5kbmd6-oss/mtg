@@ -8,7 +8,7 @@ the run with one line naming the file or the word; a top-level key not in DEFAUL
 on."""
 import json, sys
 from pathlib import Path
-DEFAULTS = {"scorers": 3, "rankers": 4,
+DEFAULTS = {"scorers": 3, "rankers": 4, "exclude_priciest": 3,
             "models": {"scorer": "claude-sonnet-5-5", "ranker": "claude-sonnet-5-5", "researcher": "claude-opus-5-5",
                        "judge": "claude-sonnet-5-5", "librarian": "claude-sonnet-5-5", "shopper": "claude-sonnet-5-5",
                        "planner": "claude-opus-5-5"},
@@ -16,7 +16,8 @@ DEFAULTS = {"scorers": 3, "rankers": 4,
             "quota": {"adds": 20, "lands": 5, "cuts": [10, 15]}, "universes_beyond": True, "new_sets": False, "images": True,
             "cart": {"condition": "MP", "language": "English", "finish": None, "premium": None}}
 WHOLE, FLAG = ("a whole number ≥ 1", lambda v: type(v) is int and v >= 1), ("true or false", lambda v: type(v) is bool)
-KIND = {"scorers": WHOLE, "rankers": WHOLE, "universes_beyond": FLAG, "new_sets": FLAG, "images": FLAG,
+KIND = {"scorers": WHOLE, "rankers": WHOLE, "exclude_priciest": ("a whole number ≥ 0", lambda v: type(v) is int and v >= 0),
+        "universes_beyond": FLAG, "new_sets": FLAG, "images": FLAG,
         "budget": ("a number or null", lambda v: v is None or type(v) in (int, float)),
         **{k: ("an object", lambda v: isinstance(v, dict)) for k, v in DEFAULTS.items() if isinstance(v, dict)}}
 
