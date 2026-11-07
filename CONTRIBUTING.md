@@ -34,4 +34,4 @@ below keep a change easy to review and land.
 | [`tests/`](tests/) | The scripts' tests, run on a fixture project |
 | [`.github/`](.github/) | Issue templates and the test workflow |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How work is proposed and landed |
-| [`LICENSE`](LICENSE) | The licence |
+| [`LICENSE`](LICENSE) | PolyForm Noncommercial 1.0.0: free to use, change and share for any noncommercial purpose; commercial use needs the licensor's permission |
