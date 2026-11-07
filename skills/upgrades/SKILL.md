@@ -12,8 +12,9 @@ Settings and dispatch as the deck-files skill's Dispatch section says.
    files into it,
    `python3 ${CLAUDE_PLUGIN_ROOT}/skills/score-deck/facts.py <run> <slug> ...`.
    Get each deck's `created` and `updated` from `dates` in
-   `moxfield.json`; report each deck with no dates there, its research
-   runs with the dates unknown.
+   `moxfield.json`. A deck with no dates there is reported on one line:
+   with `new_sets` true it is left out of the run; with it false its
+   research runs with the dates unknown.
 2. Dispatch one `mtg-toolbox:researcher` per colour-sharing group of two
    or three decks, so each researches a colour's new cards once, its prompt giving
    `<run>`, `<today>`, `<budget>` (`budget` as `$<n>`, or `none`),

@@ -71,7 +71,7 @@ the command line overrides one for that run (`/score-cards budget=50 quota.adds=
 | `budget` | The highest TCGplayer price in dollars an add may carry |
 | `quota` | The adds, land adds and cuts each deck's research lists |
 | `universes_beyond` | true: research searches Universes Beyond sets |
-| `new_sets` | true: research recommends only cards from the sets released since each deck's last edit, searched exhaustively |
+| `new_sets` | true: research recommends only cards from the sets released since each deck's last edit, searched exhaustively; a deck with no dates in `moxfield.json` is skipped |
 | `images` | false: no card image is fetched or stored, and no `changes.png` drawn |
 | `cart` | Condition, language, finish and premium per package removed; asked each cart while null |
 
