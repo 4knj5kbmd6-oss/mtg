@@ -127,7 +127,7 @@ def test_merge_rankings_takes_the_median_of_three_rankers_and_computes_the_rest(
 | Zara, Tide Caller | Win | 5 | - | cards A |
 | Zara, Tide Caller | Development | 5 | - | cards A |
 | Zara, Tide Caller | Interaction | {UNTAGGED} |
-| Zara, Tide Caller | Card quality | 5.3 | cmdr salt 4, cmdr price 6, 99 salt 8, 99 price 3 | Zara, Tide Caller 0.53; Zara, Tide Caller $10.00; Brine Elemental 2.40; Brine Elemental $197.00 |
+| Zara, Tide Caller | Card quality | 5.3 | cmdr salt 4, cmdr price 6, 99 salt 8, 99 price 3 | Zara, Tide Caller 0.53; Zara, Tide Caller $10.00; Brine Elemental 2.40 |
 | Kor Skyfisher | Win | 5 | - | cards B |
 | Kor Skyfisher | Development | 5 | - | cards B |
 | Kor Skyfisher | Interaction | {UNTAGGED} |

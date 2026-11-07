@@ -45,8 +45,8 @@ FLASH = re.compile(r"^(?:\w[\w ]*, )*flash(?:,|$)", re.I | re.M)
 # (basics, plain duals), 0.30 level 1 and 0.90 level 10; Commander salt is the commanders' salts summed, on the same
 # levels. 99 price is the 99's prices summed per copy, the exclude_priciest priciest copies left out, 100 dollars level 1
 # and 2,000 level 10 on a log scale; Commander price the commanders' prices summed, 1 dollar level 1 and 100 level 10. A
-# card with no value adds nothing. A card of the 99 at SALTY or more, or at PRICEY dollars or more, is named.
-PLAIN, SALTY, PRICEY = 0.5, 2.0, 20.0
+# card with no value adds nothing. A card of the 99 at SALTY or more is named, and each copy the 99 price leaves out.
+PLAIN, SALTY = 0.5, 2.0
 
 def held(x):
     """x rounded half up and held to 1 to 10"""
@@ -66,7 +66,7 @@ def quality(slug, out):
     Commander salt and Commander price the commanders' values summed, their Cards the sum and each commander with its
     value; 99 salt the 99's mean, its Cards the mean, the copies it is over and the cards at SALTY or more; 99 price the
     99's sum over its priced copies but the out priciest (highest price first, ties by name), its Cards the sum, the
-    copies it is over, the copies left out and the cards kept at PRICEY or more; cards highest first"""
+    copies it is over and the copies left out; cards highest first"""
     oracle = named()
     commanders, rest = decklist(slug)
     def valued(cards, field):
@@ -84,14 +84,14 @@ def quality(slug, out):
     mean = total(salts) / n(salts) if salts else 0
     priciest = sorted(((name, v) for c, name, v in prices for _ in range(c)), key=lambda c: (-c[1], c[0]))
     left, kept = priciest[:out], [(1, name, v) for name, v in priciest[out:]]
-    shown = [f"{name} {usd(v)}" for name, v in left] + [c for c in [named_at(kept, PRICEY, usd)] if c != "-"]
     return [["Commander salt", str(salt_level(total(lead_salt))),
              f"sum {salt(total(lead_salt))}; {named_at(lead_salt, 0, salt)}"],
             ["Commander price", str(price_level(total(lead_price), 1, 100)),
              f"sum {usd(total(lead_price))}; {named_at(lead_price, 0, usd)}"],
             ["99 salt", str(salt_level(mean)), f"mean {salt(mean)} over {n(salts)} cards; {named_at(salts, SALTY, salt)}"],
             ["99 price", str(price_level(total(kept), 100, 2000)),
-             f"sum {usd(total(kept))} over {n(kept)} cards, {len(left)} priciest out: {'; '.join(shown) or '-'}"]]
+             f"sum {usd(total(kept))} over {n(kept)} cards, {len(left)} priciest out: "
+             f"{'; '.join(f'{name} {usd(v)}' for name, v in left) or '-'}"]]
 
 def counts(run, slug, out):
     """write <run>/<slug>-counts.md: per category of ROWS the list's card copies in it and their names, commanders in

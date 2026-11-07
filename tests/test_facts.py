@@ -308,7 +308,7 @@ def test_commander_salt_and_price_add_the_partners():
     assert got["Commander price"] == (6, "sum $10.00; Zara, Tide Caller $6.00; Pearl Diver $4.00")
 
 
-def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more():
+def test_99_price_sums_the_99s_copies_and_names_no_card_when_none_is_left_out():
     valued("price", {"Zara, Tide Caller": 4.0, "Sol Ring": 1.5, "Kelp Weaver": 30.0, "Island": 0.25,
                      "Wave Breaker": 20.0, "Pearl Diver": 500.0})  # the rest have no price
     list_ = Path("output/decks/zara/list.txt")
@@ -321,7 +321,7 @@ def test_99_price_sums_the_99s_copies_and_names_the_cards_at_20_dollars_or_more(
         "| Commander salt | 1 | sum 0.00; - |\n"
         "| Commander price | 4 | sum $4.00; Zara, Tide Caller $4.00 |\n"
         "| 99 salt | 1 | mean 0.00 over 0 cards; - |\n"
-        "| 99 price | 1 | sum $54.00 over 8 cards, 0 priciest out: Kelp Weaver $30.00; Wave Breaker $20.00 |\n")
+        "| 99 price | 1 | sum $54.00 over 8 cards, 0 priciest out: - |\n")
 
 
 def test_a_99_with_fewer_priced_copies_than_exclude_priciest_leaves_them_all_out():
@@ -337,15 +337,14 @@ def test_exclude_priciest_leaves_out_copies_highest_first_ties_by_name_so_a_two_
     # out: Kelp Weaver, Wave Breaker and one Sol Ring, which comes before Tidal Insight by name; kept 150 + 150 + 10
     # + 4 * 0.25 = 311 dollars over 7 copies, 1 + 9 * ln(311 / 100) / ln(20) = 4.4
     assert quality(out=3)["99 price"] == (4, "sum $311.00 over 7 cards, 3 priciest out: Kelp Weaver $300.00; "
-                                             "Wave Breaker $200.00; Sol Ring $150.00; Sol Ring $150.00; Tidal Insight $150.00")
+                                             "Wave Breaker $200.00; Sol Ring $150.00")
 
 
 @pytest.mark.parametrize("words, row", [
     # settings.json's 1: Kelp Weaver out, 200 dollars kept, 1 + 9 * ln(2) / ln(20) = 3.1
-    ([], "| 99 price | 3 | sum $200.00 over 1 cards, 1 priciest out: Kelp Weaver $300.00; Wave Breaker $200.00 |"),
+    ([], "| 99 price | 3 | sum $200.00 over 1 cards, 1 priciest out: Kelp Weaver $300.00 |"),
     # the word's 0: 500 dollars kept, 1 + 9 * ln(5) / ln(20) = 5.8
-    (["exclude_priciest=0"], "| 99 price | 6 | sum $500.00 over 2 cards, 0 priciest out: Kelp Weaver $300.00; "
-                             "Wave Breaker $200.00 |")])
+    (["exclude_priciest=0"], "| 99 price | 6 | sum $500.00 over 2 cards, 0 priciest out: - |")])
 def test_facts_takes_exclude_priciest_from_settings_and_a_key_value_word_overrides_it(monkeypatch, words, row):
     valued("price", {"Kelp Weaver": 300.0, "Wave Breaker": 200.0})
     Path("settings.json").write_text('{"exclude_priciest": 1}')
